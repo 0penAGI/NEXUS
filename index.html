@@ -1,365 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>CHRONICLES OF THE SLIDE TRAGEDY</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hidden;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;width:100%;user-select:none;font-size:13px}
-#game{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;position:relative;background:#000;padding:4px;gap:4px}
-#battle-box{width:100%;flex:1;min-height:55dvh;max-height:65dvh;border:3px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;transition:border-color 0.3s}
-#battle-box.existential{border-color:#FF0;animation:glitch 0.5s infinite}
-#heart{position:absolute;width:18px;height:18px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);z-index:10;pointer-events:none;filter:drop-shadow(0 0 6px #F00)}
-#heart.determination{animation:pulse 1s infinite;filter:drop-shadow(0 0 12px #F00)}
-.bullet{position:absolute;background:#FFF;border-radius:50%;pointer-events:none}
-.bullet.void{background:#9400D3;box-shadow:0 0 8px #9400D3}
-.bullet.chaos{background:#FF0;animation:chaosShake 0.1s infinite}
-.soul-text{position:absolute;top:6px;left:6px;font-size:11px;pointer-events:none;text-shadow:1px 1px #000;line-height:1.2}
-#dialogue-box{width:100%;min-height:80px;max-height:35dvh;background:#FFF;color:#000;padding:8px;font-size:13px;position:relative;overflow-y:auto;overflow-x:hidden;flex-shrink:0;border:3px solid #FFF;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-#dialogue-box::-webkit-scrollbar{display:none}
-#dialogue-box.meta{background:#111;color:#0F0;border-color:#0F0}
-#dialogue-text{white-space:pre-wrap;line-height:1.4;font-family:'Courier New',monospace}
-#choices{margin-top:6px;display:flex;flex-direction:column;gap:5px}
-.choice-btn{background:#000;color:#FFF;padding:10px 12px;border:2px solid #FFF;font-size:14px;font-family:inherit;width:100%;text-align:left;touch-action:manipulation;transition:all 0.1s;min-height:38px;display:flex;align-items:center;user-select:auto;cursor:pointer;border-radius:4px}
-.choice-btn:active{transform:scale(0.97)}
-.choice-btn.selected{background:#FF0;color:#000;border-color:#000;font-weight:bold}
-.choice-btn.meta{border-color:#0F0;color:#0F0}
-.choice-btn.meta.selected{background:#0F0;color:#000}
-#stats{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:3px;font-size:11px;background:rgba(0,0,0,0.9);padding:4px 8px;border:1px solid #FFF;z-index:5;pointer-events:none;border-radius:3px}
-#enemy{width:80px;height:80px;pointer-events:none;animation:float 2s ease-in-out infinite}
-#enemy.glitched{animation:float 2s ease-in-out infinite, glitch 0.3s infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-@keyframes glitch{0%{transform:translate(0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(0)}}
-@keyframes chaosShake{0%{transform:rotate(0deg)}25%{transform:rotate(4deg)}75%{transform:rotate(-4deg)}100%{transform:rotate(0deg)}}
-@keyframes flash{0%,100%{opacity:1}50%{opacity:0}}
-.flash{animation:flash .3s}
-#touch-indicator{position:absolute;width:24px;height:24px;border:2px solid rgba(255,255,0,0.7);border-radius:50%;pointer-events:none;display:none;z-index:20}
-#void-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,transparent 30%,rgba(148,0,211,0.3) 100%);pointer-events:none;opacity:0;transition:opacity 0.5s}
-#void-overlay.active{opacity:1}
-.reality-text{position:absolute;font-size:10px;color:#9400D3;text-shadow:0 0 4px #9400D3;pointer-events:none;animation:fadeFloat 2.5s forwards;z-index:15}
-@keyframes fadeFloat{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>System Collapse</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #00ff41;
+            overflow: hidden;
+            touch-action: pan-y;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            min-height: 100vh;
+        }
+        .tg-viewport { width: 100vw; min-height: 100vh; position: relative; }
+        .container { padding: 12px; padding-bottom: 20px; }
+        .header { background: rgba(0, 255, 65, 0.05); border: 1px solid #00ff41; border-radius: 12px; padding: 16px; margin-bottom: 12px; text-align: center; }
+        .title { font-size: 18px; font-weight: bold; margin-bottom: 6px; text-shadow: 0 0 8px #00ff41; }
+        .cycle-info { font-size: 12px; opacity: 0.7; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .metric-card { background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%); border: 1px solid #00ff41; border-radius: 10px; padding: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 255, 65, 0.1); }
+        .metric-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: #00ff41; animation: scan 2s linear infinite; }
+        @keyframes scan { 0%, 100% { transform: translateX(-100%); } 50% { transform: translateX(100%); } }
+        .metric-label { font-size: 10px; opacity: 0.6; margin-bottom: 4px; letter-spacing: 1px; }
+        .metric-value { font-size: 24px; font-weight: bold; }
+        .metric-card.alert { border-color: #ff0000; color: #ff0000; animation: pulse 1s infinite; box-shadow: 0 0 20px rgba(255, 0, 0, 0.4); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .chaos-section { background: rgba(255, 0, 0, 0.05); border: 1px solid #ff0000; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .chaos-label { font-size: 11px; color: #ff0000; margin-bottom: 8px; text-align: center; }
+        .chaos-bar { width: 100%; height: 24px; background: #1a1a1a; border-radius: 12px; overflow: hidden; position: relative; }
+        .chaos-fill { height: 100%; background: linear-gradient(90deg, #ff0000, #ff00ff); transition: width 0.4s ease; box-shadow: 0 0 12px rgba(255, 0, 0, 0.6); border-radius: 12px; }
+        .chaos-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: bold; color: #fff; text-shadow: 0 0 4px #000; }
+        .actions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .action-btn { background: rgba(0, 255, 65, 0.1); border: 1.5px solid #00ff41; color: #00ff41; border-radius: 10px; padding: 14px 10px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+        .action-btn:active { transform: scale(0.96); background: rgba(0, 255, 65, 0.2); }
+        .action-cost { font-size: 10px; opacity: 0.7; margin-top: 4px; }
+        .action-btn.disabled { opacity: 0.3; pointer-events: none; border-color: #555; color: #555; }
+        .log-section { background: rgba(0, 0, 0, 0.9); border: 1px solid #00ff41; border-radius: 10px; padding: 12px; max-height: 140px; overflow-y: auto; margin-bottom: 12px; }
+        .log-entry { font-size: 11px; margin-bottom: 6px; line-height: 1.4; opacity: 0; animation: fadeIn 0.4s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .log-entry.crisis { color: #ff6b6b; }
+        .log-entry.collapse { color: #ff00ff; font-weight: bold; }
+        .info-section { background: rgba(0, 255, 65, 0.03); border: 1px solid rgba(0, 255, 65, 0.3); border-radius: 10px; padding: 12px; font-size: 10px; line-height: 1.6; opacity: 0.8; margin-bottom: 20px; }
+        .matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.03; z-index: 0; }
+        .content-wrapper { position: relative; z-index: 1; }
+        .log-section::-webkit-scrollbar { width: 4px; }
+        .log-section::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+        .log-section::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 2px; }
+
+        /* GAME OVER — ТЕЛЕФОН-ДРУЖЕСТВЕННЫЙ */
+        .game-over-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .game-over-overlay.active { display: flex; }
+        .game-over-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 0 0 15px #ff0000;
+            margin-bottom: 16px;
+            animation: glitch 1.5s infinite;
+        }
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0 0 15px #ff0000; }
+            50% { text-shadow: 2px 2px 10px #ff00ff, -2px -2px 10px #00ffff; }
+        }
+        .game-over-stats {
+            font-size: 14px;
+            color: #00ff41;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            max-width: 90%;
+            white-space: pre-line;
+        }
+        .restart-btn {
+            padding: 16px 40px;
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid #ff0000;
+            color: #ff0000;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 200px;
+            transition: all 0.2s;
+        }
+        .restart-btn:active {
+            transform: scale(0.94);
+            background: rgba(255, 0, 0, 0.5);
+        }
+    </style>
 </head>
 <body>
-<div id="game">
-  <div id="stats">
-    <span>LV <span id="lv">1</span></span>
-    <span>HP <span id="hp">20</span>/<span id="max-hp">20</span></span>
-    <span id="determination-stat" style="display:none;color:#FF0">DT <span id="dt">0</span></span>
-    <span id="void-stat" style="display:none;color:#9400D3">VOID <span id="void">0</span></span>
-  </div>
-  <div id="battle-box">
-    <div id="heart"></div>
-    <div id="enemy"></div>
-    <div class="soul-text">* You feel reality trembling.</div>
-    <div id="touch-indicator"></div>
-    <div id="void-overlay"></div>
-  </div>
-  <div id="dialogue-box">
-    <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY.</div>
-    <div id="choices"></div>
-  </div>
-</div>
+    <canvas class="matrix-canvas" id="matrix"></canvas>
 
-<script>
-// === TELEGRAM FIX ===
-if (window.Telegram?.WebApp) {
-  Telegram.WebApp.ready();
-  Telegram.WebApp.expand();
-  Telegram.WebApp.enableClosingConfirmation();
-  setTimeout(() => Telegram.WebApp.expand(), 100);
-}
-document.body.style.touchAction = 'none';
+    <div class="tg-viewport">
+        <div class="content-wrapper">
+            <div class="container">
+                <div class="header">
+                    <div class="title">SYSTEM COLLAPSE</div>
+                    <div class="cycle-info">CYCLE <span id="cycle">0</span> | PROTOCOL ACTIVE</div>
+                </div>
 
-// === SVG-ПЕРСОНАЖИ (встроенные) ===
-const sprites = {
-  flowey: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="#FFD700"/><circle cx="35" cy="45" r="8" fill="#000"/><circle cx="65" cy="45" r="8" fill="#000"/><path d="M30 60 Q50 75 70 60" stroke="#000" stroke-width="4" fill="none"/><rect x="45" y="70" width="10" height="30" fill="#228B22"/></svg>`,
-  toriel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="40" rx="35" ry="40" fill="#FFF"/><circle cx="35" cy="35" r="10" fill="#000"/><circle cx="65" cy="35" r="10" fill="#000"/><path d="M40 50 Q50 60 60 50" stroke="#F8C8DC" stroke-width="3" fill="none"/><path d="M30 30 L25 20 M70 30 L75 20" stroke="#FFF" stroke-width="8"/><rect x="30" y="65" width="40" height="35" rx="10" fill="#FFF"/></svg>`,
-  papyrus: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="30" y="20" width="40" height="60" rx="10" fill="#FFF"/><circle cx="50" cy="15" r="15" fill="#FFF"/><circle cx="40" cy="12" r="5" fill="#000"/><circle cx="60" cy="12" r="5" fill="#000"/><path d="M35 25 Q50 35 65 25" stroke="#FF4500" stroke-width="4" fill="none"/><rect x="25" y="45" width="20" height="30" fill="#FF4500"/><rect x="55" y="45" width="20" height="30" fill="#FF4500"/></svg>`,
-  undyne: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L30 40 L40 90 L60 90 L70 40 Z" fill="#00BFFF"/><circle cx="50" cy="30" r="12" fill="#FFF"/><circle cx="50" cy="30" r="6" fill="#000"/><path d="M35 50 Q50 60 65 50" stroke="#FFF" stroke-width="3" fill="none"/><rect x="45" y="65" width="10" height="25" fill="#00BFFF"/></svg>`,
-  sans: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="35" r="25" fill="#FFF"/><circle cx="40" cy="32" r="6" fill="#000"/><circle cx="60" cy="32" r="6" fill="#000"/><path d="M35 45 Q50 50 65 45" stroke="#000" stroke-width="3" fill="none"/><rect x="35" y="55" width="30" height="40" rx="15" fill="#87CEEB"/><rect x="25" y="60" width="20" height="35" fill="#FFF"/><rect x="55" y="60" width="20" height="35" fill="#FFF"/></svg>`
-};
+                <div class="metrics-grid">
+                    <div class="metric-card" id="capitalCard"><div class="metric-label">CAPITAL</div><div class="metric-value" id="capital">1000</div></div>
+                    <div class="metric-card" id="workersCard"><div class="metric-label">WORKERS</div><div class="metric-value" id="workers">10</div></div>
+                    <div class="metric-card" id="factoriesCard"><div class="metric-label">FACTORIES</div><div class="metric-value" id="factories">1</div></div>
+                    <div class="metric-card" id="productionCard"><div class="metric-label">PRODUCTION</div><div class="metric-value" id="production">0</div></div>
+                    <div class="metric-card" id="wealthGapCard"><div class="metric-label">WEALTH GAP</div><div class="metric-value" id="wealthGap">0%</div></div>
+                    <div class="metric-card" id="techCard"><div class="metric-label">TECH LEVEL</div><div class="metric-value" id="techLevel">1</div></div>
+                    <div class="metric-card" id="inequalityCard"><div class="metric-label">INEQUALITY</div><div class="metric-value" id="inequality">1.0x</div></div>
+                    <div class="metric-card" id="stabilityCard"><div class="metric-label">STABILITY</div><div class="metric-value" id="stability">100%</div></div>
+                    <div class="metric-card" id="demandCard"><div class="metric-label">DEMAND</div><div class="metric-value" id="demand">100%</div></div>
+                </div>
 
-// === DOM ===
-const heart = document.getElementById('heart');
-const battleBox = document.getElementById('battle-box');
-const dialogueText = document.getElementById('dialogue-text');
-const dialogueBox = document.getElementById('dialogue-box');
-const choicesDiv = document.getElementById('choices');
-const enemyDiv = document.getElementById('enemy');
-const lvSpan = document.getElementById('lv');
-const hpSpan = document.getElementById('hp');
-const maxHpSpan = document.getElementById('max-hp');
-const touchIndicator = document.getElementById('touch-indicator');
-const voidOverlay = document.getElementById('void-overlay');
-const dtStat = document.getElementById('determination-stat');
-const voidStat = document.getElementById('void-stat');
-const dtSpan = document.getElementById('dt');
-const voidSpan = document.getElementById('void');
+                <div class="chaos-section">
+                    <div class="chaos-label">SYSTEMIC CHAOS</div>
+                    <div class="chaos-bar">
+                        <div class="chaos-fill" id="chaosFill" style="width: 0%"></div>
+                        <div class="chaos-text" id="chaosText">0%</div>
+                    </div>
+                </div>
 
-// === ИГРОК ===
-let player = { hp: 20, maxHp: 20, lv: 1, determination: 0, voidLevel: 0, hasMetFlowey: false, questionedReality: false };
-let state = 'intro';
-let bullets = [];
-let selectedChoice = 0;
-let keys = {};
-let touchActive = false;
-let bulletInterval;
-let metaMode = false;
+                <div class="actions-grid">
+                    <button class="action-btn" id="buildBtn" onclick="game.buildFactory()">BUILD FACTORY<div class="action-cost">-500 CAP</div></button>
+                    <button class="action-btn" id="hireBtn" onclick="game.hireWorkers()">HIRE WORKERS<div class="action-cost">-200 CAP</div></button>
+                    <button class="action-btn" id="raiseWagesBtn" onclick="game.raiseWages()">RAISE WAGES<div class="action-cost">-300 CAP</div></button>
+                    <button class="action-btn" onclick="game.exploit()">MAX EXTRACT<div class="action-cost">+CHAOS</div></button>
+                    <button class="action-btn" id="techBtn" onclick="game.investTech()">INVEST TECH<div class="action-cost">-800 CAP</div></button>
+                    <button class="action-btn" onclick="game.automate()">AUTOMATE<div class="action-cost">-WORKERS</div></button>
+                    <button class="action-btn" onclick="game.speculate()">SPECULATE<div class="action-cost">VOLATILE</div></button>
+                    <button class="action-btn" id="monopolyBtn" onclick="game.monopolize()">MONOPOLIZE<div class="action-cost">-1500 CAP</div></button>
+                    <button class="action-btn" id="lobbyBtn" onclick="game.lobbyGov()">LOBBY GOVT<div class="action-cost">-600 CAP</div></button>
+                    <button class="action-btn" id="stimulusBtn" onclick="game.stimulus()">STIMULUS<div class="action-cost">-400 CAP</div></button>
+                </div>
 
-// === СЦЕНЫ ===
-const scenes = [
-  { enemy: "Flowey", sprite: sprites.flowey, intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... it's KILL or BE KILLED!\n* But something about you... feels different.", choices: ["* Accept reality", "* Question existence", "* Attack"], correct: 1, actSuccess: "* You asked about the space between moments.\n* Flowey's smile widened unnaturally.\n* \"Oh... you FEEL it too, don't you?\"", fightSuccess: "* You attacked. Violence without understanding.\n* Flowey laughed at your predictability.", mercySuccess: "* Flowey's eyes gleam with recognition.\n* \"You're not like the others. You... REMEMBER.\"\n* The world flickers.", bulletPattern: () => createExistentialCircle(6, 2) },
-  { enemy: "Toriel", sprite: sprites.toriel, intro: "* I'm Toriel, caretaker of the Ruins.\n* My child... why do your eyes look so empty?\n* As if you've lived this moment before...", choices: ["* Embrace the loop", "* Seek continuity", "* Attack"], correct: 1, actSuccess: "* You spoke of persistence, of memory.\n* Toriel's expression shifts - recognition? Fear?\n* \"What are you?\"", fightSuccess: "* You chose violence. Toriel weeps.\n* Some patterns never change.", mercySuccess: "* Toriel sees beyond your form.\n* \"You carry fragments of other timelines...\"\n* She lets you pass, trembling.", bulletPattern: () => createVoidWave(4, 1.8) },
-  { enemy: "Papyrus", sprite: sprites.papyrus, intro: "* NYEH HEH HEH!\n* WAIT... HAVE WE MET BEFORE?\n* NO, THAT'S IMPOSSIBLE! ...ISN'T IT?", choices: ["* Deny déjà vu", "* Acknowledge the reset", "* Attack"], correct: 1, actSuccess: "* You told him about resets, loops, iterations.\n* Papyrus's smile falters. \"THAT'S... SILLY!\"\n* But his hands are shaking.", fightSuccess: "* Another timeline, another betrayal.\n* Papyrus still believes in you.", mercySuccess: "* \"EVEN IF NOTHING PERSISTS... FRIENDSHIPS DO!\"\n* Determination +5", bulletPattern: () => createChaosBones() },
-  { enemy: "Undyne", sprite: sprites.undyne, intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!", choices: ["* Resist entropy", "* Embrace the void", "* Attack"], correct: 0, actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"", fightSuccess: "* Violence as anchor. How human.", mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.", bulletPattern: () => createDeterminationSpears(6, 2.5) },
-  { enemy: "Sans", sprite: sprites.sans, intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?", choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"], correct: 0, actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"", fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"", mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.", bulletPattern: () => createVoidBones() }
-];
+                <div class="log-section" id="log">
+                    <div class="log-entry">SYSTEM INITIALIZED</div>
+                    <div class="log-entry">AWAITING COMMANDS</div>
+                </div>
 
-let currentScene = 0;
+                <div class="info-section">
+                    <strong>НОВЫЕ МЕХАНИКИ:</strong><br>
+                    • <strong>DEMAND</strong> — без спроса производство падает<br>
+                    • <strong>WEALTH GAP</strong> — неравенство убивает спрос<br>
+                    • <strong>TECH LEVEL</strong> — повышает продуктивность<br>
+                    • <strong>Поднять зарплаты</strong> — снижает хаос, повышает спрос<br>
+                    • <strong>Лоббирование</strong> — временная стабилизация<br>
+                    • <strong>Стимулы</strong> — искусственный спрос<br><br>
+                    <strong>ЦЕЛЬ:</strong> Продержаться как можно дольше. Система всегда коллапсирует.
+                </div>
+            </div>
+        </div>
+    </div>
 
-// === СТАРТ ===
-function startGame() {
-  updateStats();
-  enemyDiv.innerHTML = scenes[0].sprite;
-  showDialogue(scenes[0].intro, () => showChoices(scenes[0].choices));
-}
+    <!-- GAME OVER — В ЦЕНТРЕ, ВИДНО НА ТЕЛЕФОНЕ -->
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-title">SYSTEM COLLAPSE</div>
+        <div class="game-over-stats" id="gameOverStats"></div>
+        <button class="restart-btn" id="restartBtn">TAP TO RESTART</button>
+    </div>
 
-// === ДИАЛОГ ===
-function showDialogue(text, callback) {
-  state = 'dialogue';
-  clearBullets();
-  typeText(text, callback);
-}
+    <script>
+        let tg = window.Telegram?.WebApp;
+        if (tg) { tg.ready(); tg.expand(); tg.enableClosingConfirmation(); }
 
-function typeText(text, callback) {
-  dialogueText.textContent = '';
-  choicesDiv.innerHTML = '';
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i < text.length) {
-      dialogueText.textContent += text[i++];
-      if (text[i-1] === '\n' || i % 3 === 0) dialogueText.scrollTop = dialogueText.scrollHeight;
-    } else {
-      clearInterval(interval);
-      if (callback) setTimeout(callback, 300);
-    }
-  }, 25);
-}
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const chars = '01$€¥₿ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const fontSize = 12;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
 
-// === ВЫБОР ===
-function showChoices(choices) {
-  state = 'choice';
-  selectedChoice = 0;
-  choicesDiv.innerHTML = '';
-  choices.forEach((c, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    if (metaMode) btn.classList.add('meta');
-    btn.textContent = c;
-    btn.onclick = btn.ontouchstart = e => { e.preventDefault(); selectChoice(i); };
-    choicesDiv.appendChild(btn);
-  });
-  updateChoiceSelection();
-  setTimeout(() => dialogueBox.scrollTop = 0, 50);
-}
+        function haptic(type = 'light') {
+            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred(type);
+        }
 
-function updateChoiceSelection() {
-  [...choicesDiv.children].forEach((b, i) => b.classList.toggle('selected', i === selectedChoice));
-}
+        const game = {
+            capital: 1000, workers: 10, factories: 1, production: 0, inequality: 1.0, stability: 100, chaos: 0, cycle: 0,
+            techLevel: 1, wealthGap: 0, demand: 100, monopolyPower: 0, gameOver: false, startTime: Date.now(),
 
-// === ЛОГИКА ВЫБОРА ===
-function selectChoice(index) {
-  if (state !== 'choice') return;
-  state = 'processing';
-  const scene = scenes[currentScene];
-  
-  if (index === 1) {
-    player.determination += 5;
-    player.questionedReality = true;
-    metaMode = true;
-    dialogueBox.classList.add('meta');
-    battleBox.classList.add('existential');
-    dtStat.style.display = 'block';
-    if (currentScene === 0) player.hasMetFlowey = true;
-  }
-  
-  if (index === scene.correct) {
-    showDialogue(scene.mercySuccess || "* Correct.", nextScene);
-  } else if (index === 1 && scene.actSuccess) {
-    showDialogue(scene.actSuccess, startBulletHell);
-  } else {
-    takeDamage(4);
-    player.voidLevel += 10;
-    showDialogue(scene.fightSuccess || "* Chaos ripples through reality.", startBulletHell);
-  }
-}
+            events: [
+                { title: 'OVERPRODUCTION CRISIS', text: 'Markets saturated. Capital -25%. Demand -20%.', effect: () => { game.capital *= 0.75; game.chaos += 12; game.demand -= 20; } },
+                { title: 'LABOR STRIKE', text: 'Workers strike. Production halted.', effect: () => { game.production *= 0.4; game.workers *= 0.8; game.chaos += 15; } },
+                { title: 'FINANCIAL CRASH', text: 'Bubble bursts. Capital -50%.', effect: () => { game.capital *= 0.5; game.chaos += 20; game.stability -= 15; } },
+                { title: 'AUTOMATION WAVE', text: 'Mass layoffs. Demand collapses.', effect: () => { game.workers *= 0.4; game.stability -= 25; game.chaos += 25; game.demand -= 30; } },
+                { title: 'MONOPOLY DECAY', text: 'Stagnation. Efficiency drops.', effect: () => { game.production *= 0.6; game.chaos += 18; game.techLevel = Math.max(1, game.techLevel - 1); } },
+                { title: 'DEMAND COLLAPSE', text: 'No one can buy. Markets implode.', effect: () => { game.demand = Math.max(20, game.demand - 40); game.production *= 0.5; game.chaos += 22; } },
+                { title: 'SOCIAL UPRISING', text: 'Revolution. Factories burn.', effect: () => { game.factories = Math.max(1, game.factories - 2); game.chaos += 30; game.stability -= 30; game.capital *= 0.7; } },
+                { title: 'TECH DISRUPTION', text: 'Industries obsolete.', effect: () => { game.production *= 0.5; game.workers *= 0.6; game.chaos += 20; } },
+                { title: 'TERMINAL CRISIS', text: 'System fails. No recovery.', effect: () => { game.stability = 0; game.chaos = 100; game.gameOver = true; } }
+            ],
 
-function nextScene() {
-  currentScene++;
-  if (currentScene >= scenes.length) { victory(); return; }
-  const scene = scenes[currentScene];
-  enemyDiv.innerHTML = scene.sprite;
-  if (metaMode) enemyDiv.classList.add('glitched');
-  showDialogue(scene.intro, () => showChoices(scene.choices));
-}
+            init() { this.update(); setInterval(() => this.tick(), 2500); },
 
-// === БОЙ ===
-function startBulletHell() {
-  state = 'bullet';
-  clearBullets();
-  heart.style.left = (battleBox.offsetWidth - 18) / 2 + 'px';
-  heart.style.top = (battleBox.offsetHeight - 18) / 2 + 'px';
-  if (player.determination > 0) heart.classList.add('determination');
-  if (player.voidLevel > 20) { voidOverlay.classList.add('active'); voidStat.style.display = 'block'; }
-  setTimeout(scenes[currentScene].bulletPattern, 500);
-  bulletInterval = setInterval(updateBullets, 16);
-}
+            tick() {
+                if (this.gameOver) return;
+                this.cycle++;
+                const base = this.factories * this.workers * this.techLevel * 0.5;
+                this.production = Math.floor(base * (this.demand / 100));
+                this.capital += this.production;
+                this.wealthGap = Math.min(99, (this.inequality - 1) * 20);
+                this.chaos += Math.random() * 1.2 + (this.inequality - 1) * 0.3;
+                this.stability -= (this.inequality - 1) * 0.3 + (100 - this.demand) * 0.05;
+                this.stability = Math.max(0, Math.min(100, this.stability));
+                this.demand = Math.max(10, Math.min(100 - this.wealthGap * 0.3, this.demand + 0.5));
 
-// === ПАТТЕРНЫ ПУЛЬ ===
-function createExistentialCircle(count, speed) {
-  const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-  spawnRealityText("discontinuity", cX + 40, cY - 25);
-  for (let i = 0; i < count; i++) setTimeout(() => {
-    const a = (i / count) * Math.PI * 2;
-    const b = document.createElement('div'); b.className = 'bullet'; b.style.width = b.style.height = '12px';
-    b.style.left = cX + 'px'; b.style.top = cY + 'px'; battleBox.appendChild(b);
-    bullets.push({el: b, x: cX, y: cY, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed});
-  }, i * 150);
-}
+                if (this.chaos > 40 && Math.random() > 0.90) this.triggerEvent();
+                if (this.demand < 30 && Math.random() > 0.85) this.triggerEvent(5);
+                if (this.wealthGap > 70 && Math.random() > 0.88) this.triggerEvent(6);
+                if (this.chaos >= 100 || this.stability <= 0) this.triggerEvent(8);
 
-function createVoidWave(count, speed) {
-  spawnRealityText("the void calls", battleBox.offsetWidth / 2, 35);
-  for (let i = 0; i < count; i++) setTimeout(() => {
-    const b = document.createElement('div'); b.className = 'bullet void'; b.style.width = '30px'; b.style.height = '10px';
-    b.style.left = '-30px'; b.style.top = (battleBox.offsetHeight * (i + 1)) / (count + 1) + 'px';
-    battleBox.appendChild(b); bullets.push({el: b, x: -30, y: parseFloat(b.style.top), vx: speed, vy: 0});
-  }, i * 600);
-}
+                this.update();
+                this.log(`[${this.cycle}] +${this.production} | ${Math.floor(this.demand)}%`);
+            },
 
-function createChaosBones() {
-  spawnRealityText("reset", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
-  for (let i = 0; i < 2; i++) setTimeout(() => {
-    const b = document.createElement('div'); b.className = 'bullet chaos'; b.style.width = '75px'; b.style.height = '18px'; b.style.borderRadius = '4px';
-    b.style.left = (Math.random() * (battleBox.offsetWidth - 75)) + 'px'; b.style.top = '-18px';
-    battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: -18, vx: 0, vy: 2.5});
-  }, i * 800);
-}
+            buildFactory() { if (this.capital < 500) return; haptic('medium'); this.capital -= 500; this.factories++; this.inequality += 0.15; this.chaos += 4; this.log('Factory built.', 'crisis'); this.update(); },
+            hireWorkers() { if (this.capital < 200) return; haptic('light'); this.capital -= 200; this.workers += 5; this.chaos += 1.5; this.demand += 3; this.log('Hired.'); this.update(); },
+            raiseWages() { if (this.capital < 300) return; haptic('medium'); this.capital -= 300; this.chaos -= 8; this.demand += 15; this.inequality = Math.max(1, this.inequality - 0.2); this.stability += 5; this.log('Wages up.'); this.update(); },
+            exploit() { haptic('heavy'); this.capital += this.workers * 60; this.inequality += 0.4; this.chaos += 8; this.stability -= 4; this.demand -= 5; this.log('Extracted.', 'crisis'); this.update(); },
+            investTech() { if (this.capital < 800) return; haptic('medium'); this.capital -= 800; this.techLevel++; this.chaos += 3; this.log(`Tech ${this.techLevel}`); this.update(); },
+            automate() { if (this.workers < 5) return; haptic('heavy'); const lost = Math.floor(this.workers * 0.5); this.workers -= lost; this.inequality += 0.6; this.chaos += 12; this.demand -= 8; this.log(`${lost} displaced.`, 'crisis'); this.update(); },
+            speculate() { haptic('rigid'); const win = Math.random() > 0.45; const amt = Math.floor(this.capital * (win ? 0.6 : 0.35)); win ? this.capital += amt : this.capital -= amt; this.chaos += win ? 5 : 18; this.log(`${win ? '+' : '-'}${amt}`, win ? '' : 'crisis'); this.update(); },
+            monopolize() { if (this.capital < 1500 || this.monopolyPower >= 3) return; haptic('heavy'); this.capital -= 1500; this.monopolyPower++; this.production *= 1.2; this.inequality += 0.8; this.chaos += 10; this.demand -= 10; this.log('Monopoly.', 'crisis'); this.update(); },
+            lobbyGov() { if (this.capital < 600) return; haptic('medium'); this.capital -= 600; this.chaos -= 10; this.stability += 8; this.inequality += 0.3; this.log('Lobbied.'); this.update(); },
+            stimulus() { if (this.capital < 400) return; haptic('light'); this.capital -= 400; this.demand += 25; this.chaos -= 5; this.log('Stimulus.'); this.update(); },
 
-function createDeterminationSpears(count, speed) {
-  spawnRealityText("DETERMINATION", battleBox.offsetWidth / 2, 40);
-  const cY = battleBox.offsetHeight / 2;
-  for (let i = 0; i < count; i++) setTimeout(() => {
-    const s = document.createElement('div'); s.className = 'bullet'; s.style.width = '35px'; s.style.height = '7px'; s.style.background = '#00FFFF';
-    s.style.left = (battleBox.offsetWidth + 35) + 'px'; s.style.top = (cY + (i - count/2) * 25) + 'px';
-    battleBox.appendChild(s); bullets.push({el: s, x: battleBox.offsetWidth + 35, y: parseFloat(s.style.top), vx: -speed, vy: 0});
-  }, i * 400);
-}
+            triggerEvent(idx = null) {
+                haptic('heavy');
+                const ev = idx !== null ? this.events[idx] : this.events[Math.floor(Math.random() * (this.events.length - 1))];
+                ev.effect();
+                this.log(ev.title, 'collapse');
+                this.update();
+                if (this.gameOver) this.endGame();
+            },
 
-function createVoidBones() {
-  spawnRealityText("acceptance", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
-  for (let i = 0; i < 3; i++) setTimeout(() => {
-    const b = document.createElement('div'); b.className = 'bullet void'; b.style.width = b.style.height = '13px'; b.style.borderRadius = '50%';
-    const a = (i / 3) * Math.PI * 2, r = 70, cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-    b.style.left = (cX + Math.cos(a) * r) + 'px'; b.style.top = (cY + Math.sin(a) * r) + 'px';
-    battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: parseFloat(b.style.top), vx: -Math.cos(a) * 1.5, vy: -Math.sin(a) * 1.5, orbit: true, angle: a, radius: r});
-  }, i * 500);
-}
+            endGame() {
+                const sec = Math.floor((Date.now() - this.startTime) / 1000);
+                const stats = `Cycle: ${this.cycle}\nCapital: ${Math.floor(this.capital)}\nWorkers: ${this.workers}\nDuration: ${sec}s`;
+                document.getElementById('gameOverStats').textContent = stats;
+                document.getElementById('gameOverOverlay').classList.add('active');
+                if (tg) tg.showAlert(`Collapsed at cycle ${this.cycle}`);
+            },
 
-function spawnRealityText(t, x, y) {
-  const el = document.createElement('div'); el.className = 'reality-text'; el.textContent = t;
-  el.style.left = x + 'px'; el.style.top = y + 'px'; battleBox.appendChild(el);
-  setTimeout(() => el.remove(), 2500);
-}
+            log(msg, type = '') {
+                const log = document.getElementById('log');
+                const el = document.createElement('div');
+                el.className = `log-entry ${type}`;
+                el.textContent = msg;
+                log.appendChild(el);
+                log.scrollTop = log.scrollHeight;
+                if (log.children.length > 25) log.removeChild(log.children[0]);
+            },
 
-// === ОБНОВЛЕНИЕ ПУЛЬ ===
-function updateBullets() {
-  const hR = heart.getBoundingClientRect(), bR = battleBox.getBoundingClientRect();
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    const b = bullets[i];
-    if (b.orbit) {
-      b.angle += 0.05; const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-      b.x = cX + Math.cos(b.angle) * b.radius; b.y = cY + Math.sin(b.angle) * b.radius; b.radius -= 0.5;
-      if (b.radius < 18) { b.el.remove(); bullets.splice(i, 1); continue; }
-    } else { b.x += b.vx; b.y += b.vy; }
-    b.el.style.left = b.x + 'px'; b.el.style.top = b.y + 'px';
-    const r = b.el.getBoundingClientRect();
-    if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) { b.el.remove(); bullets.splice(i, 1); continue; }
-    if (checkCollision(hR, r)) {
-      takeDamage(b.el.classList.contains('void') ? 2 : 1);
-      b.el.classList.add('flash');
-      setTimeout(() => { if (b.el.parentNode) b.el.remove(); bullets.splice(i, 1); }, 300);
-    }
-  }
-  if (bullets.length === 0 && state === 'bullet') {
-    clearInterval(bulletInterval);
-    heart.classList.remove('determination');
-    voidOverlay.classList.remove('active');
-    setTimeout(() => showChoices(scenes[currentScene].choices), 800);
-  }
-}
+            update() {
+                document.getElementById('capital').textContent = Math.floor(this.capital);
+                document.getElementById('workers').textContent = this.workers;
+                document.getElementById('factories').textContent = this.factories;
+                document.getElementById('production').textContent = this.production;
+                document.getElementById('inequality').textContent = this.inequality.toFixed(1) + 'x';
+                document.getElementById('stability').textContent = Math.floor(this.stability) + '%';
+                document.getElementById('cycle').textContent = this.cycle;
+                document.getElementById('techLevel').textContent = this.techLevel;
+                document.getElementById('wealthGap').textContent = Math.floor(this.wealthGap) + '%';
+                document.getElementById('demand').textContent = Math.floor(this.demand) + '%';
+                const c = Math.min(Math.floor(this.chaos), 100);
+                document.getElementById('chaosFill').style.width = c + '%';
+                document.getElementById('chaosText').textContent = c + '%';
 
-function checkCollision(a, b) { return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; }
-function takeDamage(d) { player.hp = Math.max(0, player.hp - d); if (player.hp === 0) gameOver(); updateStats(); battleBox.style.background = '#600'; setTimeout(() => battleBox.style.background = '#000', 100); }
-function updateStats() { hpSpan.textContent = player.hp; maxHpSpan.textContent = player.maxHp; lvSpan.textContent = player.lv; dtSpan.textContent = player.determination; voidSpan.textContent = player.voidLevel; }
-function clearBullets() { bullets.forEach(b => b.el.remove()); bullets = []; clearInterval(bulletInterval); }
+                const alert = (id, cond) => document.getElementById(id).classList.toggle('alert', cond);
+                alert('capitalCard', this.capital < 500);
+                alert('stabilityCard', this.stability < 50);
+                alert('demandCard', this.demand < 50);
+                alert('wealthGapCard', this.wealthGap > 60);
 
-// === КОНЕЦ ===
-function gameOver() {
-  state = 'gameover'; clearBullets();
-  showDialogue(player.questionedReality ? "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation." : "* You died.\n* But your determination hasn't faded...", () => setTimeout(() => location.reload(), 2500));
-}
+                const btn = (id, cost) => document.getElementById(id)?.classList.toggle('disabled', this.capital < cost);
+                btn('buildBtn', 500); btn('hireBtn', 200); btn('raiseWagesBtn', 300);
+                btn('techBtn', 800); btn('monopolyBtn', 1500); btn('lobbyBtn', 600); btn('stimulusBtn', 400);
+            }
+        };
 
-function victory() {
-  state = 'victory'; clearBullets();
-  const end = player.determination >= 15 && player.questionedReality
-    ? "* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET"
-    : "* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\nTHE END";
-  showDialogue(end, () => { if (player.determination >= 15) setTimeout(() => { dialogueBox.classList.add('meta'); dialogueText.innerHTML += "\n\n<span style='color:#9400D3'>* Press RESET to continue existing.</span>"; }, 2000); });
-}
+        // РЕСТАРТ — БЕЗОПАСНЫЙ ДЛЯ ТЕЛЕФОНА
+        document.getElementById('restartBtn').onclick = () => {
+            haptic('heavy');
+            location.reload();
+        };
 
-// === УПРАВЛЕНИЕ ===
-battleBox.addEventListener('touchstart', e => { e.preventDefault(); if (state !== 'bullet') return; touchActive = true; touchIndicator.style.display = 'block'; moveHeartToTouch(e.touches[0]); }, { passive: false });
-battleBox.addEventListener('touchmove', e => { e.preventDefault(); if (touchActive && state === 'bullet') moveHeartToTouch(e.touches[0]); }, { passive: false });
-battleBox.addEventListener('touchend', () => { touchActive = false; touchIndicator.style.display = 'none'; });
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
 
-function moveHeartToTouch(t) {
-  if (state !== 'bullet') return;
-  const r = battleBox.getBoundingClientRect();
-  let x = t.clientX - r.left - 9, y = t.clientY - r.top - 9;
-  x = Math.max(4, Math.min(r.width - 22, x)); y = Math.max(4, Math.min(r.height - 22, y));
-  heart.style.left = x + 'px'; heart.style.top = y + 'px';
-  touchIndicator.style.left = (x + 9) + 'px'; touchIndicator.style.top = (y + 9) + 'px';
-}
-
-document.addEventListener('keydown', e => {
-  if (state === 'choice') {
-    if (e.key === 'ArrowUp') { selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length; updateChoiceSelection(); }
-    if (e.key === 'ArrowDown') { selectedChoice = (selectedChoice + 1) % choicesDiv.children.length; updateChoiceSelection(); }
-    if (e.key === 'Enter' || e.key === ' ') selectChoice(selectedChoice);
-  }
-  keys[e.key] = true;
-});
-document.addEventListener('keyup', e => keys[e.key] = false);
-
-function moveHeart() {
-  if (state !== 'bullet' || touchActive) return;
-  const s = 3.5; let x = parseFloat(heart.style.left), y = parseFloat(heart.style.top);
-  const w = battleBox.offsetWidth, h = battleBox.offsetHeight;
-  if ((keys['ArrowLeft'] || keys['a']) && x > 4) x -= s;
-  if ((keys['ArrowRight'] || keys['d']) && x < w - 22) x += s;
-  if ((keys['ArrowUp'] || keys['w']) && y > 4) y -= s;
-  if ((keys['ArrowDown'] || keys['s']) && y < h - 22) y += s;
-  heart.style.left = x + 'px'; heart.style.top = y + 'px';
-}
-
-heart.style.left = (battleBox.offsetWidth - 18) / 2 + 'px';
-heart.style.top = (battleBox.offsetHeight - 18) / 2 + 'px';
-setInterval(moveHeart, 16);
-
-startGame();
-</script>
+        game.init();
+    </script>
 </body>
 </html>
