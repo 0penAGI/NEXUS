@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>ХРОНИКИ ТРАГЕДИИ СЛАЙДОВ: UNDERTALE EDITION</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Undertale',sans-serif;background:#000;color:#FFF;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+@font-face{font-family:Undertale;src:url('https://fonts.cdnfonts.com/s/19004/DeterminationMonoWebRegular.woff') format('woff')}
+#game{width:100%;max-width:400px;height:100%;display:flex;flex-direction:column;position:relative;background:#111;border:8px solid #FFF;padding:10px;gap:10px}
+#battle-box{width:100%;height:300px;border:3px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+#heart{position:absolute;width:20px;height:20px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);transition:left 0.05s,top 0.05s;z-index:10}
+.bullet{position:absolute;background:#FFF;border-radius:50%}
+.soul-text{position:absolute;top:10px;left:10px;font-size:14px}
+#dialogue-box{width:100%;height:80px;background:#FFF;color:#000;padding:10px;font-size:18px;position:relative;overflow:hidden}
+#dialogue-text{white-space:pre-wrap}
+#choices{position:absolute;bottom:10px;left:10px;display:flex;flex-direction:column;gap:5px}
+.choice-btn{background:#FFF;color:#000;padding:8px 12px;border:none;font-size:16px;cursor:pointer}
+.choice-btn.selected{background:#FF0}
+#stats{position:absolute;top:10px;right:10px;display:flex;gap:15px;font-size:14px}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:0}}
+.flash{animation:flash .3s}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="stats">
+    <span>LV <span id="lv">1</span></span>
+    <span>HP <span id="hp">20</span>/<span id="max-hp">20</span></span>
+  </div>
+  <div id="battle-box">
+    <div id="heart"></div>
+    <div id="enemy"></div>
+    <div class="soul-text">* Ты чувствуешь, как реальность дрожит.</div>
+  </div>
+  <div id="dialogue-box">
+    <div id="dialogue-text">* Добро пожаловать в ХРОНИКИ ТРАГЕДИИ СЛАЙДОВ.</div>
+    <div id="choices"></div>
+  </div>
+</div>
+
+<script>
+const heart = document.getElementById('heart');
+const battleBox = document.getElementById('battle-box');
+const dialogueText = document.getElementById('dialogue-text');
+const choicesDiv = document.getElementById('choices');
+const enemyDiv = document.getElementById('enemy');
+const lvSpan = document.getElementById('lv');
+const hpSpan = document.getElementById('hp');
+const maxHpSpan = document.getElementById('max-hp');
+
+let player = { hp: 20, maxHp: 20, lv: 1, mercy: 0, act: 0 };
+let state = 'intro'; // intro, act, fight, mercy, bullet, dialogue, gameover, victory
+let bullets = [];
+let selectedChoice = 0;
+let keys = {};
+let gameInterval, bulletInterval;
+
+const scenes = [
+  {
+    enemy: "Флоуи",
+    sprite: "🌻",
+    intro: "* Я — Флоуи! Флоуи-цветочек!\n* Хм... Ты новенький, да?\n* В этом мире... УБЕЙ или БУДЬ УБИТ!",
+    choices: ["* Пощадить", "* Подружиться", "* Атаковать"],
+    correct: 1,
+    actSuccess: "* Ты улыбнулся. Флоуи смутился.",
+    fightSuccess: "* Ты ударил. Флоуи рассмеялся.",
+    mercySuccess: "* Флоуи убежал, крича о дружбе.",
+    bulletPattern: () => createCircle(5, 2)
+  },
+  {
+    enemy: "Ториэль",
+    sprite: "🐐",
+    intro: "* Я — Ториэль, хранительница Руин.\n* Ты должен доказать, что достоин идти дальше.\n* Но я не хочу причинять тебе боль...",
+    choices: ["* Пощадить", "* Поговорить", "* Атаковать"],
+    correct: 0,
+    actSuccess: "* Ты попросил научиться магии. Ториэль улыбнулась.",
+    fightSuccess: "* Ты ударил. Ториэль заплакала.",
+    mercySuccess: "* Ториэль обняла тебя и пропустила.",
+    bulletPattern: () => createWave(3, 1.5)
+  },
+  {
+    enemy: "Санс",
+    sprite: "💀",
+    intro: "* эй, парень.\n* ты прошел долгий путь.\n* но знаешь... иногда лучше просто... поспать.",
+    choices: ["* Подремать", "* Подшутить", "* Атаковать"],
+    correct: 0,
+    actSuccess: "* Ты зевнул. Санс одобрительно кивнул.",
+    fightSuccess: "* Ты попытался ударить. Санс исчез.",
+    mercySuccess: "* Санс подмигнул и исчез в синим свете.",
+    bulletPattern: () => createBones()
+  }
+];
+
+let currentScene = 0;
+
+function startGame() {
+  updateStats();
+  showDialogue(scenes[0].intro, () => showChoices(scenes[0].choices));
+}
+
+function showDialogue(text, callback) {
+  state = 'dialogue';
+  clearBullets();
+  typeText(text, callback);
+}
+
+function typeText(text, callback) {
+  dialogueText.textContent = '';
+  choicesDiv.innerHTML = '';
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      dialogueText.textContent += text[i++];
+    } else {
+      clearInterval(interval);
+      if (callback) callback();
+    }
+  }, 30);
+}
+
+function showChoices(choices) {
+  state = 'choice';
+  selectedChoice = 0;
+  choicesDiv.innerHTML = '';
+  choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c;
+    btn.onclick = () => selectChoice(i);
+    choicesDiv.appendChild(btn);
+  });
+  updateChoiceSelection();
+}
+
+function updateChoiceSelection() {
+  const btns = choicesDiv.querySelectorAll('.choice-btn');
+  btns.forEach((b, i) => b.classList.toggle('selected', i === selectedChoice));
+}
+
+function selectChoice(index) {
+  const scene = scenes[currentScene];
+  if (index === scene.correct) {
+    player.mercy += 20;
+    if (scene.mercySuccess) {
+      showDialogue(scene.mercySuccess, nextScene);
+    } else {
+      nextScene();
+    }
+  } else if (index === 1 && scene.actSuccess) {
+    showDialogue(scene.actSuccess, () => startBulletHell());
+  } else {
+    takeDamage(4);
+    showDialogue(scene.fightSuccess || "* Это было... не очень дружелюбно.", () => startBulletHell());
+  }
+}
+
+function nextScene() {
+  currentScene++;
+  if (currentScene >= scenes.length) {
+    victory();
+    return;
+  }
+  const scene = scenes[currentScene];
+  enemyDiv.textContent = scene.sprite;
+  enemyDiv.style.fontSize = '60px';
+  showDialogue(scene.intro, () => showChoices(scene.choices));
+}
+
+function startBulletHell() {
+  state = 'bullet';
+  clearBullets();
+  const pattern = scenes[currentScene].bulletPattern;
+  if (pattern) pattern();
+  bulletInterval = setInterval(updateBullets, 16);
+}
+
+function createCircle(count, speed) {
+  const centerX = battleBox.offsetWidth / 2;
+  const centerY = battleBox.offsetHeight / 2;
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2;
+    const bullet = document.createElement('div');
+    bullet.className = 'bullet';
+    bullet.style.width = bullet.style.height = '12px';
+    bullet.style.left = centerX + 'px';
+    bullet.style.top = centerY + 'px';
+    battleBox.appendChild(bullet);
+    bullets.push({
+      el: bullet,
+      x: centerX,
+      y: centerY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed
+    });
+  }
+}
+
+function createWave(count, speed) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const bullet = document.createElement('div');
+      bullet.className = 'bullet';
+      bullet.style.width = '30px';
+      bullet.style.height = '10px';
+      bullet.style.left = '-30px';
+      bullet.style.top = (battleBox.offsetHeight * (i + 1)) / (count + 1) + 'px';
+      battleBox.appendChild(bullet);
+      bullets.push({
+        el: bullet,
+        x: -30,
+        y: parseFloat(bullet.style.top),
+        vx: speed,
+        vy: 0
+      });
+    }, i * 500);
+  }
+}
+
+function createBones() {
+  const bone = document.createElement('div');
+  bone.className = 'bullet';
+  bone.style.width = '80px';
+  bone.style.height = '20px';
+  bone.style.background = '#FFF';
+  bone.style.left = (battleBox.offsetWidth - 80) / 2 + 'px';
+  bone.style.top = '-20px';
+  battleBox.appendChild(bone);
+  bullets.push({
+    el: bone,
+    x: parseFloat(bone.style.left),
+    y: -20,
+    vx: 0,
+    vy: 3
+  });
+}
+
+function updateBullets() {
+  const heartRect = heart.getBoundingClientRect();
+  const boxRect = battleBox.getBoundingClientRect();
+  const heartX = parseFloat(heart.style.left);
+  const heartY = parseFloat(heart.style.top);
+
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.x += b.vx;
+    b.y += b.vy;
+    b.el.style.left = b.x + 'px';
+    b.el.style.top = b.y + 'px';
+
+    const bRect = b.el.getBoundingClientRect();
+    if (bRect.right < boxRect.left || bRect.left > boxRect.right ||
+        bRect.bottom < boxRect.top || bRect.top > boxRect.bottom) {
+      b.el.remove();
+      bullets.splice(i, 1);
+      continue;
+    }
+
+    if (checkCollision(heartRect, bRect)) {
+      takeDamage(1);
+      b.el.classList.add('flash');
+      setTimeout(() => {
+        if (b.el.parentNode) b.el.remove();
+        bullets.splice(i, 1);
+      }, 300);
+    }
+  }
+
+  if (bullets.length === 0 && state === 'bullet') {
+    clearInterval(bulletInterval);
+    setTimeout(() => showChoices(scenes[currentScene].choices), 500);
+  }
+}
+
+function checkCollision(a, b) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+function takeDamage(amount) {
+  player.hp -= amount;
+  if (player.hp <= 0) {
+    player.hp = 0;
+    gameOver();
+  }
+  updateStats();
+  battleBox.style.background = '#600';
+  setTimeout(() => battleBox.style.background = '#000', 100);
+}
+
+function updateStats() {
+  hpSpan.textContent = player.hp;
+  maxHpSpan.textContent = player.maxHp;
+  lvSpan.textContent = player.lv;
+}
+
+function gameOver() {
+  state = 'gameover';
+  clearBullets();
+  clearInterval(bulletInterval);
+  dialogueText.textContent = '';
+  showDialogue("* Ты умер.\n* Но твоя решимость не угасла...", () => {
+    setTimeout(() => location.reload(), 2000);
+  });
+}
+
+function victory() {
+  state = 'victory';
+  clearBullets();
+  showDialogue("* Ты прошел через все испытания...\n* Не убив никого.\n* Ты — настоящий герой.", () => {
+    dialogueText.innerHTML += "\n\n<span style='color:#FF0'>THE END</span>";
+  });
+}
+
+function clearBullets() {
+  bullets.forEach(b => b.el.remove());
+  bullets = [];
+  clearInterval(bulletInterval);
+}
+
+// Controls
+document.addEventListener('keydown', e => {
+  if (state === 'choice') {
+    if (e.key === 'ArrowUp') { selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length; updateChoiceSelection(); }
+    if (e.key === 'ArrowDown') { selectedChoice = (selectedChoice + 1) % choicesDiv.children.length; updateChoiceSelection(); }
+    if (e.key === 'Enter' || e.key === ' ') selectChoice(selectedChoice);
+  }
+  keys[e.key] = true;
+});
+
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+// Heart movement
+function moveHeart() {
+  if (state !== 'bullet') return;
+  const speed = 3;
+  let [x, y] = [parseFloat(heart.style.left), parseFloat(heart.style.top)];
+  const box = battleBox.getBoundingClientRect();
+  const h = heart.getBoundingClientRect();
+
+  if ((keys['ArrowLeft'] || keys['a']) && h.left > box.left + 10) x -= speed;
+  if ((keys['ArrowRight'] || keys['d']) && h.right < box.right - 10) x += speed;
+  if ((keys['ArrowUp'] || keys['w']) && h.top > box.top + 10) y -= speed;
+  if ((keys['ArrowDown'] || keys['s']) && h.bottom < box.bottom - 10) y += speed;
+
+  heart.style.left = x + 'px';
+  heart.style.top = y + 'px';
+}
+
+// Initialize heart
+heart.style.left = (battleBox.offsetWidth - 20) / 2 + 'px';
+heart.style.top = (battleBox.offsetHeight - 20) / 2 + 'px';
+
+// Game loop
+setInterval(() => {
+  moveHeart();
+}, 16);
+
+// Start
+startGame();
+</script>
+</body>
+</html>
