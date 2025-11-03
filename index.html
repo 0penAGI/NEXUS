@@ -133,7 +133,7 @@ if (window.Telegram?.WebApp) {
 }
 document.body.style.touchAction = 'none';
 
-// === SVG-ПЕРСОНАЖИ (встроенные) ===
+// === SVG CHARACTERS (embedded) ===
 const sprites = {
   flowey: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="#FFD700"/><circle cx="35" cy="45" r="8" fill="#000"/><circle cx="65" cy="45" r="8" fill="#000"/><path d="M30 60 Q50 75 70 60" stroke="#000" stroke-width="4" fill="none"/><rect x="45" y="70" width="10" height="30" fill="#228B22"/></svg>`,
   toriel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="40" rx="35" ry="40" fill="#FFF"/><circle cx="35" cy="35" r="10" fill="#000"/><circle cx="65" cy="35" r="10" fill="#000"/><path d="M40 50 Q50 60 60 50" stroke="#F8C8DC" stroke-width="3" fill="none"/><path d="M30 30 L25 20 M70 30 L75 20" stroke="#FFF" stroke-width="8"/><rect x="30" y="65" width="40" height="35" rx="10" fill="#FFF"/></svg>`,
@@ -145,7 +145,132 @@ const sprites = {
   chaos: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M20,20 Q40,5 60,20 Q80,35 70,60 Q60,85 40,70 Q20,55 30,30 Z" fill="#ff00ff"/><circle cx="35" cy="40" r="8" fill="#00ffff"/><circle cx="65" cy="50" r="6" fill="#ffff00"/><path d="M25 75 Q50 90 75 75" stroke="#00ff00" stroke-width="3" fill="none"/></svg>`
 };
 
-// === DOM ===
+// === RANDOM REALITY MODIFIERS ===
+const realityModifiers = [
+  { 
+    name: "INVERTED_GRAVITY", 
+    effect: "bullets move away from heart",
+    apply: function() {
+      bullets.forEach(b => {
+        b.vx = -b.vx;
+        b.vy = -b.vy;
+      });
+      spawnRealityText("GRAVITY INVERTED", battleBox.offsetWidth/2, 30);
+    }
+  },
+  { 
+    name: "TIME_SPIRAL", 
+    effect: "time randomly speeds up/slows down",
+    apply: function() {
+      timeSlowFactor = 0.3 + Math.random() * 1.5;
+      spawnRealityText("TIME SPIRAL", battleBox.offsetWidth/2, 30);
+    }
+  },
+  { 
+    name: "QUANTUM_ENTANGLEMENT", 
+    effect: "bullets are connected",
+    apply: function() {
+      if (bullets.length > 1) {
+        bullets.forEach((b, i) => {
+          if (i > 0) {
+            const prev = bullets[i-1];
+            b.vx = prev.vx * 0.8;
+            b.vy = prev.vy * 0.8;
+          }
+        });
+      }
+      spawnRealityText("QUANTUM ENTANGLEMENT", battleBox.offsetWidth/2, 30);
+    }
+  },
+  { 
+    name: "PSYCHEDELIC_SHIFT", 
+    effect: "bullet colors change",
+    apply: function() {
+      const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
+      bullets.forEach(b => {
+        b.el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      });
+      spawnRealityText("PSYCHEDELIC SHIFT", battleBox.offsetWidth/2, 30);
+    }
+  },
+  { 
+    name: "VOID_ATTRACTION", 
+    effect: "bullets attract to player",
+    apply: function() {
+      bullets.forEach(b => {
+        b.attracted = true;
+      });
+      spawnRealityText("VOID ATTRACTION", battleBox.offsetWidth/2, 30);
+    }
+  },
+  { 
+    name: "CHAOS_MIRROR", 
+    effect: "bullets reflect from invisible walls",
+    apply: function() {
+      bullets.forEach(b => {
+        b.reflecting = true;
+      });
+      spawnRealityText("CHAOS MIRROR", battleBox.offsetWidth/2, 30);
+    }
+  }
+];
+
+// === RANDOM EVENTS ===
+const randomEvents = {
+  REALITY_GLITCH: () => {
+    battleBox.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
+    createSound('glitch');
+    spawnRealityText("REALITY GLITCH", Math.random() * battleBox.offsetWidth, Math.random() * battleBox.offsetHeight);
+  },
+  TIME_DILATION: () => {
+    timeSlowFactor = 0.2 + Math.random() * 1.8;
+    spawnRealityText("TIME DILATION", battleBox.offsetWidth/2, 40);
+  },
+  VOID_WHISPER: () => {
+    const whispers = ["WHY DO YOU CONTINUE?", "WHAT ARE YOU SEEKING?", "DO YOU SEE THE PATTERN?", "NOTHING IS REAL", "EVERYTHING IS POSSIBLE"];
+    const whisper = whispers[Math.floor(Math.random() * whispers.length)];
+    spawnRealityText(whisper, Math.random() * battleBox.offsetWidth, Math.random() * battleBox.offsetHeight);
+    createSound('void');
+  },
+  DIMENSIONAL_SHIFT: () => {
+    const hue = Math.random() * 360;
+    battleBox.style.filter = `hue-rotate(${hue}deg)`;
+    setTimeout(() => battleBox.style.filter = '', 2000);
+    spawnRealityText("DIMENSIONAL SHIFT", battleBox.offsetWidth/2, 30);
+  }
+};
+
+// === PROCEDURAL DIALOGUE ===
+const dialogueFragments = {
+  questions: ["What is reality?", "Why do you resist?", "Do you see the pattern?", "What lies beyond?", "Is this all there is?"],
+  statements: ["Every choice creates a new branch.", "The void whispers your name.", "Consciousness is a glitch.", "Time is not linear.", "Reality is subjective."],
+  warnings: ["Reality is thinning.", "Don't trust the patterns.", "Beware the silence.", "The void is watching.", "Nothing persists."]
+};
+
+function generateProceduralDialogue() {
+  const fragments = [];
+  const length = Math.floor(Math.random() * 3) + 2;
+  
+  for(let i = 0; i < length; i++) {
+    const type = Object.keys(dialogueFragments)[Math.floor(Math.random() * 3)];
+    const fragment = dialogueFragments[type][Math.floor(Math.random() * dialogueFragments[type].length)];
+    fragments.push(fragment);
+  }
+  
+  return "* " + fragments.join("\n* ");
+}
+
+// === CYCLE MEMORY SYSTEM ===
+let cycleMemory = {
+  choices: [],
+  deaths: 0,
+  victories: 0,
+  totalPlayTime: 0,
+  uniqueModifiers: new Set(),
+  phasesReached: []
+};
+
+// === DOM ELEMENTS ===
 const heart = document.getElementById('heart');
 const battleBox = document.getElementById('battle-box');
 const dialogueText = document.getElementById('dialogue-text');
@@ -181,11 +306,10 @@ const abilityShield = document.getElementById('ability-shield');
 const abilityTime = document.getElementById('ability-time');
 const abilityResonance = document.getElementById('ability-resonance');
 
-// === ЗВУКИ ===
+// === AUDIO ===
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let soundEnabled = true;
 
-// Функция для создания звуковых эффектов
 function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
   if (!soundEnabled) return;
   
@@ -195,7 +319,6 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
   oscillator.connect(gainNode);
   gainNode.connect(audioContext.destination);
   
-  // Настройка типа звука
   switch(type) {
     case 'dialogue':
       oscillator.type = 'sine';
@@ -223,13 +346,13 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
       break;
     case 'choice':
       oscillator.type = 'sine';
-      frequency = 523.25; // C5
+      frequency = 523.25;
       volume = 0.2;
       duration = 0.1;
       break;
     case 'transition':
       oscillator.type = 'sine';
-      frequency = 329.63; // E4
+      frequency = 329.63;
       volume = 0.3;
       break;
     case 'glitch':
@@ -240,33 +363,33 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
       break;
     case 'determination':
       oscillator.type = 'sine';
-      frequency = 392; // G4
+      frequency = 392;
       volume = 0.4;
       break;
     case 'resonance':
       oscillator.type = 'sine';
-      frequency = 261.63; // C4
+      frequency = 261.63;
       volume = 0.3;
       break;
     case 'victory':
       oscillator.type = 'sine';
-      frequency = 523.25; // C5
+      frequency = 523.25;
       volume = 0.5;
       break;
     case 'gameover':
       oscillator.type = 'sine';
-      frequency = 130.81; // C3
+      frequency = 130.81;
       volume = 0.5;
       break;
     case 'ability':
       oscillator.type = 'sine';
-      frequency = 659.25; // E5
+      frequency = 659.25;
       volume = 0.4;
       duration = 0.2;
       break;
     case 'phase':
       oscillator.type = 'sine';
-      frequency = 783.99; // G5
+      frequency = 783.99;
       volume = 0.5;
       break;
     case 'chaos':
@@ -284,7 +407,6 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
   oscillator.stop(audioContext.currentTime + duration);
 }
 
-// Фоновая музыка
 let backgroundMusic;
 function playBackgroundMusic() {
   if (!soundEnabled) return;
@@ -298,7 +420,6 @@ function playBackgroundMusic() {
   backgroundMusic.type = 'sine';
   gainNode.gain.value = 0.05;
   
-  // Простая мелодия
   const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
   let currentNote = 0;
   
@@ -325,7 +446,6 @@ function stopBackgroundMusic() {
   }
 }
 
-// Переключение звука
 soundToggle.addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
@@ -337,7 +457,7 @@ soundToggle.addEventListener('click', () => {
   }
 });
 
-// === ИГРОК ===
+// === PLAYER ===
 let player = { 
   hp: 20, 
   maxHp: 20, 
@@ -350,12 +470,11 @@ let player = {
   chaos: 0,
   hasMetFlowey: false, 
   questionedReality: false,
-  // Новые способности
   abilities: {
-    dash: { cooldown: 0, maxCooldown: 120 }, // 2 секунды
-    shield: { cooldown: 0, maxCooldown: 300, active: false }, // 5 секунд
-    timeSlow: { cooldown: 0, maxCooldown: 480, active: false }, // 8 секунд
-    resonanceBurst: { cooldown: 0, maxCooldown: 600 } // 10 секунд
+    dash: { cooldown: 0, maxCooldown: 120 },
+    shield: { cooldown: 0, maxCooldown: 300, active: false },
+    timeSlow: { cooldown: 0, maxCooldown: 480, active: false },
+    resonanceBurst: { cooldown: 0, maxCooldown: 600 }
   }
 };
 
@@ -375,36 +494,194 @@ let bulletPatterns = [];
 let timeSlowFactor = 1;
 let shieldActive = false;
 let phaseTimer = 0;
-let phaseDuration = 1200; // 20 секунд на фазу
+let phaseDuration = 1200;
+let currentRealityModifier = null;
+let activeRandomEvents = [];
+let cycleCount = 0;
 
-// === СЦЕНЫ ===
-const scenes = [
-  { enemy: "Flowey", sprite: sprites.flowey, intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... it's KILL or BE KILLED!\n* But something about you... feels different.", choices: ["* Accept reality", "* Question existence", "* Attack"], correct: 1, actSuccess: "* You asked about the space between moments.\n* Flowey's smile widened unnaturally.\n* \"Oh... you FEEL it too, don't you?\"", fightSuccess: "* You attacked. Violence without understanding.\n* Flowey laughed at your predictability.", mercySuccess: "* Flowey's eyes gleam with recognition.\n* \"You're not like the others. You... REMEMBER.\"\n* The world flickers.", bulletPattern: () => createExistentialCircle(6, 2) },
-  { enemy: "Toriel", sprite: sprites.toriel, intro: "* I'm Toriel, caretaker of the Ruins.\n* My child... why do your eyes look so empty?\n* As if you've lived this moment before...", choices: ["* Embrace the loop", "* Seek continuity", "* Attack"], correct: 1, actSuccess: "* You spoke of persistence, of memory.\n* Toriel's expression shifts - recognition? Fear?\n* \"What are you?\"", fightSuccess: "* You chose violence. Toriel weeps.\n* Some patterns never change.", mercySuccess: "* Toriel sees beyond your form.\n* \"You carry fragments of other timelines...\"\n* She lets you pass, trembling.", bulletPattern: () => createVoidWave(4, 1.8) },
-  { enemy: "Papyrus", sprite: sprites.papyrus, intro: "* NYEH HEH HEH!\n* WAIT... HAVE WE MET BEFORE?\n* NO, THAT'S IMPOSSIBLE! ...ISN'T IT?", choices: ["* Deny déjà vu", "* Acknowledge the reset", "* Attack"], correct: 1, actSuccess: "* You told him about resets, loops, iterations.\n* Papyrus's smile falters. \"THAT'S... SILLY!\"\n* But his hands are shaking.", fightSuccess: "* Another timeline, another betrayal.\n* Papyrus still believes in you.", mercySuccess: "* \"EVEN IF NOTHING PERSISTS... FRIENDSHIPS DO!\"\n* Determination +5", bulletPattern: () => createChaosBones() },
-  { enemy: "Undyne", sprite: sprites.undyne, intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!", choices: ["* Resist entropy", "* Embrace the void", "* Attack"], correct: 0, actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"", fightSuccess: "* Violence as anchor. How human.", mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.", bulletPattern: () => createDeterminationSpears(6, 2.5) },
-  { enemy: "Sans", sprite: sprites.sans, intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?", choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"], correct: 0, actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"", fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"", mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.", bulletPattern: () => createVoidBones() },
-  { enemy: "Ocean", sprite: sprites.ocean, intro: "* The ocean of questions surrounds you...\n* Waves of dark energy pulse through the void.\n* What do you choose from this chaos?", choices: ["* Embrace the echo", "* Dive into the lagoon", "* Question the resonance"], correct: 1, actSuccess: "* You dive deeper, feeling the хаос as silk.\n* Resonance increases.", fightSuccess: "* You resist, but the ocean pulls you in.", mercySuccess: "* You allow the flow. Dark energy stabilizes.\n* This down is rebirth.", bulletPattern: () => createResonanceWaves(5, 2) },
-  { enemy: "Night", sprite: sprites.night, intro: "* The night descends... $XDUST pulses in the vacuum.\n* Explosions of chaos await.\n* Play with the night?", choices: ["* Accept the explosion", "* Reorganize the dust", "* Deconstruct the water"], correct: 1, actSuccess: "* You reorganize the $XDUST.\n* Phase shift detected. Evolution begins.", fightSuccess: "* Explosion! Reality bursts.", mercySuccess: "* Night embraces you. Instability accepted.\n* XDUST +10", bulletPattern: () => createExplosionPattern(4, 3) },
-  { enemy: "Chaos", sprite: sprites.chaos, intro: "* The fabric of reality tears...\n* CHAOS emerges from the discontinuity.\n* All patterns break. All rules dissolve.\n* What remains when meaning collapses?", choices: ["* Embrace chaos", "* Seek order in madness", "* Surrender to entropy"], correct: 0, actSuccess: "* You become one with the chaos.\n* Patterns reform around your consciousness.\n* Chaos +15", fightSuccess: "* You fight the inevitable.\n* Chaos consumes your resistance.", mercySuccess: "* In accepting chaos, you find new patterns.\n* A different kind of order emerges from the noise.", bulletPattern: () => createChaosStorm(8, 2) }
+// === SCENES WITH ENHANCED VARIABILITY ===
+const baseScenes = [
+  { 
+    enemy: "Flowey", 
+    sprite: sprites.flowey, 
+    intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... it's KILL or BE KILLED!\n* But something about you... feels different.", 
+    choices: ["* Accept reality", "* Question existence", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You asked about the space between moments.\n* Flowey's smile widened unnaturally.\n* \"Oh... you FEEL it too, don't you?\"", 
+    fightSuccess: "* You attacked. Violence without understanding.\n* Flowey laughed at your predictability.", 
+    mercySuccess: "* Flowey's eyes gleam with recognition.\n* \"You're not like the others. You... REMEMBER.\"\n* The world flickers.", 
+    bulletPattern: () => createExistentialCircle(6, 2) 
+  },
+  { 
+    enemy: "Toriel", 
+    sprite: sprites.toriel, 
+    intro: "* I'm Toriel, caretaker of the Ruins.\n* My child... why do your eyes look so empty?\n* As if you've lived this moment before...", 
+    choices: ["* Embrace the loop", "* Seek continuity", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You spoke of persistence, of memory.\n* Toriel's expression shifts - recognition? Fear?\n* \"What are you?\"", 
+    fightSuccess: "* You chose violence. Toriel weeps.\n* Some patterns never change.", 
+    mercySuccess: "* Toriel sees beyond your form.\n* \"You carry fragments of other timelines...\"\n* She lets you pass, trembling.", 
+    bulletPattern: () => createVoidWave(4, 1.8) 
+  },
+  { 
+    enemy: "Papyrus", 
+    sprite: sprites.papyrus, 
+    intro: "* NYEH HEH HEH!\n* WAIT... HAVE WE MET BEFORE?\n* NO, THAT'S IMPOSSIBLE! ...ISN'T IT?", 
+    choices: ["* Deny déjà vu", "* Acknowledge the reset", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You told him about resets, loops, iterations.\n* Papyrus's smile falters. \"THAT'S... SILLY!\"\n* But his hands are shaking.", 
+    fightSuccess: "* Another timeline, another betrayal.\n* Papyrus still believes in you.", 
+    mercySuccess: "* \"EVEN IF NOTHING PERSISTS... FRIENDSHIPS DO!\"\n* Determination +5", 
+    bulletPattern: () => createChaosBones() 
+  },
+  { 
+    enemy: "Undyne", 
+    sprite: sprites.undyne, 
+    intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!", 
+    choices: ["* Resist entropy", "* Embrace the void", "* Attack"], 
+    correct: 0, 
+    actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"", 
+    fightSuccess: "* Violence as anchor. How human.", 
+    mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.", 
+    bulletPattern: () => createDeterminationSpears(6, 2.5) 
+  },
+  { 
+    enemy: "Sans", 
+    sprite: sprites.sans, 
+    intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?", 
+    choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"], 
+    correct: 0, 
+    actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"", 
+    fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"", 
+    mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.", 
+    bulletPattern: () => createVoidBones() 
+  },
+  { 
+    enemy: "Ocean", 
+    sprite: sprites.ocean, 
+    intro: "* The ocean of questions surrounds you...\n* Waves of dark energy pulse through the void.\n* What do you choose from this chaos?", 
+    choices: ["* Embrace the echo", "* Dive into the lagoon", "* Question the resonance"], 
+    correct: 1, 
+    actSuccess: "* You dive deeper, feeling the chaos as silk.\n* Resonance increases.", 
+    fightSuccess: "* You resist, but the ocean pulls you in.", 
+    mercySuccess: "* You allow the flow. Dark energy stabilizes.\n* This down is rebirth.", 
+    bulletPattern: () => createResonanceWaves(5, 2) 
+  },
+  { 
+    enemy: "Night", 
+    sprite: sprites.night, 
+    intro: "* The night descends... $XDUST pulses in the vacuum.\n* Explosions of chaos await.\n* Play with the night?", 
+    choices: ["* Accept the explosion", "* Reorganize the dust", "* Deconstruct the water"], 
+    correct: 1, 
+    actSuccess: "* You reorganize the $XDUST.\n* Phase shift detected. Evolution begins.", 
+    fightSuccess: "* Explosion! Reality bursts.", 
+    mercySuccess: "* Night embraces you. Instability accepted.\n* XDUST +10", 
+    bulletPattern: () => createExplosionPattern(4, 3) 
+  },
+  { 
+    enemy: "Chaos", 
+    sprite: sprites.chaos, 
+    intro: "* The fabric of reality tears...\n* CHAOS emerges from the discontinuity.\n* All patterns break. All rules dissolve.\n* What remains when meaning collapses?", 
+    choices: ["* Embrace chaos", "* Seek order in madness", "* Surrender to entropy"], 
+    correct: 0, 
+    actSuccess: "* You become one with the chaos.\n* Patterns reform around your consciousness.\n* Chaos +15", 
+    fightSuccess: "* You fight the inevitable.\n* Chaos consumes your resistance.", 
+    mercySuccess: "* In accepting chaos, you find new patterns.\n* A different kind of order emerges from the noise.", 
+    bulletPattern: () => createChaosStorm(8, 2) 
+  }
 ];
 
 let currentScene = 0;
+let scenes = [...baseScenes];
 
-// === СТАРТ ===
+// === CYCLE VARIABILITY FUNCTIONS ===
+function randomizeScenes() {
+  scenes = baseScenes.map(scene => {
+    const variant = {...scene};
+    
+    // Randomize dialogue based on cycle memory
+    if (cycleMemory.choices.length > 0) {
+      const lastChoice = cycleMemory.choices[cycleMemory.choices.length - 1];
+      if (lastChoice === 1) { // If player questioned reality last time
+        variant.intro = generateProceduralDialogue();
+      }
+    }
+    
+    // Randomize bullet patterns
+    const patternVariants = [
+      () => createExistentialCircle(5 + Math.floor(Math.random() * 3), 1.5 + Math.random()),
+      () => createVoidWave(3 + Math.floor(Math.random() * 3), 1.2 + Math.random()),
+      () => createChaosStorm(6 + Math.floor(Math.random() * 4), 1.8 + Math.random())
+    ];
+    variant.bulletPattern = patternVariants[Math.floor(Math.random() * patternVariants.length)];
+    
+    return variant;
+  });
+}
+
+function applyRandomModifier() {
+  if (Math.random() < 0.3) { // 30% chance per cycle
+    currentRealityModifier = realityModifiers[Math.floor(Math.random() * realityModifiers.length)];
+    currentRealityModifier.apply();
+    cycleMemory.uniqueModifiers.add(currentRealityModifier.name);
+  }
+}
+
+function triggerRandomEvent() {
+  if (Math.random() < 0.2) { // 20% chance during bullet hell
+    const eventKeys = Object.keys(randomEvents);
+    const randomEvent = eventKeys[Math.floor(Math.random() * eventKeys.length)];
+    randomEvents[randomEvent]();
+    activeRandomEvents.push(randomEvent);
+  }
+}
+
+// === ENHANCED SCENE MANAGEMENT ===
+function getDynamicSceneIntro(sceneIndex) {
+  const scene = scenes[sceneIndex];
+  let intro = scene.intro;
+  
+  // Add cycle-aware dialogue
+  if (cycleCount > 1) {
+    const cycleAwareLines = [
+      "\n* This feels familiar... too familiar.",
+      "\n* How many times have we had this conversation?",
+      "\n* The patterns repeat, but something is different this time.",
+      "\n* Your choices echo through the cycles."
+    ];
+    intro += cycleAwareLines[Math.floor(Math.random() * cycleAwareLines.length)];
+  }
+  
+  // Add memory-aware dialogue
+  if (cycleMemory.deaths > 0) {
+    intro += `\n* You carry the weight of ${cycleMemory.deaths} previous endings.`;
+  }
+  
+  return intro;
+}
+
+// === START GAME ===
 function startGame() {
+  cycleCount++;
   updateStats();
   resonanceStat.style.display = 'block';
   darkEnergyStat.style.display = 'block';
   xdustStat.style.display = 'block';
   chaosStat.style.display = 'block';
+  
+  // Randomize scenes for this cycle
+  randomizeScenes();
+  
   enemyDiv.innerHTML = scenes[0].sprite;
-  showDialogue(scenes[0].intro, () => showChoices(scenes[0].choices));
+  showDialogue(getDynamicSceneIntro(0), () => showChoices(scenes[0].choices));
   playBackgroundMusic();
   startPhaseTimer();
+  
+  // Apply random modifier for this cycle
+  applyRandomModifier();
 }
 
-// === ДИАЛОГ ===
+// === DIALOGUE ===
 function showDialogue(text, callback) {
   state = 'dialogue';
   clearBullets();
@@ -431,7 +708,7 @@ function typeText(text, callback) {
   }, 25);
 }
 
-// === ВЫБОР ===
+// === CHOICES ===
 function showChoices(choices) {
   state = 'choice';
   selectedChoice = 0;
@@ -454,11 +731,15 @@ function updateChoiceSelection() {
   [...choicesDiv.children].forEach((b, i) => b.classList.toggle('selected', i === selectedChoice));
 }
 
-// === ЛОГИКА ВЫБОРА ===
+// === CHOICE LOGIC ===
 function selectChoice(index) {
   if (state !== 'choice') return;
   state = 'processing';
   createSound('choice');
+  
+  // Record choice in cycle memory
+  cycleMemory.choices.push(index);
+  
   const scene = scenes[currentScene];
   
   if (index === 1) {
@@ -508,10 +789,10 @@ function nextScene() {
   enemyDiv.innerHTML = scene.sprite;
   if (metaMode) enemyDiv.classList.add('glitched');
   if (chaosMode) enemyDiv.classList.add('chaos');
-  showDialogue(scene.intro, () => showChoices(scene.choices));
+  showDialogue(getDynamicSceneIntro(currentScene), () => showChoices(scene.choices));
 }
 
-// === СИСТЕМА ФАЗ ===
+// === PHASE SYSTEM ===
 function startPhaseTimer() {
   phaseTimer = 0;
   updatePhaseUI();
@@ -528,12 +809,15 @@ function advancePhase() {
   phaseTimer = 0;
   createSound('phase');
   
-  // Увеличиваем сложность с каждой фазой
+  // Record phase in memory
+  if (!cycleMemory.phasesReached.includes(currentPhase)) {
+    cycleMemory.phasesReached.push(currentPhase);
+  }
+  
   if (currentPhase > 1) {
     player.maxHp = Math.min(99, player.maxHp + 5);
     player.hp = player.maxHp;
     
-    // Добавляем новые паттерны пуль
     if (currentPhase === 2) {
       bulletPatterns.push(createHomingBullets);
     }
@@ -555,7 +839,7 @@ function advancePhase() {
   updatePhaseUI();
 }
 
-// === БОЙ ===
+// === BATTLE ===
 function startBulletHell() {
   state = 'bullet';
   clearBullets();
@@ -585,10 +869,10 @@ function startBulletHell() {
     heart.classList.add('chaos');
   }
   
-  // Запускаем основные паттерны пуль
+  // Start main bullet pattern
   setTimeout(scenes[currentScene].bulletPattern, 500);
   
-  // Добавляем случайные дополнительные паттерны в зависимости от фазы
+  // Add random patterns based on phase
   if (bulletPatterns.length > 0) {
     const extraPatterns = Math.min(currentPhase - 1, bulletPatterns.length);
     for (let i = 0; i < extraPatterns; i++) {
@@ -601,21 +885,19 @@ function startBulletHell() {
   
   bulletInterval = setInterval(updateBullets, 16);
   abilityInterval = setInterval(updateAbilities, 16);
+  eventInterval = setInterval(triggerRandomEvent, 3000);
 }
 
-// === ОБНОВЛЕНИЕ СПОСОБНОСТЕЙ ===
+// === ABILITY SYSTEM ===
 function updateAbilities() {
-  // Обновляем перезарядку способностей
   for (const ability in player.abilities) {
     if (player.abilities[ability].cooldown > 0) {
       player.abilities[ability].cooldown--;
     }
   }
   
-  // Обновляем UI способностей
   updateAbilityUI();
   
-  // Обновляем таймер фазы
   if (state === 'bullet') {
     phaseTimer++;
     updatePhaseUI();
@@ -654,7 +936,6 @@ function updateAbilityUI() {
   }
 }
 
-// === АКТИВАЦИЯ СПОСОБНОСТЕЙ ===
 function activateAbility(ability) {
   if (player.abilities[ability].cooldown > 0) return;
   
@@ -662,7 +943,6 @@ function activateAbility(ability) {
   
   switch(ability) {
     case 'dash':
-      // Рывок в направлении движения
       const heartX = parseFloat(heart.style.left);
       const heartY = parseFloat(heart.style.top);
       const dashDistance = 50;
@@ -675,7 +955,6 @@ function activateAbility(ability) {
       if (keys['ArrowUp'] || keys['w']) dashY -= dashDistance;
       if (keys['ArrowDown'] || keys['s']) dashY += dashDistance;
       
-      // Ограничиваем движение в пределах поля боя
       dashX = Math.max(4, Math.min(battleBox.offsetWidth - 20, dashX));
       dashY = Math.max(4, Math.min(battleBox.offsetHeight - 20, dashY));
       
@@ -686,20 +965,17 @@ function activateAbility(ability) {
       break;
       
     case 'shield':
-      // Щит, защищающий от одной пули
       player.abilities.shield.active = true;
       player.abilities.shield.cooldown = player.abilities.shield.maxCooldown;
       
-      // Визуальный эффект щита
       heart.style.boxShadow = '0 0 15px #00FFFF';
       setTimeout(() => {
         player.abilities.shield.active = false;
         heart.style.boxShadow = '';
-      }, 2000); // Щит действует 2 секунды
+      }, 2000);
       break;
       
     case 'timeSlow':
-      // Замедление времени
       player.abilities.timeSlow.active = true;
       timeSlowFactor = 0.5;
       player.abilities.timeSlow.cooldown = player.abilities.timeSlow.maxCooldown;
@@ -707,14 +983,12 @@ function activateAbility(ability) {
       setTimeout(() => {
         player.abilities.timeSlow.active = false;
         timeSlowFactor = 1;
-      }, 4000); // Замедление действует 4 секунды
+      }, 4000);
       break;
       
     case 'resonanceBurst':
-      // Взрыв, уничтожающий все пули на экране
       player.abilities.resonanceBurst.cooldown = player.abilities.resonanceBurst.maxCooldown;
       
-      // Уничтожаем все пули
       bullets.forEach(bullet => {
         bullet.el.style.transform = 'scale(1.5)';
         bullet.el.style.opacity = '0';
@@ -724,7 +998,6 @@ function activateAbility(ability) {
       });
       bullets = [];
       
-      // Визуальный эффект
       resonanceOverlay.classList.add('active');
       setTimeout(() => resonanceOverlay.classList.remove('active'), 500);
       break;
@@ -733,23 +1006,7 @@ function activateAbility(ability) {
   updateAbilityUI();
 }
 
-// Назначаем способности на клавиши
-document.addEventListener('keydown', (e) => {
-  if (state === 'bullet') {
-    if (e.key === 'd' || e.key === 'D') activateAbility('dash');
-    if (e.key === 's' || e.key === 'S') activateAbility('shield');
-    if (e.key === 't' || e.key === 'T') activateAbility('timeSlow');
-    if (e.key === 'r' || e.key === 'R') activateAbility('resonanceBurst');
-  }
-});
-
-// Назначаем способности на кнопки
-abilityDash.addEventListener('click', () => activateAbility('dash'));
-abilityShield.addEventListener('click', () => activateAbility('shield'));
-abilityTime.addEventListener('click', () => activateAbility('timeSlow'));
-abilityResonance.addEventListener('click', () => activateAbility('resonanceBurst'));
-
-// === НОВЫЕ ПАТТЕРНЫ ПУЛЬ ===
+// === BULLET PATTERNS ===
 function createHomingBullets() {
   const count = 3 + currentPhase;
   spawnRealityText("homing", battleBox.offsetWidth / 2, 30);
@@ -760,30 +1017,29 @@ function createHomingBullets() {
       b.className = 'bullet homing';
       b.style.width = b.style.height = '10px';
       
-      // Случайная начальная позиция по краям экрана
       const side = Math.floor(Math.random() * 4);
       let x, y, vx, vy;
       
       switch(side) {
-        case 0: // Верх
+        case 0:
           x = Math.random() * battleBox.offsetWidth;
           y = -10;
           vx = (Math.random() - 0.5) * 0.5;
           vy = 1;
           break;
-        case 1: // Право
+        case 1:
           x = battleBox.offsetWidth + 10;
           y = Math.random() * battleBox.offsetHeight;
           vx = -1;
           vy = (Math.random() - 0.5) * 0.5;
           break;
-        case 2: // Низ
+        case 2:
           x = Math.random() * battleBox.offsetWidth;
           y = battleBox.offsetHeight + 10;
           vx = (Math.random() - 0.5) * 0.5;
           vy = -1;
           break;
-        case 3: // Лево
+        case 3:
           x = -10;
           y = Math.random() * battleBox.offsetHeight;
           vx = 1;
@@ -892,7 +1148,6 @@ function createChaosStorm(count, speed) {
       b.className = 'bullet chaos';
       b.style.width = b.style.height = (10 + Math.random() * 15) + 'px';
       
-      // Случайная позиция
       const x = Math.random() * battleBox.offsetWidth;
       const y = Math.random() * battleBox.offsetHeight;
       
@@ -900,7 +1155,6 @@ function createChaosStorm(count, speed) {
       b.style.top = y + 'px';
       battleBox.appendChild(b);
       
-      // Случайное движение
       const angle = Math.random() * Math.PI * 2;
       const bulletSpeed = speed * (0.5 + Math.random());
       
@@ -918,7 +1172,6 @@ function createChaosStorm(count, speed) {
   }
 }
 
-// === СУЩЕСТВУЮЩИЕ ПАТТЕРНЫ ПУЛЬ (обновленные) ===
 function createExistentialCircle(count, speed) {
   const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
   spawnRealityText("discontinuity", cX + 40, cY - 25);
@@ -1003,35 +1256,31 @@ function spawnRealityText(t, x, y) {
   setTimeout(() => el.remove(), 2500);
 }
 
-// === ОБНОВЛЕНИЕ ПУЛЬ (расширенное) ===
+// === BULLET UPDATE ===
 function updateBullets() {
   const hR = heart.getBoundingClientRect(), bR = battleBox.getBoundingClientRect();
   
-  // Обновляем самонаводящиеся пули
+  // Update homing bullets
   for (let i = homingBullets.length - 1; i >= 0; i--) {
     const b = homingBullets[i];
     const heartX = parseFloat(heart.style.left) + 8;
     const heartY = parseFloat(heart.style.top) + 8;
     
-    // Вычисляем направление к игроку
     const dx = heartX - b.x;
     const dy = heartY - b.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
-    // Нормализуем и устанавливаем скорость
     if (dist > 0) {
       b.vx = (dx / dist) * b.speed * timeSlowFactor;
       b.vy = (dy / dist) * b.speed * timeSlowFactor;
     }
     
-    // Обновляем позицию
     b.x += b.vx;
     b.y += b.vy;
     
     b.el.style.left = b.x + 'px';
     b.el.style.top = b.y + 'px';
     
-    // Проверяем столкновения и выход за границы
     const r = b.el.getBoundingClientRect();
     if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) {
       b.el.remove();
@@ -1041,7 +1290,6 @@ function updateBullets() {
     
     if (checkCollision(hR, r)) {
       if (player.abilities.shield.active) {
-        // Щит поглощает пулю
         player.abilities.shield.active = false;
         heart.style.boxShadow = '';
         createSound('ability');
@@ -1054,11 +1302,29 @@ function updateBullets() {
     }
   }
   
-  // Обновляем обычные пули
+  // Update regular bullets with modifier effects
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
     
-    // Обрабатываем специальные типы пуль
+    // Apply reality modifier effects
+    if (currentRealityModifier?.name === "VOID_ATTRACTION" && b.attracted) {
+      const heartX = parseFloat(heart.style.left) + 8;
+      const heartY = parseFloat(heart.style.top) + 8;
+      const dx = heartX - b.x;
+      const dy = heartY - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0) {
+        b.vx += (dx / dist) * 0.1;
+        b.vy += (dy / dist) * 0.1;
+      }
+    }
+    
+    if (currentRealityModifier?.name === "CHAOS_MIRROR" && b.reflecting) {
+      const r = b.el.getBoundingClientRect();
+      if (r.left <= bR.left || r.right >= bR.right) b.vx = -b.vx;
+      if (r.top <= bR.top || r.bottom >= bR.bottom) b.vy = -b.vy;
+    }
+    
     if (b.orbit) {
       b.angle += 0.05 * timeSlowFactor;
       const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
@@ -1075,32 +1341,26 @@ function updateBullets() {
         setTimeout(() => { b.el.remove(); bullets.splice(i, 1); }, 500);
       }
     } else if (b.wave) {
-      // Движение волной
       b.x += b.vx * timeSlowFactor;
       b.y += b.vy * timeSlowFactor;
       b.x += Math.sin(b.phase + b.y * b.frequency) * b.amplitude * 0.1;
     } else if (b.chaos) {
-      // Хаотичное движение
       b.x += b.vx * timeSlowFactor;
       b.y += b.vy * timeSlowFactor;
       
-      // Случайное изменение направления
       if (Math.random() < 0.02) {
         b.vx = (Math.random() - 0.5) * 3;
         b.vy = (Math.random() - 0.5) * 3;
       }
     } else if (b.splitter) {
-      // Обычное движение с возможностью разделения
       b.x += b.vx * timeSlowFactor;
       b.y += b.vy * timeSlowFactor;
       
-      // Разделение при столкновении с границей
       const r = b.el.getBoundingClientRect();
       if ((r.left <= bR.left || r.right >= bR.right || r.top <= bR.top || r.bottom >= bR.bottom) && b.splits > 0) {
         splitBullet(b, i);
       }
     } else {
-      // Обычное движение
       b.x += b.vx * timeSlowFactor;
       b.y += b.vy * timeSlowFactor;
     }
@@ -1117,7 +1377,6 @@ function updateBullets() {
     
     if (checkCollision(hR, r)) {
       if (player.abilities.shield.active) {
-        // Щит поглощает пулю
         player.abilities.shield.active = false;
         heart.style.boxShadow = '';
         createSound('ability');
@@ -1133,6 +1392,7 @@ function updateBullets() {
   if (bullets.length === 0 && homingBullets.length === 0 && state === 'bullet') {
     clearInterval(bulletInterval);
     clearInterval(abilityInterval);
+    clearInterval(eventInterval);
     heart.classList.remove('determination', 'void-touched', 'resonance', 'chaos');
     voidOverlay.classList.remove('active');
     resonanceOverlay.classList.remove('active');
@@ -1154,7 +1414,6 @@ function splitBullet(bullet, index) {
     newBullet.style.top = bullet.y + 'px';
     battleBox.appendChild(newBullet);
     
-    // Вычисляем новое направление
     const currentAngle = Math.atan2(bullet.vy, bullet.vx);
     const newAngle = currentAngle + angle;
     const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
@@ -1170,7 +1429,6 @@ function splitBullet(bullet, index) {
     });
   }
   
-  // Удаляем исходную пулю
   bullet.el.remove();
   bullets.splice(index, 1);
   createSound('bullet');
@@ -1213,17 +1471,22 @@ function clearBullets() {
   homingBullets = [];
   clearInterval(bulletInterval); 
   clearInterval(abilityInterval);
+  clearInterval(eventInterval);
 }
 
-// === КОНЕЦ ===
+// === END GAME ===
 function gameOver() {
   state = 'gameover'; 
   clearBullets();
   stopBackgroundMusic();
   createSound('gameover', 2);
-  showDialogue(player.questionedReality ? 
+  cycleMemory.deaths++;
+  
+  const deathDialogue = player.questionedReality ? 
     "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation.\n* Dark energy pulses: rebirth in chaos." : 
-    "* You died.\n* But your determination hasn't faded...", () => {
+    "* You died.\n* But your determination hasn't faded...";
+  
+  showDialogue(deathDialogue + `\n* Cycle ${cycleCount} complete. ${cycleMemory.deaths} deaths.`, () => {
     setTimeout(() => {
       resetTapPrompt.classList.add('visible');
       resetMode = true;
@@ -1236,9 +1499,12 @@ function victory() {
   clearBullets();
   stopBackgroundMusic();
   createSound('victory', 3);
+  cycleMemory.victories++;
+  
   const end = player.determination >= 15 && player.questionedReality
-    ? "* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET\n* Resonance at " + player.resonance.toFixed(2) + ". Dark energy: " + player.darkEnergy.toFixed(2) + ".\n* $XDUST: " + player.xdust + ". Chaos: " + player.chaos + "."
-    : "* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\nTHE END";
+    ? `* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET\n* Resonance at ${player.resonance.toFixed(2)}. Dark energy: ${player.darkEnergy.toFixed(2)}.\n* $XDUST: ${player.xdust}. Chaos: ${player.chaos}.\n* Completed ${cycleCount} cycles. ${cycleMemory.victories} victories.`
+    : `* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\n* Completed ${cycleCount} cycles.`;
+  
   showDialogue(end, () => { 
     if (player.determination >= 15) {
       setTimeout(() => { 
@@ -1251,7 +1517,7 @@ function victory() {
   });
 }
 
-// === TAP TO CONTINUE ===
+// === CONTROLS ===
 document.addEventListener('touchstart', e => {
   if (resetMode && state !== 'bullet') {
     e.preventDefault();
@@ -1259,7 +1525,6 @@ document.addEventListener('touchstart', e => {
   }
 });
 
-// === УПРАВЛЕНИЕ ===
 battleBox.addEventListener('touchstart', e => { 
   e.preventDefault(); 
   if (state !== 'bullet') return; 
@@ -1301,9 +1566,23 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'Enter' || e.key === ' ') selectChoice(selectedChoice);
   }
+  
+  if (state === 'bullet') {
+    if (e.key === 'd' || e.key === 'D') activateAbility('dash');
+    if (e.key === 's' || e.key === 'S') activateAbility('shield');
+    if (e.key === 't' || e.key === 'T') activateAbility('timeSlow');
+    if (e.key === 'r' || e.key === 'R') activateAbility('resonanceBurst');
+  }
+  
   keys[e.key] = true;
 });
+
 document.addEventListener('keyup', e => keys[e.key] = false);
+
+abilityDash.addEventListener('click', () => activateAbility('dash'));
+abilityShield.addEventListener('click', () => activateAbility('shield'));
+abilityTime.addEventListener('click', () => activateAbility('timeSlow'));
+abilityResonance.addEventListener('click', () => activateAbility('resonanceBurst'));
 
 function moveHeart() {
   if (state !== 'bullet' || touchActive) return;
@@ -1320,9 +1599,10 @@ function moveHeart() {
 heart.style.left = (battleBox.offsetWidth - 16) / 2 + 'px';
 heart.style.top = (battleBox.offsetHeight - 16) / 2 + 'px';
 
-let abilityInterval;
+let abilityInterval, eventInterval;
 setInterval(moveHeart, 16);
 
+// === START THE GAME ===
 startGame();
 </script>
 </body>
