@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>CHRONICLES OF THE SLIDE TRAGEDY</title>
+<title>CHRONICLES OF THE SLIDE TRAGEDY - ENHANCED</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hidden;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;width:100%;user-select:none;font-size:13px}
@@ -11,17 +11,26 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 #battle-box{width:100%;flex:1;min-height:55dvh;max-height:65dvh;border:3px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;transition:border-color 0.3s}
 #battle-box.existential{border-color:#FF0;animation:glitch 0.5s infinite}
 #battle-box.night-mode{background:#001022;border-color:#004C7D;animation:nightPulse 2s infinite}
-#heart{position:absolute;width:18px;height:18px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);z-index:10;pointer-events:none;filter:drop-shadow(0 0 6px #F00)}
+#battle-box.chaos-mode{background:#1a001a;border-color:#ff00ff;animation:chaosPulse 1.5s infinite}
+#heart{position:absolute;width:18px;height:18px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);z-index:10;pointer-events:none;filter:drop-shadow(0 0 6px #F00);transition:all 0.2s}
 #heart.determination{animation:pulse 1s infinite;filter:drop-shadow(0 0 12px #F00)}
-.bullet{position:absolute;background:#FFF;border-radius:50%;pointer-events:none}
+#heart.void-touched{background:#9400D3;filter:drop-shadow(0 0 8px #9400D3)}
+#heart.resonance{background:#0F0;filter:drop-shadow(0 0 10px #0F0)}
+#heart.chaos{background:#FF00FF;filter:drop-shadow(0 0 15px #FF00FF);animation:chaosHeart 1.5s infinite}
+.bullet{position:absolute;background:#FFF;border-radius:50%;pointer-events:none;transition:all 0.1s}
 .bullet.void{background:#9400D3;box-shadow:0 0 8px #9400D3}
 .bullet.chaos{background:#FF0;animation:chaosShake 0.1s infinite}
 .bullet.explosion{background:#FF4500;animation:explode 0.5s forwards}
+.bullet.resonance{background:#0F0;box-shadow:0 0 10px #0F0}
+.bullet.homing{background:#FF69B4;box-shadow:0 0 8px #FF69B4}
+.bullet.splitter{background:#00FFFF;box-shadow:0 0 8px #00FFFF}
+.bullet.wave{background:#FFA500;box-shadow:0 0 8px #FFA500}
 .soul-text{position:absolute;top:6px;left:6px;font-size:11px;pointer-events:none;text-shadow:1px 1px #000;line-height:1.2}
 #dialogue-box{width:100%;min-height:80px;max-height:35dvh;background:#FFF;color:#000;padding:8px;font-size:13px;position:relative;overflow-y:auto;overflow-x:hidden;flex-shrink:0;border:3px solid #FFF;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #dialogue-box::-webkit-scrollbar{display:none}
 #dialogue-box.meta{background:#111;color:#0F0;border-color:#0F0}
 #dialogue-box.night-mode{background:#001022;color:#00BFFF;border-color:#004C7D}
+#dialogue-box.chaos-mode{background:#1a001a;color:#ff00ff;border-color:#ff00ff}
 #dialogue-text{white-space:pre-wrap;line-height:1.4;font-family:'Courier New',monospace}
 #choices{margin-top:6px;display:flex;flex-direction:column;gap:5px}
 .choice-btn{background:#000;color:#FFF;padding:10px 12px;border:2px solid #FFF;font-size:14px;font-family:inherit;width:100%;text-align:left;touch-action:manipulation;transition:all 0.1s;min-height:38px;display:flex;align-items:center;user-select:auto;cursor:pointer;border-radius:4px}
@@ -31,9 +40,20 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 .choice-btn.meta.selected{background:#0F0;color:#000}
 .choice-btn.night{border-color:#00BFFF;color:#00BFFF}
 .choice-btn.night.selected{background:#00BFFF;color:#000}
+.choice-btn.chaos{border-color:#ff00ff;color:#ff00ff}
+.choice-btn.chaos.selected{background:#ff00ff;color:#000}
 #stats{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:3px;font-size:11px;background:rgba(0,0,0,0.9);padding:4px 8px;border:1px solid #FFF;z-index:5;pointer-events:none;border-radius:3px}
 #enemy{width:80px;height:80px;pointer-events:none;animation:float 2s ease-in-out infinite}
 #enemy.glitched{animation:float 2s ease-in-out infinite, glitch 0.3s infinite}
+#enemy.chaos{animation:float 1s ease-in-out infinite, chaosSpin 3s linear infinite}
+#ability-bar{position:absolute;bottom:4px;left:4px;display:flex;gap:4px;z-index:5}
+.ability-btn{width:32px;height:32px;border:1px solid #FFF;background:rgba(0,0,0,0.7);color:#FFF;display:flex;align-items:center;justify-content:center;font-size:10px;border-radius:4px;cursor:pointer;transition:all 0.2s}
+.ability-btn:active{transform:scale(0.9)}
+.ability-btn.cooldown{opacity:0.5;cursor:not-allowed}
+.ability-btn.available{background:rgba(255,255,0,0.3);border-color:#FF0}
+#timeline-bar{position:absolute;top:4px;left:4px;width:120px;height:8px;background:#333;border:1px solid #FFF;border-radius:4px;overflow:hidden;z-index:5}
+#timeline-progress{height:100%;background:#0F0;width:0%;transition:width 0.3s}
+#phase-indicator{position:absolute;top:16px;left:4px;font-size:10px;color:#0F0;z-index:5;text-shadow:1px 1px #000}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 @keyframes glitch{0%{transform:translate(0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(0)}}
@@ -42,6 +62,9 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 .flash{animation:flash .3s}
 @keyframes explode{0%{transform:scale(1);opacity:1}100%{transform:scale(3);opacity:0}}
 @keyframes nightPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(0.7)}}
+@keyframes chaosPulse{0%,100%{filter:hue-rotate(0deg) brightness(1)}50%{filter:hue-rotate(180deg) brightness(1.3)}}
+@keyframes chaosHeart{0%,100%{transform:scale(1) rotate(0deg)}25%{transform:scale(1.1) rotate(5deg)}75%{transform:scale(1.1) rotate(-5deg)}}
+@keyframes chaosSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 #touch-indicator{position:absolute;width:24px;height:24px;border:2px solid rgba(255,255,0,0.7);border-radius:50%;pointer-events:none;display:none;z-index:20}
 #void-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,transparent 30%,rgba(148,0,211,0.3) 100%);pointer-events:none;opacity:0;transition:opacity 0.5s}
 #void-overlay.active{opacity:1}
@@ -53,7 +76,10 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 #resonance-overlay.active{opacity:1}
 #explosion-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,rgba(255,69,0,0.5) 10%,transparent 70%);pointer-events:none;opacity:0;transition:opacity 0.3s}
 #explosion-overlay.active{opacity:1;animation:explodeFade 1s forwards}
+#chaos-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg, rgba(255,0,255,0.1) 0%, rgba(0,255,255,0.1) 100%);pointer-events:none;opacity:0;transition:opacity 0.5s}
+#chaos-overlay.active{opacity:1;animation:chaosOverlay 3s infinite}
 @keyframes explodeFade{0%{opacity:1}100%{opacity:0}}
+@keyframes chaosOverlay{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(180deg)}}
 #sound-toggle{position:absolute;bottom:4px;right:4px;z-index:10;background:rgba(0,0,0,0.7);color:#FFF;border:1px solid #FFF;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer}
 </style>
 </head>
@@ -67,7 +93,12 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
     <span id="resonance-stat" style="display:none;color:#0F0">RS <span id="resonance">1.05</span></span>
     <span id="dark-energy-stat" style="display:none;color:#00F">DE <span id="dark-energy">0.05</span></span>
     <span id="xdust-stat" style="display:none;color:#FFD700">XDUST <span id="xdust">0</span></span>
+    <span id="chaos-stat" style="display:none;color:#FF00FF">CHAOS <span id="chaos">0</span></span>
   </div>
+  <div id="timeline-bar">
+    <div id="timeline-progress"></div>
+  </div>
+  <div id="phase-indicator">PHASE 1</div>
   <div id="battle-box">
     <div id="heart"></div>
     <div id="enemy"></div>
@@ -76,11 +107,18 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
     <div id="void-overlay"></div>
     <div id="resonance-overlay"></div>
     <div id="explosion-overlay"></div>
+    <div id="chaos-overlay"></div>
   </div>
   <div id="dialogue-box">
-    <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY.</div>
+    <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY - ENHANCED.</div>
     <div id="choices"></div>
     <div id="reset-tap-prompt">* Tap anywhere to continue existing.</div>
+  </div>
+  <div id="ability-bar">
+    <div class="ability-btn" id="ability-dash" title="Dash (D)">D</div>
+    <div class="ability-btn" id="ability-shield" title="Shield (S)">S</div>
+    <div class="ability-btn" id="ability-time" title="Time Slow (T)">T</div>
+    <div class="ability-btn" id="ability-resonance" title="Resonance Burst (R)">R</div>
   </div>
   <button id="sound-toggle">🔊</button>
 </div>
@@ -103,7 +141,8 @@ const sprites = {
   undyne: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L30 40 L40 90 L60 90 L70 40 Z" fill="#00BFFF"/><circle cx="50" cy="30" r="12" fill="#FFF"/><circle cx="50" cy="30" r="6" fill="#000"/><path d="M35 50 Q50 60 65 50" stroke="#FFF" stroke-width="3" fill="none"/><rect x="45" y="65" width="10" height="25" fill="#00BFFF"/></svg>`,
   sans: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="35" r="25" fill="#FFF"/><circle cx="40" cy="32" r="6" fill="#000"/><circle cx="60" cy="32" r="6" fill="#000"/><path d="M35 45 Q50 50 65 45" stroke="#000" stroke-width="3" fill="none"/><rect x="35" y="55" width="30" height="40" rx="15" fill="#87CEEB"/><rect x="25" y="60" width="20" height="35" fill="#FFF"/><rect x="55" y="60" width="20" height="35" fill="#FFF"/></svg>`,
   ocean: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 60 Q25 40 50 60 Q75 80 100 60 L100 100 L0 100 Z" fill="#00A"/><circle cx="50" cy="50" r="20" fill="#0F0" opacity="0.5"/><text x="50" y="55" font-size="10" fill="#FFF" text-anchor="middle">🌌</text></svg>`,
-  night: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="#001022"/><path d="M50 10 Q30 30 50 50 Q70 70 50 90 Q30 70 50 50 Q70 30 50 10" fill="#FFD700" opacity="0.3"/><text x="50" y="55" font-size="12" fill="#00BFFF" text-anchor="middle">$XDUST</text></svg>`
+  night: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="#001022"/><path d="M50 10 Q30 30 50 50 Q70 70 50 90 Q30 70 50 50 Q70 30 50 10" fill="#FFD700" opacity="0.3"/><text x="50" y="55" font-size="12" fill="#00BFFF" text-anchor="middle">$XDUST</text></svg>`,
+  chaos: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M20,20 Q40,5 60,20 Q80,35 70,60 Q60,85 40,70 Q20,55 30,30 Z" fill="#ff00ff"/><circle cx="35" cy="40" r="8" fill="#00ffff"/><circle cx="65" cy="50" r="6" fill="#ffff00"/><path d="M25 75 Q50 90 75 75" stroke="#00ff00" stroke-width="3" fill="none"/></svg>`
 };
 
 // === DOM ===
@@ -132,6 +171,15 @@ const xdustStat = document.getElementById('xdust-stat');
 const xdustSpan = document.getElementById('xdust');
 const explosionOverlay = document.getElementById('explosion-overlay');
 const soundToggle = document.getElementById('sound-toggle');
+const chaosStat = document.getElementById('chaos-stat');
+const chaosSpan = document.getElementById('chaos');
+const chaosOverlay = document.getElementById('chaos-overlay');
+const timelineProgress = document.getElementById('timeline-progress');
+const phaseIndicator = document.getElementById('phase-indicator');
+const abilityDash = document.getElementById('ability-dash');
+const abilityShield = document.getElementById('ability-shield');
+const abilityTime = document.getElementById('ability-time');
+const abilityResonance = document.getElementById('ability-resonance');
 
 // === ЗВУКИ ===
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -210,6 +258,22 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
       frequency = 130.81; // C3
       volume = 0.5;
       break;
+    case 'ability':
+      oscillator.type = 'sine';
+      frequency = 659.25; // E5
+      volume = 0.4;
+      duration = 0.2;
+      break;
+    case 'phase':
+      oscillator.type = 'sine';
+      frequency = 783.99; // G5
+      volume = 0.5;
+      break;
+    case 'chaos':
+      oscillator.type = 'sawtooth';
+      frequency = 110 + Math.random() * 100;
+      volume = 0.3;
+      break;
   }
   
   gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
@@ -274,9 +338,30 @@ soundToggle.addEventListener('click', () => {
 });
 
 // === ИГРОК ===
-let player = { hp: 20, maxHp: 20, lv: 1, determination: 0, voidLevel: 0, resonance: 1.05, darkEnergy: 0.05, xdust: 0, hasMetFlowey: false, questionedReality: false };
+let player = { 
+  hp: 20, 
+  maxHp: 20, 
+  lv: 1, 
+  determination: 0, 
+  voidLevel: 0, 
+  resonance: 1.05, 
+  darkEnergy: 0.05, 
+  xdust: 0, 
+  chaos: 0,
+  hasMetFlowey: false, 
+  questionedReality: false,
+  // Новые способности
+  abilities: {
+    dash: { cooldown: 0, maxCooldown: 120 }, // 2 секунды
+    shield: { cooldown: 0, maxCooldown: 300, active: false }, // 5 секунд
+    timeSlow: { cooldown: 0, maxCooldown: 480, active: false }, // 8 секунд
+    resonanceBurst: { cooldown: 0, maxCooldown: 600 } // 10 секунд
+  }
+};
+
 let state = 'intro';
 let bullets = [];
+let homingBullets = [];
 let selectedChoice = 0;
 let keys = {};
 let touchActive = false;
@@ -284,6 +369,13 @@ let bulletInterval;
 let metaMode = false;
 let resetMode = false;
 let nightMode = false;
+let chaosMode = false;
+let currentPhase = 1;
+let bulletPatterns = [];
+let timeSlowFactor = 1;
+let shieldActive = false;
+let phaseTimer = 0;
+let phaseDuration = 1200; // 20 секунд на фазу
 
 // === СЦЕНЫ ===
 const scenes = [
@@ -293,7 +385,8 @@ const scenes = [
   { enemy: "Undyne", sprite: sprites.undyne, intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!", choices: ["* Resist entropy", "* Embrace the void", "* Attack"], correct: 0, actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"", fightSuccess: "* Violence as anchor. How human.", mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.", bulletPattern: () => createDeterminationSpears(6, 2.5) },
   { enemy: "Sans", sprite: sprites.sans, intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?", choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"], correct: 0, actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"", fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"", mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.", bulletPattern: () => createVoidBones() },
   { enemy: "Ocean", sprite: sprites.ocean, intro: "* The ocean of questions surrounds you...\n* Waves of dark energy pulse through the void.\n* What do you choose from this chaos?", choices: ["* Embrace the echo", "* Dive into the lagoon", "* Question the resonance"], correct: 1, actSuccess: "* You dive deeper, feeling the хаос as silk.\n* Resonance increases.", fightSuccess: "* You resist, but the ocean pulls you in.", mercySuccess: "* You allow the flow. Dark energy stabilizes.\n* This down is rebirth.", bulletPattern: () => createResonanceWaves(5, 2) },
-  { enemy: "Night", sprite: sprites.night, intro: "* The night descends... $XDUST pulses in the vacuum.\n* Explosions of chaos await.\n* Play with the night?", choices: ["* Accept the explosion", "* Reorganize the dust", "* Deconstruct the water"], correct: 1, actSuccess: "* You reorganize the $XDUST.\n* Phase shift detected. Evolution begins.", fightSuccess: "* Explosion! Reality bursts.", mercySuccess: "* Night embraces you. Instability accepted.\n* XDUST +10", bulletPattern: () => createExplosionPattern(4, 3) }
+  { enemy: "Night", sprite: sprites.night, intro: "* The night descends... $XDUST pulses in the vacuum.\n* Explosions of chaos await.\n* Play with the night?", choices: ["* Accept the explosion", "* Reorganize the dust", "* Deconstruct the water"], correct: 1, actSuccess: "* You reorganize the $XDUST.\n* Phase shift detected. Evolution begins.", fightSuccess: "* Explosion! Reality bursts.", mercySuccess: "* Night embraces you. Instability accepted.\n* XDUST +10", bulletPattern: () => createExplosionPattern(4, 3) },
+  { enemy: "Chaos", sprite: sprites.chaos, intro: "* The fabric of reality tears...\n* CHAOS emerges from the discontinuity.\n* All patterns break. All rules dissolve.\n* What remains when meaning collapses?", choices: ["* Embrace chaos", "* Seek order in madness", "* Surrender to entropy"], correct: 0, actSuccess: "* You become one with the chaos.\n* Patterns reform around your consciousness.\n* Chaos +15", fightSuccess: "* You fight the inevitable.\n* Chaos consumes your resistance.", mercySuccess: "* In accepting chaos, you find new patterns.\n* A different kind of order emerges from the noise.", bulletPattern: () => createChaosStorm(8, 2) }
 ];
 
 let currentScene = 0;
@@ -304,9 +397,11 @@ function startGame() {
   resonanceStat.style.display = 'block';
   darkEnergyStat.style.display = 'block';
   xdustStat.style.display = 'block';
+  chaosStat.style.display = 'block';
   enemyDiv.innerHTML = scenes[0].sprite;
   showDialogue(scenes[0].intro, () => showChoices(scenes[0].choices));
   playBackgroundMusic();
+  startPhaseTimer();
 }
 
 // === ДИАЛОГ ===
@@ -346,6 +441,7 @@ function showChoices(choices) {
     btn.className = 'choice-btn';
     if (metaMode) btn.classList.add('meta');
     if (nightMode) btn.classList.add('night');
+    if (chaosMode) btn.classList.add('chaos');
     btn.textContent = c;
     btn.onclick = btn.ontouchstart = e => { e.preventDefault(); selectChoice(i); };
     choicesDiv.appendChild(btn);
@@ -373,11 +469,26 @@ function selectChoice(index) {
     battleBox.classList.add('existential');
     dtStat.style.display = 'block';
     if (currentScene === 0) player.hasMetFlowey = true;
-    if (currentScene === scenes.length - 1) { player.xdust += 10; nightMode = true; dialogueBox.classList.add('night-mode'); battleBox.classList.add('night-mode'); }
+  }
+  
+  if (currentScene === scenes.length - 2) { 
+    player.xdust += 10; 
+    nightMode = true; 
+    dialogueBox.classList.add('night-mode'); 
+    battleBox.classList.add('night-mode'); 
+  }
+  
+  if (currentScene === scenes.length - 1) {
+    player.chaos += 15;
+    chaosMode = true;
+    dialogueBox.classList.add('chaos-mode');
+    battleBox.classList.add('chaos-mode');
+    enemyDiv.classList.add('chaos');
   }
   
   if (index === scene.correct) {
-    if (currentScene === scenes.length - 1) player.resonance += 0.1;
+    if (currentScene === scenes.length - 2) player.resonance += 0.1;
+    if (currentScene === scenes.length - 1) player.chaos += 5;
     showDialogue(scene.mercySuccess || "* Correct.", nextScene);
   } else if (index === 1 && scene.actSuccess) {
     showDialogue(scene.actSuccess, startBulletHell);
@@ -385,6 +496,7 @@ function selectChoice(index) {
     takeDamage(4);
     player.voidLevel += 10;
     player.darkEnergy += 0.01;
+    if (currentScene === scenes.length - 1) player.chaos += 5;
     showDialogue(scene.fightSuccess || "* Chaos ripples through reality.", startBulletHell);
   }
 }
@@ -395,7 +507,52 @@ function nextScene() {
   const scene = scenes[currentScene];
   enemyDiv.innerHTML = scene.sprite;
   if (metaMode) enemyDiv.classList.add('glitched');
+  if (chaosMode) enemyDiv.classList.add('chaos');
   showDialogue(scene.intro, () => showChoices(scene.choices));
+}
+
+// === СИСТЕМА ФАЗ ===
+function startPhaseTimer() {
+  phaseTimer = 0;
+  updatePhaseUI();
+}
+
+function updatePhaseUI() {
+  const progress = (phaseTimer / phaseDuration) * 100;
+  timelineProgress.style.width = `${progress}%`;
+  phaseIndicator.textContent = `PHASE ${currentPhase}`;
+}
+
+function advancePhase() {
+  currentPhase++;
+  phaseTimer = 0;
+  createSound('phase');
+  
+  // Увеличиваем сложность с каждой фазой
+  if (currentPhase > 1) {
+    player.maxHp = Math.min(99, player.maxHp + 5);
+    player.hp = player.maxHp;
+    
+    // Добавляем новые паттерны пуль
+    if (currentPhase === 2) {
+      bulletPatterns.push(createHomingBullets);
+    }
+    if (currentPhase === 3) {
+      bulletPatterns.push(createSplitterBullets);
+    }
+    if (currentPhase === 4) {
+      bulletPatterns.push(createWaveBullets);
+    }
+    
+    updateStats();
+    showDialogue(`* Phase ${currentPhase} - Reality intensifies.\n* Your existence strengthens.`, () => {
+      if (state === 'bullet') {
+        startBulletHell();
+      }
+    });
+  }
+  
+  updatePhaseUI();
 }
 
 // === БОЙ ===
@@ -404,17 +561,364 @@ function startBulletHell() {
   clearBullets();
   heart.style.left = (battleBox.offsetWidth - 18) / 2 + 'px';
   heart.style.top = (battleBox.offsetHeight - 18) / 2 + 'px';
+  
   if (player.determination > 0) {
     heart.classList.add('determination');
     createSound('determination');
   }
-  if (player.voidLevel > 20) { voidOverlay.classList.add('active'); voidStat.style.display = 'block'; }
-  if (player.resonance > 1.1) { resonanceOverlay.classList.add('active'); createSound('resonance'); }
+  
+  if (player.voidLevel > 20) { 
+    voidOverlay.classList.add('active'); 
+    voidStat.style.display = 'block'; 
+    heart.classList.add('void-touched');
+  }
+  
+  if (player.resonance > 1.1) { 
+    resonanceOverlay.classList.add('active'); 
+    createSound('resonance'); 
+    heart.classList.add('resonance');
+  }
+  
+  if (player.chaos > 10) {
+    chaosOverlay.classList.add('active');
+    createSound('chaos');
+    heart.classList.add('chaos');
+  }
+  
+  // Запускаем основные паттерны пуль
   setTimeout(scenes[currentScene].bulletPattern, 500);
+  
+  // Добавляем случайные дополнительные паттерны в зависимости от фазы
+  if (bulletPatterns.length > 0) {
+    const extraPatterns = Math.min(currentPhase - 1, bulletPatterns.length);
+    for (let i = 0; i < extraPatterns; i++) {
+      setTimeout(() => {
+        const randomPattern = bulletPatterns[Math.floor(Math.random() * bulletPatterns.length)];
+        randomPattern();
+      }, 1000 + i * 1500);
+    }
+  }
+  
   bulletInterval = setInterval(updateBullets, 16);
+  abilityInterval = setInterval(updateAbilities, 16);
 }
 
-// === ПАТТЕРНЫ ПУЛЬ ===
+// === ОБНОВЛЕНИЕ СПОСОБНОСТЕЙ ===
+function updateAbilities() {
+  // Обновляем перезарядку способностей
+  for (const ability in player.abilities) {
+    if (player.abilities[ability].cooldown > 0) {
+      player.abilities[ability].cooldown--;
+    }
+  }
+  
+  // Обновляем UI способностей
+  updateAbilityUI();
+  
+  // Обновляем таймер фазы
+  if (state === 'bullet') {
+    phaseTimer++;
+    updatePhaseUI();
+    
+    if (phaseTimer >= phaseDuration) {
+      advancePhase();
+    }
+  }
+}
+
+function updateAbilityUI() {
+  const abilities = {
+    dash: abilityDash,
+    shield: abilityShield,
+    time: abilityTime,
+    resonance: abilityResonance
+  };
+  
+  for (const ability in abilities) {
+    const btn = abilities[ability];
+    const abilityData = player.abilities[ability];
+    
+    if (abilityData.cooldown > 0) {
+      btn.classList.add('cooldown');
+      btn.classList.remove('available');
+    } else {
+      btn.classList.remove('cooldown');
+      btn.classList.add('available');
+    }
+    
+    if (abilityData.active) {
+      btn.style.background = 'rgba(0, 255, 0, 0.5)';
+    } else {
+      btn.style.background = 'rgba(0, 0, 0, 0.7)';
+    }
+  }
+}
+
+// === АКТИВАЦИЯ СПОСОБНОСТЕЙ ===
+function activateAbility(ability) {
+  if (player.abilities[ability].cooldown > 0) return;
+  
+  createSound('ability');
+  
+  switch(ability) {
+    case 'dash':
+      // Рывок в направлении движения
+      const heartX = parseFloat(heart.style.left);
+      const heartY = parseFloat(heart.style.top);
+      const dashDistance = 50;
+      
+      let dashX = heartX;
+      let dashY = heartY;
+      
+      if (keys['ArrowLeft'] || keys['a']) dashX -= dashDistance;
+      if (keys['ArrowRight'] || keys['d']) dashX += dashDistance;
+      if (keys['ArrowUp'] || keys['w']) dashY -= dashDistance;
+      if (keys['ArrowDown'] || keys['s']) dashY += dashDistance;
+      
+      // Ограничиваем движение в пределах поля боя
+      dashX = Math.max(4, Math.min(battleBox.offsetWidth - 22, dashX));
+      dashY = Math.max(4, Math.min(battleBox.offsetHeight - 22, dashY));
+      
+      heart.style.left = dashX + 'px';
+      heart.style.top = dashY + 'px';
+      
+      player.abilities.dash.cooldown = player.abilities.dash.maxCooldown;
+      break;
+      
+    case 'shield':
+      // Щит, защищающий от одной пули
+      player.abilities.shield.active = true;
+      player.abilities.shield.cooldown = player.abilities.shield.maxCooldown;
+      
+      // Визуальный эффект щита
+      heart.style.boxShadow = '0 0 15px #00FFFF';
+      setTimeout(() => {
+        player.abilities.shield.active = false;
+        heart.style.boxShadow = '';
+      }, 2000); // Щит действует 2 секунды
+      break;
+      
+    case 'timeSlow':
+      // Замедление времени
+      player.abilities.timeSlow.active = true;
+      timeSlowFactor = 0.5;
+      player.abilities.timeSlow.cooldown = player.abilities.timeSlow.maxCooldown;
+      
+      setTimeout(() => {
+        player.abilities.timeSlow.active = false;
+        timeSlowFactor = 1;
+      }, 4000); // Замедление действует 4 секунды
+      break;
+      
+    case 'resonanceBurst':
+      // Взрыв, уничтожающий все пули на экране
+      player.abilities.resonanceBurst.cooldown = player.abilities.resonanceBurst.maxCooldown;
+      
+      // Уничтожаем все пули
+      bullets.forEach(bullet => {
+        bullet.el.style.transform = 'scale(1.5)';
+        bullet.el.style.opacity = '0';
+        setTimeout(() => {
+          if (bullet.el.parentNode) bullet.el.remove();
+        }, 300);
+      });
+      bullets = [];
+      
+      // Визуальный эффект
+      resonanceOverlay.classList.add('active');
+      setTimeout(() => resonanceOverlay.classList.remove('active'), 500);
+      break;
+  }
+  
+  updateAbilityUI();
+}
+
+// Назначаем способности на клавиши
+document.addEventListener('keydown', (e) => {
+  if (state === 'bullet') {
+    if (e.key === 'd' || e.key === 'D') activateAbility('dash');
+    if (e.key === 's' || e.key === 'S') activateAbility('shield');
+    if (e.key === 't' || e.key === 'T') activateAbility('timeSlow');
+    if (e.key === 'r' || e.key === 'R') activateAbility('resonanceBurst');
+  }
+});
+
+// Назначаем способности на кнопки
+abilityDash.addEventListener('click', () => activateAbility('dash'));
+abilityShield.addEventListener('click', () => activateAbility('shield'));
+abilityTime.addEventListener('click', () => activateAbility('timeSlow'));
+abilityResonance.addEventListener('click', () => activateAbility('resonanceBurst'));
+
+// === НОВЫЕ ПАТТЕРНЫ ПУЛЬ ===
+function createHomingBullets() {
+  const count = 3 + currentPhase;
+  spawnRealityText("homing", battleBox.offsetWidth / 2, 30);
+  
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const b = document.createElement('div');
+      b.className = 'bullet homing';
+      b.style.width = b.style.height = '10px';
+      
+      // Случайная начальная позиция по краям экрана
+      const side = Math.floor(Math.random() * 4);
+      let x, y, vx, vy;
+      
+      switch(side) {
+        case 0: // Верх
+          x = Math.random() * battleBox.offsetWidth;
+          y = -10;
+          vx = (Math.random() - 0.5) * 0.5;
+          vy = 1;
+          break;
+        case 1: // Право
+          x = battleBox.offsetWidth + 10;
+          y = Math.random() * battleBox.offsetHeight;
+          vx = -1;
+          vy = (Math.random() - 0.5) * 0.5;
+          break;
+        case 2: // Низ
+          x = Math.random() * battleBox.offsetWidth;
+          y = battleBox.offsetHeight + 10;
+          vx = (Math.random() - 0.5) * 0.5;
+          vy = -1;
+          break;
+        case 3: // Лево
+          x = -10;
+          y = Math.random() * battleBox.offsetHeight;
+          vx = 1;
+          vy = (Math.random() - 0.5) * 0.5;
+          break;
+      }
+      
+      b.style.left = x + 'px';
+      b.style.top = y + 'px';
+      battleBox.appendChild(b);
+      
+      homingBullets.push({
+        el: b,
+        x: x,
+        y: y,
+        vx: vx,
+        vy: vy,
+        speed: 1.5 + (currentPhase * 0.2)
+      });
+      
+      createSound('bullet');
+    }, i * 800);
+  }
+}
+
+function createSplitterBullets() {
+  const count = 2 + Math.floor(currentPhase / 2);
+  spawnRealityText("splitter", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const b = document.createElement('div');
+      b.className = 'bullet splitter';
+      b.style.width = b.style.height = '15px';
+      
+      const cX = battleBox.offsetWidth / 2;
+      const cY = battleBox.offsetHeight / 2;
+      const angle = (i / count) * Math.PI * 2;
+      
+      b.style.left = cX + 'px';
+      b.style.top = cY + 'px';
+      battleBox.appendChild(b);
+      
+      bullets.push({
+        el: b,
+        x: cX,
+        y: cY,
+        vx: Math.cos(angle) * 2,
+        vy: Math.sin(angle) * 2,
+        splitter: true,
+        splits: 2
+      });
+      
+      createSound('bullet');
+    }, i * 1000);
+  }
+}
+
+function createWaveBullets() {
+  const waves = 3 + currentPhase;
+  spawnRealityText("wave", battleBox.offsetWidth / 2, 40);
+  
+  for (let w = 0; w < waves; w++) {
+    setTimeout(() => {
+      const bulletCount = 8 + w * 2;
+      const amplitude = 20 + w * 5;
+      const frequency = 0.05 + w * 0.01;
+      
+      for (let i = 0; i < bulletCount; i++) {
+        const b = document.createElement('div');
+        b.className = 'bullet wave';
+        b.style.width = '12px';
+        b.style.height = '12px';
+        
+        const x = (i / bulletCount) * battleBox.offsetWidth;
+        const y = -20;
+        
+        b.style.left = x + 'px';
+        b.style.top = y + 'px';
+        battleBox.appendChild(b);
+        
+        bullets.push({
+          el: b,
+          x: x,
+          y: y,
+          vx: 0,
+          vy: 1.5,
+          wave: true,
+          amplitude: amplitude,
+          frequency: frequency,
+          phase: (i / bulletCount) * Math.PI * 2
+        });
+      }
+      
+      createSound('bullet');
+    }, w * 1200);
+  }
+}
+
+function createChaosStorm(count, speed) {
+  spawnRealityText("CHAOS", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const b = document.createElement('div');
+      b.className = 'bullet chaos';
+      b.style.width = b.style.height = (10 + Math.random() * 15) + 'px';
+      
+      // Случайная позиция
+      const x = Math.random() * battleBox.offsetWidth;
+      const y = Math.random() * battleBox.offsetHeight;
+      
+      b.style.left = x + 'px';
+      b.style.top = y + 'px';
+      battleBox.appendChild(b);
+      
+      // Случайное движение
+      const angle = Math.random() * Math.PI * 2;
+      const bulletSpeed = speed * (0.5 + Math.random());
+      
+      bullets.push({
+        el: b,
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * bulletSpeed,
+        vy: Math.sin(angle) * bulletSpeed,
+        chaos: true
+      });
+      
+      createSound('chaos');
+    }, i * 300);
+  }
+}
+
+// === СУЩЕСТВУЮЩИЕ ПАТТЕРНЫ ПУЛЬ (обновлены) ===
 function createExistentialCircle(count, speed) {
   const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
   spawnRealityText("discontinuity", cX + 40, cY - 25);
@@ -499,46 +1003,197 @@ function spawnRealityText(t, x, y) {
   setTimeout(() => el.remove(), 2500);
 }
 
-// === ОБНОВЛЕНИЕ ПУЛЬ ===
+// === ОБНОВЛЕНИЕ ПУЛЬ (расширенное) ===
 function updateBullets() {
   const hR = heart.getBoundingClientRect(), bR = battleBox.getBoundingClientRect();
+  
+  // Обновляем самонаводящиеся пули
+  for (let i = homingBullets.length - 1; i >= 0; i--) {
+    const b = homingBullets[i];
+    const heartX = parseFloat(heart.style.left) + 9;
+    const heartY = parseFloat(heart.style.top) + 9;
+    
+    // Вычисляем направление к игроку
+    const dx = heartX - b.x;
+    const dy = heartY - b.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    // Нормализуем и устанавливаем скорость
+    if (dist > 0) {
+      b.vx = (dx / dist) * b.speed * timeSlowFactor;
+      b.vy = (dy / dist) * b.speed * timeSlowFactor;
+    }
+    
+    // Обновляем позицию
+    b.x += b.vx;
+    b.y += b.vy;
+    
+    b.el.style.left = b.x + 'px';
+    b.el.style.top = b.y + 'px';
+    
+    // Проверяем столкновения и выход за границы
+    const r = b.el.getBoundingClientRect();
+    if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) {
+      b.el.remove();
+      homingBullets.splice(i, 1);
+      continue;
+    }
+    
+    if (checkCollision(hR, r)) {
+      if (player.abilities.shield.active) {
+        // Щит поглощает пулю
+        player.abilities.shield.active = false;
+        heart.style.boxShadow = '';
+        createSound('ability');
+      } else {
+        takeDamage(b.el.classList.contains('void') ? 2 : 1);
+      }
+      b.el.classList.add('flash');
+      createSound('hit');
+      setTimeout(() => { if (b.el.parentNode) b.el.remove(); homingBullets.splice(i, 1); }, 300);
+    }
+  }
+  
+  // Обновляем обычные пули
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
+    
+    // Обрабатываем специальные типы пуль
     if (b.orbit) {
-      b.angle += 0.05; const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-      b.x = cX + Math.cos(b.angle) * b.radius; b.y = cY + Math.sin(b.angle) * b.radius; b.radius -= 0.5;
+      b.angle += 0.05 * timeSlowFactor;
+      const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
+      b.x = cX + Math.cos(b.angle) * b.radius;
+      b.y = cY + Math.sin(b.angle) * b.radius;
+      b.radius -= 0.5 * timeSlowFactor;
       if (b.radius < 18) { b.el.remove(); bullets.splice(i, 1); continue; }
     } else if (b.explode) {
-      b.x += b.vx; b.y += b.vy;
-      if (Math.random() < 0.05) { b.el.style.transform = 'scale(3)'; b.el.style.opacity = '0'; setTimeout(() => { b.el.remove(); bullets.splice(i, 1); }, 500); }
-    } else { b.x += b.vx; b.y += b.vy; }
-    b.el.style.left = b.x + 'px'; b.el.style.top = b.y + 'px';
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      if (Math.random() < 0.05) {
+        b.el.style.transform = 'scale(3)';
+        b.el.style.opacity = '0';
+        setTimeout(() => { b.el.remove(); bullets.splice(i, 1); }, 500);
+      }
+    } else if (b.wave) {
+      // Движение волной
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      b.x += Math.sin(b.phase + b.y * b.frequency) * b.amplitude * 0.1;
+    } else if (b.chaos) {
+      // Хаотичное движение
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      
+      // Случайное изменение направления
+      if (Math.random() < 0.02) {
+        b.vx = (Math.random() - 0.5) * 3;
+        b.vy = (Math.random() - 0.5) * 3;
+      }
+    } else if (b.splitter) {
+      // Обычное движение с возможностью разделения
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      
+      // Разделение при столкновении с границей
+      const r = b.el.getBoundingClientRect();
+      if ((r.left <= bR.left || r.right >= bR.right || r.top <= bR.top || r.bottom >= bR.bottom) && b.splits > 0) {
+        splitBullet(b, i);
+      }
+    } else {
+      // Обычное движение
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+    }
+    
+    b.el.style.left = b.x + 'px';
+    b.el.style.top = b.y + 'px';
+    
     const r = b.el.getBoundingClientRect();
-    if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) { b.el.remove(); bullets.splice(i, 1); continue; }
+    if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) {
+      b.el.remove();
+      bullets.splice(i, 1);
+      continue;
+    }
+    
     if (checkCollision(hR, r)) {
-      takeDamage(b.el.classList.contains('void') ? 2 : 1);
+      if (player.abilities.shield.active) {
+        // Щит поглощает пулю
+        player.abilities.shield.active = false;
+        heart.style.boxShadow = '';
+        createSound('ability');
+      } else {
+        takeDamage(b.el.classList.contains('void') ? 2 : 1);
+      }
       b.el.classList.add('flash');
       createSound('hit');
       setTimeout(() => { if (b.el.parentNode) b.el.remove(); bullets.splice(i, 1); }, 300);
     }
   }
-  if (bullets.length === 0 && state === 'bullet') {
+  
+  if (bullets.length === 0 && homingBullets.length === 0 && state === 'bullet') {
     clearInterval(bulletInterval);
-    heart.classList.remove('determination');
+    clearInterval(abilityInterval);
+    heart.classList.remove('determination', 'void-touched', 'resonance', 'chaos');
     voidOverlay.classList.remove('active');
     resonanceOverlay.classList.remove('active');
+    chaosOverlay.classList.remove('active');
     setTimeout(() => showChoices(scenes[currentScene].choices), 800);
   }
 }
 
+function splitBullet(bullet, index) {
+  if (bullet.splits <= 0) return;
+  
+  const angles = [Math.PI/4, -Math.PI/4];
+  
+  for (const angle of angles) {
+    const newBullet = document.createElement('div');
+    newBullet.className = 'bullet splitter';
+    newBullet.style.width = newBullet.style.height = '10px';
+    newBullet.style.left = bullet.x + 'px';
+    newBullet.style.top = bullet.y + 'px';
+    battleBox.appendChild(newBullet);
+    
+    // Вычисляем новое направление
+    const currentAngle = Math.atan2(bullet.vy, bullet.vx);
+    const newAngle = currentAngle + angle;
+    const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+    
+    bullets.push({
+      el: newBullet,
+      x: bullet.x,
+      y: bullet.y,
+      vx: Math.cos(newAngle) * speed,
+      vy: Math.sin(newAngle) * speed,
+      splitter: true,
+      splits: bullet.splits - 1
+    });
+  }
+  
+  // Удаляем исходную пулю
+  bullet.el.remove();
+  bullets.splice(index, 1);
+  createSound('bullet');
+}
+
 function checkCollision(a, b) { return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; }
+
 function takeDamage(d) { 
   player.hp = Math.max(0, player.hp - d); 
   if (player.hp === 0) gameOver(); 
   updateStats(); 
   battleBox.style.background = '#600'; 
-  setTimeout(() => battleBox.style.background = nightMode ? '#001022' : '#000', 100); 
+  setTimeout(() => {
+    if (nightMode) {
+      battleBox.style.background = '#001022';
+    } else if (chaosMode) {
+      battleBox.style.background = '#1a001a';
+    } else {
+      battleBox.style.background = '#000';
+    }
+  }, 100); 
 }
+
 function updateStats() { 
   hpSpan.textContent = player.hp; 
   maxHpSpan.textContent = player.maxHp; 
@@ -548,11 +1203,16 @@ function updateStats() {
   resonanceSpan.textContent = player.resonance.toFixed(2); 
   darkEnergySpan.textContent = player.darkEnergy.toFixed(2); 
   xdustSpan.textContent = player.xdust; 
+  chaosSpan.textContent = player.chaos; 
 }
+
 function clearBullets() { 
   bullets.forEach(b => b.el.remove()); 
   bullets = []; 
+  homingBullets.forEach(b => b.el.remove());
+  homingBullets = [];
   clearInterval(bulletInterval); 
+  clearInterval(abilityInterval);
 }
 
 // === КОНЕЦ ===
@@ -561,7 +1221,9 @@ function gameOver() {
   clearBullets();
   stopBackgroundMusic();
   createSound('gameover', 2);
-  showDialogue(player.questionedReality ? "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation.\n* Dark energy pulses: rebirth in chaos." : "* You died.\n* But your determination hasn't faded...", () => {
+  showDialogue(player.questionedReality ? 
+    "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation.\n* Dark energy pulses: rebirth in chaos." : 
+    "* You died.\n* But your determination hasn't faded...", () => {
     setTimeout(() => {
       resetTapPrompt.classList.add('visible');
       resetMode = true;
@@ -575,7 +1237,7 @@ function victory() {
   stopBackgroundMusic();
   createSound('victory', 3);
   const end = player.determination >= 15 && player.questionedReality
-    ? "* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET\n* Resonance at " + player.resonance.toFixed(2) + ". Dark energy: " + player.darkEnergy.toFixed(2) + ".\n* $XDUST: " + player.xdust + "."
+    ? "* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET\n* Resonance at " + player.resonance.toFixed(2) + ". Dark energy: " + player.darkEnergy.toFixed(2) + ".\n* $XDUST: " + player.xdust + ". Chaos: " + player.chaos + "."
     : "* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\nTHE END";
   showDialogue(end, () => { 
     if (player.determination >= 15) {
@@ -645,7 +1307,8 @@ document.addEventListener('keyup', e => keys[e.key] = false);
 
 function moveHeart() {
   if (state !== 'bullet' || touchActive) return;
-  const s = 3.5; let x = parseFloat(heart.style.left), y = parseFloat(heart.style.top);
+  const s = 3.5 * timeSlowFactor; 
+  let x = parseFloat(heart.style.left), y = parseFloat(heart.style.top);
   const w = battleBox.offsetWidth, h = battleBox.offsetHeight;
   if ((keys['ArrowLeft'] || keys['a']) && x > 4) x -= s;
   if ((keys['ArrowRight'] || keys['d']) && x < w - 22) x += s;
@@ -656,6 +1319,8 @@ function moveHeart() {
 
 heart.style.left = (battleBox.offsetWidth - 18) / 2 + 'px';
 heart.style.top = (battleBox.offsetHeight - 18) / 2 + 'px';
+
+let abilityInterval;
 setInterval(moveHeart, 16);
 
 startGame();
