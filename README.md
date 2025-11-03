@@ -9,7 +9,7 @@ But for now, enjoy this reality-bending experience:
 🌐 **USE AI NOW in [TELEGRAM](https://t.me/pshtxkbot)** 
 ⸻
 
-# CHRONICLES OF THE SLIDE TRAGEDY - README
+# CHRONICLES OF THE SLIDE TRAGEDY 
 
 ## Overview
 **CHRONICLES OF THE SLIDE TRAGEDY - ENHANCED** is a mobile-first bullet-hell narrative experience that explores themes of reality, existence, and cyclical time. Built with pure HTML/CSS/JavaScript, this game offers a unique blend of bullet-hell combat, philosophical dialogue choices, and reality-bending mechanics.
