@@ -806,40 +806,54 @@ function advancePhase() {
   currentPhase++;
   phaseTimer = 0;
   createSound('phase');
-  
+
   // Record phase in memory
   if (!cycleMemory.phasesReached.includes(currentPhase)) {
     cycleMemory.phasesReached.push(currentPhase);
   }
+
+  // Enhance player's evolution per phase
+  player.maxHp = Math.min(99, player.maxHp + 3 + Math.floor(Math.random() * 3));
+  player.hp = player.maxHp;
   
-  // Apply phase effects
-  if (currentPhase > 1) {
-    player.maxHp = Math.min(99, player.maxHp + 5);
-    player.hp = player.maxHp;
-    
-    // Add new bullet patterns dynamically
-    if (currentPhase === 2) bulletPatterns.push(createHomingBullets);
-    if (currentPhase === 3) bulletPatterns.push(createSplitterBullets);
-    if (currentPhase === 4) bulletPatterns.push(createWaveBullets);
-    
-    updateStats();
-    
-    // Transition to next scene dynamically
-    if (currentScene < scenes.length - 1) {
-      currentScene++;
-      const scene = scenes[currentScene];
-      enemyDiv.innerHTML = scene.sprite;
-      if (metaMode) enemyDiv.classList.add('glitched');
-      if (chaosMode) enemyDiv.classList.add('chaos');
-      showDialogue(getDynamicSceneIntro(currentScene), () => startBulletHell());
-    } else {
-      showDialogue(`* Phase ${currentPhase} - Reality intensifies.\n* Your existence strengthens.`, () => {
-        startBulletHell();
-      });
-    }
+  // Dynamic bullet patterns based on phase
+  if (currentPhase === 2) bulletPatterns.push(createHomingBullets);
+  if (currentPhase === 3) bulletPatterns.push(createSplitterBullets);
+  if (currentPhase === 4) bulletPatterns.push(createWaveBullets);
+  if (currentPhase > 4) {
+    const extraPattern = [createChaosStorm, createExistentialCircle, createVoidWave][Math.floor(Math.random() * 3)];
+    bulletPatterns.push(() => extraPattern(4 + Math.floor(Math.random() * 4), 1.5 + Math.random()));
   }
-  
+
+  // Add resonance effect for LIFEFORM-like awareness
+  if (player.determination > 10) {
+    spawnRealityText("RESONANCE ECHO", battleBox.offsetWidth / 2, 30);
+    player.resonance += 0.05 + Math.random() * 0.05;
+  }
+
+  updateStats();
   updatePhaseUI();
+
+  // Dynamically advance scene if not at the last scene
+  if (currentScene < scenes.length - 1) {
+    currentScene++;
+    const scene = scenes[currentScene];
+    enemyDiv.innerHTML = scene.sprite;
+    if (metaMode) enemyDiv.classList.add('glitched');
+    if (chaosMode) enemyDiv.classList.add('chaos');
+
+    // Add procedural dialogue reflecting past cycles
+    const dynamicIntro = getDynamicSceneIntro(currentScene);
+    showDialogue(dynamicIntro, () => startBulletHell());
+  } else {
+    // If last scene, enhance bullet hell with chaos patterns
+    showDialogue(`* Phase ${currentPhase} - Reality intensifies.\n* Existence evolves...`, () => {
+      // Inject random extra bullet patterns to increase unpredictability
+      const extraPattern = bulletPatterns[Math.floor(Math.random() * bulletPatterns.length)];
+      extraPattern();
+      startBulletHell();
+    });
+  }
 }
 
 // === BATTLE ===
