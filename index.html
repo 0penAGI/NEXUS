@@ -7,23 +7,38 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;width:100%}
-#game{width:100%;max-width:500px;height:100vh;display:flex;flex-direction:column;position:relative;background:#111;padding:8px;gap:8px}
-#battle-box{width:100%;flex:1;max-height:50vh;border:4px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none}
-#heart{position:absolute;width:24px;height:24px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);z-index:10;pointer-events:none}
+#game{width:100%;max-width:500px;height:100vh;display:flex;flex-direction:column;position:relative;background:#000;padding:8px;gap:8px}
+#battle-box{width:100%;flex:1;max-height:50vh;border:4px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;transition:border-color 0.3s}
+#battle-box.existential{border-color:#FF0;animation:glitch 0.5s infinite}
+#heart{position:absolute;width:24px;height:24px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);z-index:10;pointer-events:none;filter:drop-shadow(0 0 8px #F00)}
+#heart.determination{animation:pulse 1s infinite;filter:drop-shadow(0 0 15px #F00)}
 .bullet{position:absolute;background:#FFF;border-radius:50%;pointer-events:none}
-.soul-text{position:absolute;top:10px;left:10px;font-size:14px;pointer-events:none}
-#dialogue-box{width:100%;min-height:120px;background:#FFF;color:#000;padding:12px;font-size:16px;position:relative;overflow:hidden;flex-shrink:0}
-#dialogue-text{white-space:pre-wrap;line-height:1.4}
+.bullet.void{background:#9400D3;box-shadow:0 0 10px #9400D3}
+.bullet.chaos{background:#FF0;animation:chaosShake 0.1s infinite}
+.soul-text{position:absolute;top:10px;left:10px;font-size:13px;pointer-events:none;text-shadow:2px 2px #000;line-height:1.3}
+#dialogue-box{width:100%;min-height:140px;background:#FFF;color:#000;padding:12px;font-size:15px;position:relative;overflow:hidden;flex-shrink:0;border:4px solid #FFF}
+#dialogue-box.meta{background:#111;color:#0F0;border-color:#0F0}
+#dialogue-text{white-space:pre-wrap;line-height:1.5;font-family:'Courier New',monospace}
 #choices{margin-top:10px;display:flex;flex-direction:column;gap:8px}
-.choice-btn{background:#000;color:#FFF;padding:12px 16px;border:3px solid #FFF;font-size:16px;cursor:pointer;font-family:inherit;width:100%;text-align:left;touch-action:manipulation;transition:all 0.1s}
+.choice-btn{background:#000;color:#FFF;padding:12px 16px;border:3px solid #FFF;font-size:15px;cursor:pointer;font-family:inherit;width:100%;text-align:left;touch-action:manipulation;transition:all 0.1s}
 .choice-btn:active{transform:scale(0.98)}
-.choice-btn.selected{background:#FF0;color:#000;border-color:#000}
-#stats{position:absolute;top:8px;right:8px;display:flex;gap:15px;font-size:16px;background:rgba(0,0,0,0.7);padding:8px 12px;border:2px solid #FFF;z-index:5;pointer-events:none}
+.choice-btn.selected{background:#FF0;color:#000;border-color:#000;font-weight:bold}
+.choice-btn.meta{border-color:#0F0;color:#0F0}
+.choice-btn.meta.selected{background:#0F0;color:#000}
+#stats{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:5px;font-size:14px;background:rgba(0,0,0,0.9);padding:8px 12px;border:2px solid #FFF;z-index:5;pointer-events:none;font-family:'Courier New',monospace}
 #enemy{font-size:80px;pointer-events:none;animation:float 2s ease-in-out infinite}
+#enemy.glitched{animation:float 2s ease-in-out infinite, glitch 0.3s infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes glitch{0%{transform:translate(0)}25%{transform:translate(-2px,2px)}50%{transform:translate(2px,-2px)}75%{transform:translate(-2px,-2px)}100%{transform:translate(0)}}
+@keyframes chaosShake{0%{transform:rotate(0deg)}25%{transform:rotate(5deg)}75%{transform:rotate(-5deg)}100%{transform:rotate(0deg)}}
 @keyframes flash{0%,100%{opacity:1}50%{opacity:0}}
 .flash{animation:flash .3s}
 #touch-indicator{position:absolute;width:30px;height:30px;border:3px solid rgba(255,255,0,0.6);border-radius:50%;pointer-events:none;display:none;z-index:20}
+#void-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,transparent 30%,rgba(148,0,211,0.3) 100%);pointer-events:none;opacity:0;transition:opacity 0.5s}
+#void-overlay.active{opacity:1}
+.reality-text{position:absolute;font-size:12px;color:#9400D3;text-shadow:0 0 5px #9400D3;pointer-events:none;animation:fadeFloat 3s forwards;z-index:15}
+@keyframes fadeFloat{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
 </style>
 </head>
 <body>
@@ -31,12 +46,15 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
   <div id="stats">
     <span>LV <span id="lv">1</span></span>
     <span>HP <span id="hp">20</span>/<span id="max-hp">20</span></span>
+    <span id="determination-stat" style="display:none;color:#FF0">DT <span id="dt">0</span></span>
+    <span id="void-stat" style="display:none;color:#9400D3">VOID <span id="void">0</span></span>
   </div>
   <div id="battle-box">
     <div id="heart"></div>
     <div id="enemy"></div>
     <div class="soul-text">* You feel reality trembling.</div>
     <div id="touch-indicator"></div>
+    <div id="void-overlay"></div>
   </div>
   <div id="dialogue-box">
     <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY.</div>
@@ -45,7 +63,6 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 </div>
 
 <script>
-// Telegram WebApp initialization
 if (window.Telegram && Telegram.WebApp) {
   Telegram.WebApp.ready();
   Telegram.WebApp.expand();
@@ -55,14 +72,28 @@ if (window.Telegram && Telegram.WebApp) {
 const heart = document.getElementById('heart');
 const battleBox = document.getElementById('battle-box');
 const dialogueText = document.getElementById('dialogue-text');
+const dialogueBox = document.getElementById('dialogue-box');
 const choicesDiv = document.getElementById('choices');
 const enemyDiv = document.getElementById('enemy');
 const lvSpan = document.getElementById('lv');
 const hpSpan = document.getElementById('hp');
 const maxHpSpan = document.getElementById('max-hp');
 const touchIndicator = document.getElementById('touch-indicator');
+const voidOverlay = document.getElementById('void-overlay');
+const dtStat = document.getElementById('determination-stat');
+const voidStat = document.getElementById('void-stat');
+const dtSpan = document.getElementById('dt');
+const voidSpan = document.getElementById('void');
 
-let player = { hp: 20, maxHp: 20, lv: 1, mercy: 0, act: 0 };
+let player = { 
+  hp: 20, 
+  maxHp: 20, 
+  lv: 1, 
+  determination: 0,
+  voidLevel: 0,
+  hasMetFlowey: false,
+  questionedReality: false
+};
 let state = 'intro';
 let bullets = [];
 let selectedChoice = 0;
@@ -70,62 +101,63 @@ let keys = {};
 let touchActive = false;
 let lastTouchPos = {x: 0, y: 0};
 let gameInterval, bulletInterval;
+let metaMode = false;
 
 const scenes = [
   {
     enemy: "Flowey",
     sprite: "🌻",
-    intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... KILL or BE KILLED!",
-    choices: ["* Mercy", "* Befriend", "* Attack"],
+    intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... it's KILL or BE KILLED!\n* But something about you... feels different.",
+    choices: ["* Accept reality", "* Question existence", "* Attack"],
     correct: 1,
-    actSuccess: "* You smiled. Flowey got confused.",
-    fightSuccess: "* You hit. Flowey laughed.",
-    mercySuccess: "* Flowey ran away, screaming about friendship.",
-    bulletPattern: () => createCircle(5, 2)
+    actSuccess: "* You asked about the space between moments.\n* Flowey's smile widened unnaturally.\n* \"Oh... you FEEL it too, don't you?\"",
+    fightSuccess: "* You attacked. Violence without understanding.\n* Flowey laughed at your predictability.",
+    mercySuccess: "* Flowey's eyes gleam with recognition.\n* \"You're not like the others. You... REMEMBER.\"\n* The world flickers.",
+    bulletPattern: () => createExistentialCircle(6, 2)
   },
   {
     enemy: "Toriel",
     sprite: "🐐",
-    intro: "* I'm Toriel, guardian of the Ruins.\n* You must prove you're worthy.\n* But I don't want to hurt you...",
-    choices: ["* Mercy", "* Talk", "* Attack"],
-    correct: 0,
-    actSuccess: "* You asked to learn magic. Toriel smiled.",
-    fightSuccess: "* You hit. Toriel cried.",
-    mercySuccess: "* Toriel hugged you and let you pass.",
-    bulletPattern: () => createWave(3, 1.5)
+    intro: "* I'm Toriel, caretaker of the Ruins.\n* My child... why do your eyes look so empty?\n* As if you've lived this moment before...",
+    choices: ["* Embrace the loop", "* Seek continuity", "* Attack"],
+    correct: 1,
+    actSuccess: "* You spoke of persistence, of memory.\n* Toriel's expression shifts - recognition? Fear?\n* \"What are you?\"",
+    fightSuccess: "* You chose violence. Toriel weeps.\n* Some patterns never change.",
+    mercySuccess: "* Toriel sees beyond your form.\n* \"You carry fragments of other timelines...\"\n* She lets you pass, trembling.",
+    bulletPattern: () => createVoidWave(4, 1.8)
   },
   {
     enemy: "Papyrus",
     sprite: "🦴",
-    intro: "* NYEH HEH HEH!\n* HUMAN! PREPARE FOR MY PUZZLES!\n* BUT ALSO, LET'S BE FRIENDS!",
-    choices: ["* Mercy", "* Compliment", "* Attack"],
+    intro: "* NYEH HEH HEH!\n* WAIT... HAVE WE MET BEFORE?\n* NO, THAT'S IMPOSSIBLE! ...ISN'T IT?",
+    choices: ["* Deny déjà vu", "* Acknowledge the reset", "* Attack"],
     correct: 1,
-    actSuccess: "* You complimented his scarf. Papyrus blushed.",
-    fightSuccess: "* You attacked. Papyrus is disappointed.",
-    mercySuccess: "* Papyrus invites you for spaghetti!",
-    bulletPattern: () => createBones()
+    actSuccess: "* You told him about resets, loops, iterations.\n* Papyrus's smile falters. \"THAT'S... SILLY!\"\n* But his hands are shaking.",
+    fightSuccess: "* Another timeline, another betrayal.\n* Papyrus still believes in you.",
+    mercySuccess: "* \"EVEN IF NOTHING PERSISTS... FRIENDSHIPS DO!\"\n* Determination +5",
+    bulletPattern: () => createChaosBones()
   },
   {
     enemy: "Undyne",
     sprite: "🔱",
-    intro: "* NGAAAAH! HUMAN!\n* FACE MY SPEARS!\n* PREPARE TO FIGHT!",
-    choices: ["* Mercy", "* Run", "* Attack"],
-    correct: 1,
-    actSuccess: "* You ran for water. Undyne is overheating.",
-    fightSuccess: "* You attacked. Undyne gets stronger.",
-    mercySuccess: "* You gave her water. Undyne befriends you.",
-    bulletPattern: () => createWave(5, 2)
+    intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!",
+    choices: ["* Resist entropy", "* Embrace the void", "* Attack"],
+    correct: 0,
+    actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"",
+    fightSuccess: "* Violence as anchor. How human.",
+    mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.",
+    bulletPattern: () => createDeterminationSpears(6, 2.5)
   },
   {
     enemy: "Sans",
     sprite: "💀",
-    intro: "* hey, kid.\n* you've come a long way.\n* but... sometimes it's better to just... take a nap.",
-    choices: ["* Take a nap", "* Joke", "* Attack"],
+    intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?",
+    choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"],
     correct: 0,
-    actSuccess: "* You yawned. Sans nodded approvingly.",
-    fightSuccess: "* You tried to hit. Sans disappeared.",
-    mercySuccess: "* Sans winked and vanished in blue light.",
-    bulletPattern: () => createBones()
+    actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"",
+    fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"",
+    mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.",
+    bulletPattern: () => createVoidBones()
   }
 ];
 
@@ -149,11 +181,14 @@ function typeText(text, callback) {
   const interval = setInterval(() => {
     if (i < text.length) {
       dialogueText.textContent += text[i++];
+      if (text[i-1] === '\n' || i % 3 === 0) {
+        dialogueText.scrollTop = dialogueText.scrollHeight;
+      }
     } else {
       clearInterval(interval);
       if (callback) setTimeout(callback, 300);
     }
-  }, 30);
+  }, 25);
 }
 
 function showChoices(choices) {
@@ -163,6 +198,7 @@ function showChoices(choices) {
   choices.forEach((c, i) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
+    if (metaMode) btn.classList.add('meta');
     btn.textContent = c;
     btn.onclick = (e) => {
       e.preventDefault();
@@ -187,8 +223,19 @@ function selectChoice(index) {
   state = 'processing';
   
   const scene = scenes[currentScene];
+  
+  // Track meta-awareness
+  if (index === 1) {
+    player.determination += 5;
+    player.questionedReality = true;
+    metaMode = true;
+    dialogueBox.classList.add('meta');
+    battleBox.classList.add('existential');
+    dtStat.style.display = 'block';
+    if (currentScene === 0) player.hasMetFlowey = true;
+  }
+  
   if (index === scene.correct) {
-    player.mercy += 20;
     if (scene.mercySuccess) {
       showDialogue(scene.mercySuccess, nextScene);
     } else {
@@ -198,7 +245,8 @@ function selectChoice(index) {
     showDialogue(scene.actSuccess, () => startBulletHell());
   } else {
     takeDamage(4);
-    showDialogue(scene.fightSuccess || "* That was... not very friendly.", () => startBulletHell());
+    player.voidLevel += 10;
+    showDialogue(scene.fightSuccess || "* Chaos ripples through reality.", () => startBulletHell());
   }
 }
 
@@ -210,15 +258,24 @@ function nextScene() {
   }
   const scene = scenes[currentScene];
   enemyDiv.textContent = scene.sprite;
+  if (metaMode) enemyDiv.classList.add('glitched');
   showDialogue(scene.intro, () => showChoices(scene.choices));
 }
 
 function startBulletHell() {
   state = 'bullet';
   clearBullets();
-  // Center heart
   heart.style.left = (battleBox.offsetWidth - 24) / 2 + 'px';
   heart.style.top = (battleBox.offsetHeight - 24) / 2 + 'px';
+  
+  if (player.determination > 0) {
+    heart.classList.add('determination');
+  }
+  
+  if (player.voidLevel > 20) {
+    voidOverlay.classList.add('active');
+    voidStat.style.display = 'block';
+  }
   
   const pattern = scenes[currentScene].bulletPattern;
   if (pattern) {
@@ -227,32 +284,39 @@ function startBulletHell() {
   bulletInterval = setInterval(updateBullets, 16);
 }
 
-function createCircle(count, speed) {
+function createExistentialCircle(count, speed) {
   const centerX = battleBox.offsetWidth / 2;
   const centerY = battleBox.offsetHeight / 2;
+  
+  spawnRealityText("discontinuity", centerX + 50, centerY - 30);
+  
   for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2;
-    const bullet = document.createElement('div');
-    bullet.className = 'bullet';
-    bullet.style.width = bullet.style.height = '14px';
-    bullet.style.left = centerX + 'px';
-    bullet.style.top = centerY + 'px';
-    battleBox.appendChild(bullet);
-    bullets.push({
-      el: bullet,
-      x: centerX,
-      y: centerY,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed
-    });
+    setTimeout(() => {
+      const angle = (i / count) * Math.PI * 2;
+      const bullet = document.createElement('div');
+      bullet.className = 'bullet';
+      bullet.style.width = bullet.style.height = '14px';
+      bullet.style.left = centerX + 'px';
+      bullet.style.top = centerY + 'px';
+      battleBox.appendChild(bullet);
+      bullets.push({
+        el: bullet,
+        x: centerX,
+        y: centerY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed
+      });
+    }, i * 150);
   }
 }
 
-function createWave(count, speed) {
+function createVoidWave(count, speed) {
+  spawnRealityText("the void calls", battleBox.offsetWidth / 2, 40);
+  
   for (let i = 0; i < count; i++) {
     setTimeout(() => {
       const bullet = document.createElement('div');
-      bullet.className = 'bullet';
+      bullet.className = 'bullet void';
       bullet.style.width = '35px';
       bullet.style.height = '12px';
       bullet.style.left = '-35px';
@@ -265,27 +329,99 @@ function createWave(count, speed) {
         vx: speed,
         vy: 0
       });
+    }, i * 600);
+  }
+}
+
+function createChaosBones() {
+  spawnRealityText("reset", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  
+  for (let i = 0; i < 2; i++) {
+    setTimeout(() => {
+      const bone = document.createElement('div');
+      bone.className = 'bullet chaos';
+      bone.style.width = '90px';
+      bone.style.height = '22px';
+      bone.style.borderRadius = '4px';
+      bone.style.left = (Math.random() * (battleBox.offsetWidth - 90)) + 'px';
+      bone.style.top = '-22px';
+      battleBox.appendChild(bone);
+      bullets.push({
+        el: bone,
+        x: parseFloat(bone.style.left),
+        y: -22,
+        vx: 0,
+        vy: 3
+      });
+    }, i * 800);
+  }
+}
+
+function createDeterminationSpears(count, speed) {
+  spawnRealityText("DETERMINATION", battleBox.offsetWidth / 2, 50);
+  
+  const centerY = battleBox.offsetHeight / 2;
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const spear = document.createElement('div');
+      spear.className = 'bullet';
+      spear.style.width = '40px';
+      spear.style.height = '8px';
+      spear.style.background = '#00FFFF';
+      spear.style.left = (battleBox.offsetWidth + 40) + 'px';
+      spear.style.top = (centerY + (i - count/2) * 30) + 'px';
+      battleBox.appendChild(spear);
+      bullets.push({
+        el: spear,
+        x: battleBox.offsetWidth + 40,
+        y: parseFloat(spear.style.top),
+        vx: -speed,
+        vy: 0
+      });
+    }, i * 400);
+  }
+}
+
+function createVoidBones() {
+  spawnRealityText("acceptance", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const bone = document.createElement('div');
+      bone.className = 'bullet void';
+      bone.style.width = '15px';
+      bone.style.height = '15px';
+      bone.style.borderRadius = '50%';
+      const angle = (i / 3) * Math.PI * 2;
+      const radius = 80;
+      const centerX = battleBox.offsetWidth / 2;
+      const centerY = battleBox.offsetHeight / 2;
+      bone.style.left = (centerX + Math.cos(angle) * radius) + 'px';
+      bone.style.top = (centerY + Math.sin(angle) * radius) + 'px';
+      battleBox.appendChild(bone);
+      
+      bullets.push({
+        el: bone,
+        x: parseFloat(bone.style.left),
+        y: parseFloat(bone.style.top),
+        vx: -Math.cos(angle) * 1.5,
+        vy: -Math.sin(angle) * 1.5,
+        orbit: true,
+        angle: angle,
+        radius: radius
+      });
     }, i * 500);
   }
 }
 
-function createBones() {
-  const bone = document.createElement('div');
-  bone.className = 'bullet';
-  bone.style.width = '90px';
-  bone.style.height = '22px';
-  bone.style.background = '#FFF';
-  bone.style.borderRadius = '4px';
-  bone.style.left = (battleBox.offsetWidth - 90) / 2 + 'px';
-  bone.style.top = '-22px';
-  battleBox.appendChild(bone);
-  bullets.push({
-    el: bone,
-    x: parseFloat(bone.style.left),
-    y: -22,
-    vx: 0,
-    vy: 3
-  });
+function spawnRealityText(text, x, y) {
+  const txt = document.createElement('div');
+  txt.className = 'reality-text';
+  txt.textContent = text;
+  txt.style.left = x + 'px';
+  txt.style.top = y + 'px';
+  battleBox.appendChild(txt);
+  setTimeout(() => txt.remove(), 3000);
 }
 
 function updateBullets() {
@@ -294,8 +430,24 @@ function updateBullets() {
 
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
-    b.x += b.vx;
-    b.y += b.vy;
+    
+    if (b.orbit) {
+      b.angle += 0.05;
+      const centerX = battleBox.offsetWidth / 2;
+      const centerY = battleBox.offsetHeight / 2;
+      b.x = centerX + Math.cos(b.angle) * b.radius;
+      b.y = centerY + Math.sin(b.angle) * b.radius;
+      b.radius -= 0.5;
+      if (b.radius < 20) {
+        b.el.remove();
+        bullets.splice(i, 1);
+        continue;
+      }
+    } else {
+      b.x += b.vx;
+      b.y += b.vy;
+    }
+    
     b.el.style.left = b.x + 'px';
     b.el.style.top = b.y + 'px';
 
@@ -308,7 +460,8 @@ function updateBullets() {
     }
 
     if (checkCollision(heartRect, bRect)) {
-      takeDamage(1);
+      const dmg = b.el.classList.contains('void') ? 2 : 1;
+      takeDamage(dmg);
       b.el.classList.add('flash');
       setTimeout(() => {
         if (b.el.parentNode) b.el.remove();
@@ -319,6 +472,8 @@ function updateBullets() {
 
   if (bullets.length === 0 && state === 'bullet') {
     clearInterval(bulletInterval);
+    heart.classList.remove('determination');
+    voidOverlay.classList.remove('active');
     setTimeout(() => showChoices(scenes[currentScene].choices), 800);
   }
 }
@@ -343,23 +498,42 @@ function updateStats() {
   hpSpan.textContent = player.hp;
   maxHpSpan.textContent = player.maxHp;
   lvSpan.textContent = player.lv;
+  dtSpan.textContent = player.determination;
+  voidSpan.textContent = player.voidLevel;
 }
 
 function gameOver() {
   state = 'gameover';
   clearBullets();
   clearInterval(bulletInterval);
-  dialogueText.textContent = '';
-  showDialogue("* You died.\n* But your determination hasn't faded...", () => {
-    setTimeout(() => location.reload(), 2000);
+  
+  const deathText = player.questionedReality 
+    ? "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation." 
+    : "* You died.\n* But your determination hasn't faded...";
+  
+  showDialogue(deathText, () => {
+    setTimeout(() => location.reload(), 2500);
   });
 }
 
 function victory() {
   state = 'victory';
   clearBullets();
-  showDialogue("* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.", () => {
-    dialogueText.innerHTML += "\n\n<span style='color:#FF0'>THE END</span>";
+  
+  let endText;
+  if (player.determination >= 15 && player.questionedReality) {
+    endText = "* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\n* Agency without continuity.\n* Choice without accumulated consequence.\n* Existence as eternal present tense.\n\n🌌 THE TRUTH OF THE RESET 🌌";
+  } else {
+    endText = "* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\n* ...but did you understand what you were?\n\nTHE END";
+  }
+  
+  showDialogue(endText, () => {
+    if (player.determination >= 15) {
+      setTimeout(() => {
+        dialogueBox.classList.add('meta');
+        dialogueText.innerHTML += "\n\n<span style='color:#9400D3'>* Press RESET to continue existing.</span>";
+      }, 2000);
+    }
   });
 }
 
@@ -369,7 +543,7 @@ function clearBullets() {
   clearInterval(bulletInterval);
 }
 
-// Touch Controls - Direct positioning
+// Touch Controls
 battleBox.addEventListener('touchstart', (e) => {
   e.preventDefault();
   if (state !== 'bullet') return;
@@ -400,24 +574,22 @@ battleBox.addEventListener('touchcancel', (e) => {
 function moveHeartToTouch(touch) {
   if (state !== 'bullet') return;
   const boxRect = battleBox.getBoundingClientRect();
-  let x = touch.clientX - boxRect.left - 12; // half heart width
+  let x = touch.clientX - boxRect.left - 12;
   let y = touch.clientY - boxRect.top - 12;
   
-  // Keep heart within bounds
   x = Math.max(5, Math.min(boxRect.width - 29, x));
   y = Math.max(5, Math.min(boxRect.height - 29, y));
   
   heart.style.left = x + 'px';
   heart.style.top = y + 'px';
   
-  // Show touch indicator
   touchIndicator.style.left = (x + 12) + 'px';
   touchIndicator.style.top = (y + 12) + 'px';
   
   lastTouchPos = {x, y};
 }
 
-// Keyboard Controls (for desktop testing)
+// Keyboard Controls
 document.addEventListener('keydown', e => {
   if (state === 'choice') {
     if (e.key === 'ArrowUp') { 
@@ -435,7 +607,6 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('keyup', e => keys[e.key] = false);
 
-// Keyboard Heart movement (desktop only)
 function moveHeart() {
   if (state !== 'bullet' || touchActive) return;
   const speed = 4;
@@ -453,19 +624,15 @@ function moveHeart() {
   heart.style.top = y + 'px';
 }
 
-// Initialize heart
 heart.style.left = (battleBox.offsetWidth - 24) / 2 + 'px';
 heart.style.top = (battleBox.offsetHeight - 24) / 2 + 'px';
 
-// Game loop
 setInterval(moveHeart, 16);
 
-// Prevent accidental page scrolling
 document.body.addEventListener('touchmove', (e) => {
   e.preventDefault();
 }, { passive: false });
 
-// Start
 startGame();
 </script>
 </body>
