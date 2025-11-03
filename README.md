@@ -5,8 +5,8 @@ But for now, enjoy this reality-bending experience:
 
 **CHRONICLES OF THE SLIDE TRAGEDY**
 
-🌐 **Play Now:** https://0penagi.github.io/NEXUS/
-🌐 **USE AI Now:** https://t.me/pshtxkbot
+🌐 **Play mini game [NOW](https://0penagi.github.io/NEXUS/)** 
+🌐 **USE AI NOW in [TELEGRAM](https://t.me/pshtxkbot)** 
 ⸻
 
 # CHRONICLES OF THE SLIDE TRAGEDY
