@@ -815,7 +815,11 @@ function advancePhase() {
   // Enhance player's evolution per phase
   player.maxHp = Math.min(99, player.maxHp + 3 + Math.floor(Math.random() * 3));
   player.hp = player.maxHp;
-  
+
+  // Scale bullet speed dynamically for current phase
+  bullets.forEach(b => { b.vx *= 1 + currentPhase * 0.05; b.vy *= 1 + currentPhase * 0.05; });
+  homingBullets.forEach(b => { b.speed *= 1 + currentPhase * 0.05; });
+
   // Dynamic bullet patterns based on phase
   if (currentPhase === 2) bulletPatterns.push(createHomingBullets);
   if (currentPhase === 3) bulletPatterns.push(createSplitterBullets);
@@ -834,6 +838,11 @@ function advancePhase() {
   updateStats();
   updatePhaseUI();
 
+  // Chance for mid-phase reality modifier
+  if (Math.random() < 0.15 && currentRealityModifier) {
+    currentRealityModifier.apply();
+  }
+
   // Dynamically advance scene if not at the last scene
   if (currentScene < scenes.length - 1) {
     currentScene++;
@@ -842,8 +851,11 @@ function advancePhase() {
     if (metaMode) enemyDiv.classList.add('glitched');
     if (chaosMode) enemyDiv.classList.add('chaos');
 
-    // Add procedural dialogue reflecting past cycles
-    const dynamicIntro = getDynamicSceneIntro(currentScene);
+    // Add procedural dialogue reflecting past cycles and echoes
+    let dynamicIntro = getDynamicSceneIntro(currentScene);
+    if (cycleMemory.deaths > 0 || cycleMemory.victories > 0) {
+      dynamicIntro += "\n* You feel echoes from previous cycles resonate...";
+    }
     showDialogue(dynamicIntro, () => startBulletHell());
   } else {
     // If last scene, enhance bullet hell with chaos patterns
