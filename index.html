@@ -1,27 +1,29 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>CHRONICLES OF THE SLIDE TRAGEDY: UNDERTALE EDITION</title>
+<title>CHRONICLES OF THE SLIDE TRAGEDY</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Undertale',sans-serif;background:#000;color:#FFF;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
-@font-face{font-family:Undertale;src:url('https://fonts.cdnfonts.com/s/19004/DeterminationMonoWebRegular.woff') format('woff')}
-#game{width:100%;max-width:400px;height:100%;display:flex;flex-direction:column;position:relative;background:#111;border:8px solid #FFF;padding:10px;gap:10px}
-#battle-box{width:100%;height:300px;border:3px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
-#heart{position:absolute;width:20px;height:20px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);transition:left 0.05s,top 0.05s;z-index:10}
-.bullet{position:absolute;background:#FFF;border-radius:50%}
-.soul-text{position:absolute;top:10px;left:10px;font-size:14px}
-#dialogue-box{width:100%;height:80px;background:#FFF;color:#000;padding:10px;font-size:18px;position:relative;overflow:hidden}
-#dialogue-text{white-space:pre-wrap}
-#choices{position:absolute;bottom:10px;left:10px;display:flex;flex-direction:column;gap:5px}
-.choice-btn{background:#FFF;color:#000;padding:8px 12px;border:none;font-size:16px;cursor:pointer}
-.choice-btn.selected{background:#FF0}
-#stats{position:absolute;top:10px;right:10px;display:flex;gap:15px;font-size:14px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;width:100%}
+#game{width:100%;max-width:500px;height:100vh;display:flex;flex-direction:column;position:relative;background:#111;padding:8px;gap:8px}
+#battle-box{width:100%;flex:1;max-height:50vh;border:4px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none}
+#heart{position:absolute;width:24px;height:24px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);z-index:10;pointer-events:none}
+.bullet{position:absolute;background:#FFF;border-radius:50%;pointer-events:none}
+.soul-text{position:absolute;top:10px;left:10px;font-size:14px;pointer-events:none}
+#dialogue-box{width:100%;min-height:120px;background:#FFF;color:#000;padding:12px;font-size:16px;position:relative;overflow:hidden;flex-shrink:0}
+#dialogue-text{white-space:pre-wrap;line-height:1.4}
+#choices{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.choice-btn{background:#000;color:#FFF;padding:12px 16px;border:3px solid #FFF;font-size:16px;cursor:pointer;font-family:inherit;width:100%;text-align:left;touch-action:manipulation;transition:all 0.1s}
+.choice-btn:active{transform:scale(0.98)}
+.choice-btn.selected{background:#FF0;color:#000;border-color:#000}
+#stats{position:absolute;top:8px;right:8px;display:flex;gap:15px;font-size:16px;background:rgba(0,0,0,0.7);padding:8px 12px;border:2px solid #FFF;z-index:5;pointer-events:none}
+#enemy{font-size:80px;pointer-events:none;animation:float 2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 @keyframes flash{0%,100%{opacity:1}50%{opacity:0}}
 .flash{animation:flash .3s}
+#touch-indicator{position:absolute;width:30px;height:30px;border:3px solid rgba(255,255,0,0.6);border-radius:50%;pointer-events:none;display:none;z-index:20}
 </style>
 </head>
 <body>
@@ -34,6 +36,7 @@ body{font-family:'Undertale',sans-serif;background:#000;color:#FFF;overflow:hidd
     <div id="heart"></div>
     <div id="enemy"></div>
     <div class="soul-text">* You feel reality trembling.</div>
+    <div id="touch-indicator"></div>
   </div>
   <div id="dialogue-box">
     <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY.</div>
@@ -42,6 +45,13 @@ body{font-family:'Undertale',sans-serif;background:#000;color:#FFF;overflow:hidd
 </div>
 
 <script>
+// Telegram WebApp initialization
+if (window.Telegram && Telegram.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+  Telegram.WebApp.enableClosingConfirmation();
+}
+
 const heart = document.getElementById('heart');
 const battleBox = document.getElementById('battle-box');
 const dialogueText = document.getElementById('dialogue-text');
@@ -50,19 +60,22 @@ const enemyDiv = document.getElementById('enemy');
 const lvSpan = document.getElementById('lv');
 const hpSpan = document.getElementById('hp');
 const maxHpSpan = document.getElementById('max-hp');
+const touchIndicator = document.getElementById('touch-indicator');
 
 let player = { hp: 20, maxHp: 20, lv: 1, mercy: 0, act: 0 };
-let state = 'intro'; // intro, act, fight, mercy, bullet, dialogue, gameover, victory
+let state = 'intro';
 let bullets = [];
 let selectedChoice = 0;
 let keys = {};
+let touchActive = false;
+let lastTouchPos = {x: 0, y: 0};
 let gameInterval, bulletInterval;
 
 const scenes = [
   {
     enemy: "Flowey",
     sprite: "🌻",
-    intro: "* I'm Flowey! Flowey the flower!\n* Hm... You're new here, right?\n* In this world... KILL or BE KILLED!",
+    intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... KILL or BE KILLED!",
     choices: ["* Mercy", "* Befriend", "* Attack"],
     correct: 1,
     actSuccess: "* You smiled. Flowey got confused.",
@@ -73,7 +86,7 @@ const scenes = [
   {
     enemy: "Toriel",
     sprite: "🐐",
-    intro: "* I'm Toriel, guardian of the Ruins.\n* You must prove you're worthy to go further.\n* But I don't want to hurt you...",
+    intro: "* I'm Toriel, guardian of the Ruins.\n* You must prove you're worthy.\n* But I don't want to hurt you...",
     choices: ["* Mercy", "* Talk", "* Attack"],
     correct: 0,
     actSuccess: "* You asked to learn magic. Toriel smiled.",
@@ -82,14 +95,36 @@ const scenes = [
     bulletPattern: () => createWave(3, 1.5)
   },
   {
+    enemy: "Papyrus",
+    sprite: "🦴",
+    intro: "* NYEH HEH HEH!\n* HUMAN! PREPARE FOR MY PUZZLES!\n* BUT ALSO, LET'S BE FRIENDS!",
+    choices: ["* Mercy", "* Compliment", "* Attack"],
+    correct: 1,
+    actSuccess: "* You complimented his scarf. Papyrus blushed.",
+    fightSuccess: "* You attacked. Papyrus is disappointed.",
+    mercySuccess: "* Papyrus invites you for spaghetti!",
+    bulletPattern: () => createBones()
+  },
+  {
+    enemy: "Undyne",
+    sprite: "🔱",
+    intro: "* NGAAAAH! HUMAN!\n* FACE MY SPEARS!\n* PREPARE TO FIGHT!",
+    choices: ["* Mercy", "* Run", "* Attack"],
+    correct: 1,
+    actSuccess: "* You ran for water. Undyne is overheating.",
+    fightSuccess: "* You attacked. Undyne gets stronger.",
+    mercySuccess: "* You gave her water. Undyne befriends you.",
+    bulletPattern: () => createWave(5, 2)
+  },
+  {
     enemy: "Sans",
     sprite: "💀",
-    intro: "* hey, kid.\n* you've come a long way.\n* but you know... sometimes it's better to just... take a nap.",
+    intro: "* hey, kid.\n* you've come a long way.\n* but... sometimes it's better to just... take a nap.",
     choices: ["* Take a nap", "* Joke", "* Attack"],
     correct: 0,
     actSuccess: "* You yawned. Sans nodded approvingly.",
     fightSuccess: "* You tried to hit. Sans disappeared.",
-    mercySuccess: "* Sans winked and disappeared in a blue light.",
+    mercySuccess: "* Sans winked and vanished in blue light.",
     bulletPattern: () => createBones()
   }
 ];
@@ -116,7 +151,7 @@ function typeText(text, callback) {
       dialogueText.textContent += text[i++];
     } else {
       clearInterval(interval);
-      if (callback) callback();
+      if (callback) setTimeout(callback, 300);
     }
   }, 30);
 }
@@ -129,7 +164,14 @@ function showChoices(choices) {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.textContent = c;
-    btn.onclick = () => selectChoice(i);
+    btn.onclick = (e) => {
+      e.preventDefault();
+      selectChoice(i);
+    };
+    btn.ontouchstart = (e) => {
+      e.preventDefault();
+      selectChoice(i);
+    };
     choicesDiv.appendChild(btn);
   });
   updateChoiceSelection();
@@ -141,6 +183,9 @@ function updateChoiceSelection() {
 }
 
 function selectChoice(index) {
+  if (state !== 'choice') return;
+  state = 'processing';
+  
   const scene = scenes[currentScene];
   if (index === scene.correct) {
     player.mercy += 20;
@@ -165,15 +210,20 @@ function nextScene() {
   }
   const scene = scenes[currentScene];
   enemyDiv.textContent = scene.sprite;
-  enemyDiv.style.fontSize = '60px';
   showDialogue(scene.intro, () => showChoices(scene.choices));
 }
 
 function startBulletHell() {
   state = 'bullet';
   clearBullets();
+  // Center heart
+  heart.style.left = (battleBox.offsetWidth - 24) / 2 + 'px';
+  heart.style.top = (battleBox.offsetHeight - 24) / 2 + 'px';
+  
   const pattern = scenes[currentScene].bulletPattern;
-  if (pattern) pattern();
+  if (pattern) {
+    setTimeout(pattern, 500);
+  }
   bulletInterval = setInterval(updateBullets, 16);
 }
 
@@ -184,7 +234,7 @@ function createCircle(count, speed) {
     const angle = (i / count) * Math.PI * 2;
     const bullet = document.createElement('div');
     bullet.className = 'bullet';
-    bullet.style.width = bullet.style.height = '12px';
+    bullet.style.width = bullet.style.height = '14px';
     bullet.style.left = centerX + 'px';
     bullet.style.top = centerY + 'px';
     battleBox.appendChild(bullet);
@@ -203,14 +253,14 @@ function createWave(count, speed) {
     setTimeout(() => {
       const bullet = document.createElement('div');
       bullet.className = 'bullet';
-      bullet.style.width = '30px';
-      bullet.style.height = '10px';
-      bullet.style.left = '-30px';
+      bullet.style.width = '35px';
+      bullet.style.height = '12px';
+      bullet.style.left = '-35px';
       bullet.style.top = (battleBox.offsetHeight * (i + 1)) / (count + 1) + 'px';
       battleBox.appendChild(bullet);
       bullets.push({
         el: bullet,
-        x: -30,
+        x: -35,
         y: parseFloat(bullet.style.top),
         vx: speed,
         vy: 0
@@ -222,16 +272,17 @@ function createWave(count, speed) {
 function createBones() {
   const bone = document.createElement('div');
   bone.className = 'bullet';
-  bone.style.width = '80px';
-  bone.style.height = '20px';
+  bone.style.width = '90px';
+  bone.style.height = '22px';
   bone.style.background = '#FFF';
-  bone.style.left = (battleBox.offsetWidth - 80) / 2 + 'px';
-  bone.style.top = '-20px';
+  bone.style.borderRadius = '4px';
+  bone.style.left = (battleBox.offsetWidth - 90) / 2 + 'px';
+  bone.style.top = '-22px';
   battleBox.appendChild(bone);
   bullets.push({
     el: bone,
     x: parseFloat(bone.style.left),
-    y: -20,
+    y: -22,
     vx: 0,
     vy: 3
   });
@@ -240,8 +291,6 @@ function createBones() {
 function updateBullets() {
   const heartRect = heart.getBoundingClientRect();
   const boxRect = battleBox.getBoundingClientRect();
-  const heartX = parseFloat(heart.style.left);
-  const heartY = parseFloat(heart.style.top);
 
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
@@ -270,7 +319,7 @@ function updateBullets() {
 
   if (bullets.length === 0 && state === 'bullet') {
     clearInterval(bulletInterval);
-    setTimeout(() => showChoices(scenes[currentScene].choices), 500);
+    setTimeout(() => showChoices(scenes[currentScene].choices), 800);
   }
 }
 
@@ -286,6 +335,7 @@ function takeDamage(amount) {
   }
   updateStats();
   battleBox.style.background = '#600';
+  navigator.vibrate && navigator.vibrate(100);
   setTimeout(() => battleBox.style.background = '#000', 100);
 }
 
@@ -308,7 +358,7 @@ function gameOver() {
 function victory() {
   state = 'victory';
   clearBullets();
-  showDialogue("* You've passed through all the trials...\n* Without killing anyone.\n* You are a true hero.", () => {
+  showDialogue("* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.", () => {
     dialogueText.innerHTML += "\n\n<span style='color:#FF0'>THE END</span>";
   });
 }
@@ -319,11 +369,65 @@ function clearBullets() {
   clearInterval(bulletInterval);
 }
 
-// Controls
+// Touch Controls - Direct positioning
+battleBox.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (state !== 'bullet') return;
+  touchActive = true;
+  touchIndicator.style.display = 'block';
+  moveHeartToTouch(e.touches[0]);
+}, { passive: false });
+
+battleBox.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (touchActive && state === 'bullet') {
+    moveHeartToTouch(e.touches[0]);
+  }
+}, { passive: false });
+
+battleBox.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  touchActive = false;
+  touchIndicator.style.display = 'none';
+}, { passive: false });
+
+battleBox.addEventListener('touchcancel', (e) => {
+  e.preventDefault();
+  touchActive = false;
+  touchIndicator.style.display = 'none';
+}, { passive: false });
+
+function moveHeartToTouch(touch) {
+  if (state !== 'bullet') return;
+  const boxRect = battleBox.getBoundingClientRect();
+  let x = touch.clientX - boxRect.left - 12; // half heart width
+  let y = touch.clientY - boxRect.top - 12;
+  
+  // Keep heart within bounds
+  x = Math.max(5, Math.min(boxRect.width - 29, x));
+  y = Math.max(5, Math.min(boxRect.height - 29, y));
+  
+  heart.style.left = x + 'px';
+  heart.style.top = y + 'px';
+  
+  // Show touch indicator
+  touchIndicator.style.left = (x + 12) + 'px';
+  touchIndicator.style.top = (y + 12) + 'px';
+  
+  lastTouchPos = {x, y};
+}
+
+// Keyboard Controls (for desktop testing)
 document.addEventListener('keydown', e => {
   if (state === 'choice') {
-    if (e.key === 'ArrowUp') { selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length; updateChoiceSelection(); }
-    if (e.key === 'ArrowDown') { selectedChoice = (selectedChoice + 1) % choicesDiv.children.length; updateChoiceSelection(); }
+    if (e.key === 'ArrowUp') { 
+      selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length; 
+      updateChoiceSelection(); 
+    }
+    if (e.key === 'ArrowDown') { 
+      selectedChoice = (selectedChoice + 1) % choicesDiv.children.length; 
+      updateChoiceSelection(); 
+    }
     if (e.key === 'Enter' || e.key === ' ') selectChoice(selectedChoice);
   }
   keys[e.key] = true;
@@ -331,31 +435,35 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('keyup', e => keys[e.key] = false);
 
-// Heart movement
+// Keyboard Heart movement (desktop only)
 function moveHeart() {
-  if (state !== 'bullet') return;
-  const speed = 3;
-  let [x, y] = [parseFloat(heart.style.left), parseFloat(heart.style.top)];
-  const box = battleBox.getBoundingClientRect();
-  const h = heart.getBoundingClientRect();
+  if (state !== 'bullet' || touchActive) return;
+  const speed = 4;
+  let x = parseFloat(heart.style.left);
+  let y = parseFloat(heart.style.top);
+  const boxW = battleBox.offsetWidth;
+  const boxH = battleBox.offsetHeight;
 
-  if ((keys['ArrowLeft'] || keys['a']) && h.left > box.left + 10) x -= speed;
-  if ((keys['ArrowRight'] || keys['d']) && h.right < box.right - 10) x += speed;
-  if ((keys['ArrowUp'] || keys['w']) && h.top > box.top + 10) y -= speed;
-  if ((keys['ArrowDown'] || keys['s']) && h.bottom < box.bottom - 10) y += speed;
+  if ((keys['ArrowLeft'] || keys['a']) && x > 5) x -= speed;
+  if ((keys['ArrowRight'] || keys['d']) && x < boxW - 29) x += speed;
+  if ((keys['ArrowUp'] || keys['w']) && y > 5) y -= speed;
+  if ((keys['ArrowDown'] || keys['s']) && y < boxH - 29) y += speed;
 
   heart.style.left = x + 'px';
   heart.style.top = y + 'px';
 }
 
 // Initialize heart
-heart.style.left = (battleBox.offsetWidth - 20) / 2 + 'px';
-heart.style.top = (battleBox.offsetHeight - 20) / 2 + 'px';
+heart.style.left = (battleBox.offsetWidth - 24) / 2 + 'px';
+heart.style.top = (battleBox.offsetHeight - 24) / 2 + 'px';
 
 // Game loop
-setInterval(() => {
-  moveHeart();
-}, 16);
+setInterval(moveHeart, 16);
+
+// Prevent accidental page scrolling
+document.body.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+}, { passive: false });
 
 // Start
 startGame();
