@@ -307,18 +307,26 @@ const abilityTime = document.getElementById('ability-time');
 const abilityResonance = document.getElementById('ability-resonance');
 
 // === AUDIO ===
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext;
 let soundEnabled = true;
+
+function initAudio() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+// Ensure audio context is initialized on first user interaction (Telegram Web App safe)
+document.addEventListener('click', initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true });
 
 function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
   if (!soundEnabled) return;
-  
+  initAudio();
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
-  
   oscillator.connect(gainNode);
   gainNode.connect(audioContext.destination);
-  
   switch(type) {
     case 'dialogue':
       oscillator.type = 'sine';
@@ -398,10 +406,8 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
       volume = 0.3;
       break;
   }
-  
   gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
   gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-  
   oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
   oscillator.start(audioContext.currentTime);
   oscillator.stop(audioContext.currentTime + duration);
@@ -410,33 +416,25 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
 let backgroundMusic;
 function playBackgroundMusic() {
   if (!soundEnabled) return;
-  
+  initAudio();
   backgroundMusic = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
-  
   backgroundMusic.connect(gainNode);
   gainNode.connect(audioContext.destination);
-  
   backgroundMusic.type = 'sine';
   gainNode.gain.value = 0.05;
-  
   const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
   let currentNote = 0;
-  
   backgroundMusic.start();
-  
   const playNote = () => {
     if (!soundEnabled) {
       backgroundMusic.stop();
       return;
     }
-    
     backgroundMusic.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
     currentNote = (currentNote + 1) % notes.length;
-    
     setTimeout(playNote, 1000);
   };
-  
   playNote();
 }
 
@@ -449,7 +447,6 @@ function stopBackgroundMusic() {
 soundToggle.addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
-  
   if (soundEnabled) {
     playBackgroundMusic();
   } else {
@@ -662,6 +659,7 @@ function getDynamicSceneIntro(sceneIndex) {
 
 // === START GAME ===
 function startGame() {
+  initAudio();
   cycleCount++;
   updateStats();
   resonanceStat.style.display = 'block';
