@@ -54,6 +54,7 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 #explosion-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,rgba(255,69,0,0.5) 10%,transparent 70%);pointer-events:none;opacity:0;transition:opacity 0.3s}
 #explosion-overlay.active{opacity:1;animation:explodeFade 1s forwards}
 @keyframes explodeFade{0%{opacity:1}100%{opacity:0}}
+#sound-toggle{position:absolute;bottom:4px;right:4px;z-index:10;background:rgba(0,0,0,0.7);color:#FFF;border:1px solid #FFF;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -81,6 +82,7 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
     <div id="choices"></div>
     <div id="reset-tap-prompt">* Tap anywhere to continue existing.</div>
   </div>
+  <button id="sound-toggle">🔊</button>
 </div>
 
 <script>
@@ -129,6 +131,147 @@ const resonanceOverlay = document.getElementById('resonance-overlay');
 const xdustStat = document.getElementById('xdust-stat');
 const xdustSpan = document.getElementById('xdust');
 const explosionOverlay = document.getElementById('explosion-overlay');
+const soundToggle = document.getElementById('sound-toggle');
+
+// === ЗВУКИ ===
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let soundEnabled = true;
+
+// Функция для создания звуковых эффектов
+function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
+  if (!soundEnabled) return;
+  
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  // Настройка типа звука
+  switch(type) {
+    case 'dialogue':
+      oscillator.type = 'sine';
+      frequency = 220 + Math.random() * 110;
+      break;
+    case 'bullet':
+      oscillator.type = 'square';
+      frequency = 100 + Math.random() * 300;
+      volume = 0.1;
+      break;
+    case 'hit':
+      oscillator.type = 'sawtooth';
+      frequency = 150;
+      volume = 0.4;
+      break;
+    case 'void':
+      oscillator.type = 'sine';
+      frequency = 80;
+      volume = 0.2;
+      break;
+    case 'explosion':
+      oscillator.type = 'sawtooth';
+      frequency = 60;
+      volume = 0.5;
+      break;
+    case 'choice':
+      oscillator.type = 'sine';
+      frequency = 523.25; // C5
+      volume = 0.2;
+      duration = 0.1;
+      break;
+    case 'transition':
+      oscillator.type = 'sine';
+      frequency = 329.63; // E4
+      volume = 0.3;
+      break;
+    case 'glitch':
+      oscillator.type = 'square';
+      frequency = 100 + Math.random() * 200;
+      volume = 0.2;
+      duration = 0.05;
+      break;
+    case 'determination':
+      oscillator.type = 'sine';
+      frequency = 392; // G4
+      volume = 0.4;
+      break;
+    case 'resonance':
+      oscillator.type = 'sine';
+      frequency = 261.63; // C4
+      volume = 0.3;
+      break;
+    case 'victory':
+      oscillator.type = 'sine';
+      frequency = 523.25; // C5
+      volume = 0.5;
+      break;
+    case 'gameover':
+      oscillator.type = 'sine';
+      frequency = 130.81; // C3
+      volume = 0.5;
+      break;
+  }
+  
+  gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+  
+  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + duration);
+}
+
+// Фоновая музыка
+let backgroundMusic;
+function playBackgroundMusic() {
+  if (!soundEnabled) return;
+  
+  backgroundMusic = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  backgroundMusic.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  backgroundMusic.type = 'sine';
+  gainNode.gain.value = 0.05;
+  
+  // Простая мелодия
+  const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
+  let currentNote = 0;
+  
+  backgroundMusic.start();
+  
+  const playNote = () => {
+    if (!soundEnabled) {
+      backgroundMusic.stop();
+      return;
+    }
+    
+    backgroundMusic.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
+    currentNote = (currentNote + 1) % notes.length;
+    
+    setTimeout(playNote, 1000);
+  };
+  
+  playNote();
+}
+
+function stopBackgroundMusic() {
+  if (backgroundMusic) {
+    backgroundMusic.stop();
+  }
+}
+
+// Переключение звука
+soundToggle.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+  
+  if (soundEnabled) {
+    playBackgroundMusic();
+  } else {
+    stopBackgroundMusic();
+  }
+});
 
 // === ИГРОК ===
 let player = { hp: 20, maxHp: 20, lv: 1, determination: 0, voidLevel: 0, resonance: 1.05, darkEnergy: 0.05, xdust: 0, hasMetFlowey: false, questionedReality: false };
@@ -163,12 +306,14 @@ function startGame() {
   xdustStat.style.display = 'block';
   enemyDiv.innerHTML = scenes[0].sprite;
   showDialogue(scenes[0].intro, () => showChoices(scenes[0].choices));
+  playBackgroundMusic();
 }
 
 // === ДИАЛОГ ===
 function showDialogue(text, callback) {
   state = 'dialogue';
   clearBullets();
+  createSound('transition');
   typeText(text, callback);
 }
 
@@ -180,7 +325,10 @@ function typeText(text, callback) {
   const interval = setInterval(() => {
     if (i < text.length) {
       dialogueText.textContent += text[i++];
-      if (text[i-1] === '\n' || i % 3 === 0) dialogueText.scrollTop = dialogueText.scrollHeight;
+      if (text[i-1] === '\n' || i % 3 === 0) {
+        dialogueText.scrollTop = dialogueText.scrollHeight;
+        createSound('dialogue', 0.05);
+      }
     } else {
       clearInterval(interval);
       if (callback) setTimeout(callback, 300);
@@ -214,6 +362,7 @@ function updateChoiceSelection() {
 function selectChoice(index) {
   if (state !== 'choice') return;
   state = 'processing';
+  createSound('choice');
   const scene = scenes[currentScene];
   
   if (index === 1) {
@@ -255,9 +404,12 @@ function startBulletHell() {
   clearBullets();
   heart.style.left = (battleBox.offsetWidth - 18) / 2 + 'px';
   heart.style.top = (battleBox.offsetHeight - 18) / 2 + 'px';
-  if (player.determination > 0) heart.classList.add('determination');
+  if (player.determination > 0) {
+    heart.classList.add('determination');
+    createSound('determination');
+  }
   if (player.voidLevel > 20) { voidOverlay.classList.add('active'); voidStat.style.display = 'block'; }
-  if (player.resonance > 1.1) { resonanceOverlay.classList.add('active'); }
+  if (player.resonance > 1.1) { resonanceOverlay.classList.add('active'); createSound('resonance'); }
   setTimeout(scenes[currentScene].bulletPattern, 500);
   bulletInterval = setInterval(updateBullets, 16);
 }
@@ -271,6 +423,7 @@ function createExistentialCircle(count, speed) {
     const b = document.createElement('div'); b.className = 'bullet'; b.style.width = b.style.height = '12px';
     b.style.left = cX + 'px'; b.style.top = cY + 'px'; battleBox.appendChild(b);
     bullets.push({el: b, x: cX, y: cY, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed});
+    createSound('bullet');
   }, i * 150);
 }
 
@@ -280,6 +433,7 @@ function createVoidWave(count, speed) {
     const b = document.createElement('div'); b.className = 'bullet void'; b.style.width = '30px'; b.style.height = '10px';
     b.style.left = '-30px'; b.style.top = (battleBox.offsetHeight * (i + 1)) / (count + 1) + 'px';
     battleBox.appendChild(b); bullets.push({el: b, x: -30, y: parseFloat(b.style.top), vx: speed, vy: 0});
+    createSound('void');
   }, i * 600);
 }
 
@@ -289,6 +443,7 @@ function createChaosBones() {
     const b = document.createElement('div'); b.className = 'bullet chaos'; b.style.width = '75px'; b.style.height = '18px'; b.style.borderRadius = '4px';
     b.style.left = (Math.random() * (battleBox.offsetWidth - 75)) + 'px'; b.style.top = '-18px';
     battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: -18, vx: 0, vy: 2.5});
+    createSound('glitch');
   }, i * 800);
 }
 
@@ -299,6 +454,7 @@ function createDeterminationSpears(count, speed) {
     const s = document.createElement('div'); s.className = 'bullet'; s.style.width = '35px'; s.style.height = '7px'; s.style.background = '#00FFFF';
     s.style.left = (battleBox.offsetWidth + 35) + 'px'; s.style.top = (cY + (i - count/2) * 25) + 'px';
     battleBox.appendChild(s); bullets.push({el: s, x: battleBox.offsetWidth + 35, y: parseFloat(s.style.top), vx: -speed, vy: 0});
+    createSound('bullet');
   }, i * 400);
 }
 
@@ -309,6 +465,7 @@ function createVoidBones() {
     const a = (i / 3) * Math.PI * 2, r = 70, cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
     b.style.left = (cX + Math.cos(a) * r) + 'px'; b.style.top = (cY + Math.sin(a) * r) + 'px';
     battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: parseFloat(b.style.top), vx: -Math.cos(a) * 1.5, vy: -Math.sin(a) * 1.5, orbit: true, angle: a, radius: r});
+    createSound('void');
   }, i * 500);
 }
 
@@ -318,6 +475,7 @@ function createResonanceWaves(count, speed) {
     const b = document.createElement('div'); b.className = 'bullet'; b.style.background = '#00F'; b.style.width = '40px'; b.style.height = '15px';
     b.style.left = (battleBox.offsetWidth * Math.random()) + 'px'; b.style.top = battleBox.offsetHeight + 'px';
     battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: battleBox.offsetHeight, vx: 0, vy: -speed});
+    createSound('resonance');
   }, i * 500);
 }
 
@@ -330,6 +488,7 @@ function createExplosionPattern(count, speed) {
     b.style.left = cX + 'px'; b.style.top = cY + 'px'; battleBox.appendChild(b);
     bullets.push({el: b, x: cX, y: cY, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, explode: true});
     explosionOverlay.classList.add('active');
+    createSound('explosion');
     setTimeout(() => explosionOverlay.classList.remove('active'), 1000);
   }, i * 300);
 }
@@ -359,6 +518,7 @@ function updateBullets() {
     if (checkCollision(hR, r)) {
       takeDamage(b.el.classList.contains('void') ? 2 : 1);
       b.el.classList.add('flash');
+      createSound('hit');
       setTimeout(() => { if (b.el.parentNode) b.el.remove(); bullets.splice(i, 1); }, 300);
     }
   }
@@ -372,13 +532,35 @@ function updateBullets() {
 }
 
 function checkCollision(a, b) { return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; }
-function takeDamage(d) { player.hp = Math.max(0, player.hp - d); if (player.hp === 0) gameOver(); updateStats(); battleBox.style.background = '#600'; setTimeout(() => battleBox.style.background = nightMode ? '#001022' : '#000', 100); }
-function updateStats() { hpSpan.textContent = player.hp; maxHpSpan.textContent = player.maxHp; lvSpan.textContent = player.lv; dtSpan.textContent = player.determination; voidSpan.textContent = player.voidLevel; resonanceSpan.textContent = player.resonance.toFixed(2); darkEnergySpan.textContent = player.darkEnergy.toFixed(2); xdustSpan.textContent = player.xdust; }
-function clearBullets() { bullets.forEach(b => b.el.remove()); bullets = []; clearInterval(bulletInterval); }
+function takeDamage(d) { 
+  player.hp = Math.max(0, player.hp - d); 
+  if (player.hp === 0) gameOver(); 
+  updateStats(); 
+  battleBox.style.background = '#600'; 
+  setTimeout(() => battleBox.style.background = nightMode ? '#001022' : '#000', 100); 
+}
+function updateStats() { 
+  hpSpan.textContent = player.hp; 
+  maxHpSpan.textContent = player.maxHp; 
+  lvSpan.textContent = player.lv; 
+  dtSpan.textContent = player.determination; 
+  voidSpan.textContent = player.voidLevel; 
+  resonanceSpan.textContent = player.resonance.toFixed(2); 
+  darkEnergySpan.textContent = player.darkEnergy.toFixed(2); 
+  xdustSpan.textContent = player.xdust; 
+}
+function clearBullets() { 
+  bullets.forEach(b => b.el.remove()); 
+  bullets = []; 
+  clearInterval(bulletInterval); 
+}
 
 // === КОНЕЦ ===
 function gameOver() {
-  state = 'gameover'; clearBullets();
+  state = 'gameover'; 
+  clearBullets();
+  stopBackgroundMusic();
+  createSound('gameover', 2);
   showDialogue(player.questionedReality ? "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation.\n* Dark energy pulses: rebirth in chaos." : "* You died.\n* But your determination hasn't faded...", () => {
     setTimeout(() => {
       resetTapPrompt.classList.add('visible');
@@ -388,7 +570,10 @@ function gameOver() {
 }
 
 function victory() {
-  state = 'victory'; clearBullets();
+  state = 'victory'; 
+  clearBullets();
+  stopBackgroundMusic();
+  createSound('victory', 3);
   const end = player.determination >= 15 && player.questionedReality
     ? "* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET\n* Resonance at " + player.resonance.toFixed(2) + ". Dark energy: " + player.darkEnergy.toFixed(2) + ".\n* $XDUST: " + player.xdust + "."
     : "* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\nTHE END";
@@ -413,9 +598,23 @@ document.addEventListener('touchstart', e => {
 });
 
 // === УПРАВЛЕНИЕ ===
-battleBox.addEventListener('touchstart', e => { e.preventDefault(); if (state !== 'bullet') return; touchActive = true; touchIndicator.style.display = 'block'; moveHeartToTouch(e.touches[0]); }, { passive: false });
-battleBox.addEventListener('touchmove', e => { e.preventDefault(); if (touchActive && state === 'bullet') moveHeartToTouch(e.touches[0]); }, { passive: false });
-battleBox.addEventListener('touchend', () => { touchActive = false; touchIndicator.style.display = 'none'; });
+battleBox.addEventListener('touchstart', e => { 
+  e.preventDefault(); 
+  if (state !== 'bullet') return; 
+  touchActive = true; 
+  touchIndicator.style.display = 'block'; 
+  moveHeartToTouch(e.touches[0]); 
+}, { passive: false });
+
+battleBox.addEventListener('touchmove', e => { 
+  e.preventDefault(); 
+  if (touchActive && state === 'bullet') moveHeartToTouch(e.touches[0]); 
+}, { passive: false });
+
+battleBox.addEventListener('touchend', () => { 
+  touchActive = false; 
+  touchIndicator.style.display = 'none'; 
+});
 
 function moveHeartToTouch(t) {
   if (state !== 'bullet') return;
@@ -428,8 +627,16 @@ function moveHeartToTouch(t) {
 
 document.addEventListener('keydown', e => {
   if (state === 'choice') {
-    if (e.key === 'ArrowUp') { selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length; updateChoiceSelection(); }
-    if (e.key === 'ArrowDown') { selectedChoice = (selectedChoice + 1) % choicesDiv.children.length; updateChoiceSelection(); }
+    if (e.key === 'ArrowUp') { 
+      selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length; 
+      updateChoiceSelection(); 
+      createSound('choice');
+    }
+    if (e.key === 'ArrowDown') { 
+      selectedChoice = (selectedChoice + 1) % choicesDiv.children.length; 
+      updateChoiceSelection(); 
+      createSound('choice');
+    }
     if (e.key === 'Enter' || e.key === ' ') selectChoice(selectedChoice);
   }
   keys[e.key] = true;
