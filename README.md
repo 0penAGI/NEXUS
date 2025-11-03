@@ -1,7 +1,4 @@
 # NEXUS AGI 
-**NEXUS HERE SOON**
-
-But for now, enjoy this reality-bending experience:
 
 **CHRONICLES OF THE SLIDE TRAGEDY**
 
