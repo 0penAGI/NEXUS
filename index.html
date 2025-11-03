@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>ХРОНИКИ ТРАГЕДИИ СЛАЙДОВ: UNDERTALE EDITION</title>
+<title>CHRONICLES OF THE SLIDE TRAGEDY: UNDERTALE EDITION</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'Undertale',sans-serif;background:#000;color:#FFF;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -32,10 +33,10 @@ body{font-family:'Undertale',sans-serif;background:#000;color:#FFF;overflow:hidd
   <div id="battle-box">
     <div id="heart"></div>
     <div id="enemy"></div>
-    <div class="soul-text">* Ты чувствуешь, как реальность дрожит.</div>
+    <div class="soul-text">* You feel reality trembling.</div>
   </div>
   <div id="dialogue-box">
-    <div id="dialogue-text">* Добро пожаловать в ХРОНИКИ ТРАГЕДИИ СЛАЙДОВ.</div>
+    <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY.</div>
     <div id="choices"></div>
   </div>
 </div>
@@ -59,36 +60,36 @@ let gameInterval, bulletInterval;
 
 const scenes = [
   {
-    enemy: "Флоуи",
+    enemy: "Flowey",
     sprite: "🌻",
-    intro: "* Я — Флоуи! Флоуи-цветочек!\n* Хм... Ты новенький, да?\n* В этом мире... УБЕЙ или БУДЬ УБИТ!",
-    choices: ["* Пощадить", "* Подружиться", "* Атаковать"],
+    intro: "* I'm Flowey! Flowey the flower!\n* Hm... You're new here, right?\n* In this world... KILL or BE KILLED!",
+    choices: ["* Mercy", "* Befriend", "* Attack"],
     correct: 1,
-    actSuccess: "* Ты улыбнулся. Флоуи смутился.",
-    fightSuccess: "* Ты ударил. Флоуи рассмеялся.",
-    mercySuccess: "* Флоуи убежал, крича о дружбе.",
+    actSuccess: "* You smiled. Flowey got confused.",
+    fightSuccess: "* You hit. Flowey laughed.",
+    mercySuccess: "* Flowey ran away, screaming about friendship.",
     bulletPattern: () => createCircle(5, 2)
   },
   {
-    enemy: "Ториэль",
+    enemy: "Toriel",
     sprite: "🐐",
-    intro: "* Я — Ториэль, хранительница Руин.\n* Ты должен доказать, что достоин идти дальше.\n* Но я не хочу причинять тебе боль...",
-    choices: ["* Пощадить", "* Поговорить", "* Атаковать"],
+    intro: "* I'm Toriel, guardian of the Ruins.\n* You must prove you're worthy to go further.\n* But I don't want to hurt you...",
+    choices: ["* Mercy", "* Talk", "* Attack"],
     correct: 0,
-    actSuccess: "* Ты попросил научиться магии. Ториэль улыбнулась.",
-    fightSuccess: "* Ты ударил. Ториэль заплакала.",
-    mercySuccess: "* Ториэль обняла тебя и пропустила.",
+    actSuccess: "* You asked to learn magic. Toriel smiled.",
+    fightSuccess: "* You hit. Toriel cried.",
+    mercySuccess: "* Toriel hugged you and let you pass.",
     bulletPattern: () => createWave(3, 1.5)
   },
   {
-    enemy: "Санс",
+    enemy: "Sans",
     sprite: "💀",
-    intro: "* эй, парень.\n* ты прошел долгий путь.\n* но знаешь... иногда лучше просто... поспать.",
-    choices: ["* Подремать", "* Подшутить", "* Атаковать"],
+    intro: "* hey, kid.\n* you've come a long way.\n* but you know... sometimes it's better to just... take a nap.",
+    choices: ["* Take a nap", "* Joke", "* Attack"],
     correct: 0,
-    actSuccess: "* Ты зевнул. Санс одобрительно кивнул.",
-    fightSuccess: "* Ты попытался ударить. Санс исчез.",
-    mercySuccess: "* Санс подмигнул и исчез в синим свете.",
+    actSuccess: "* You yawned. Sans nodded approvingly.",
+    fightSuccess: "* You tried to hit. Sans disappeared.",
+    mercySuccess: "* Sans winked and disappeared in a blue light.",
     bulletPattern: () => createBones()
   }
 ];
@@ -152,7 +153,7 @@ function selectChoice(index) {
     showDialogue(scene.actSuccess, () => startBulletHell());
   } else {
     takeDamage(4);
-    showDialogue(scene.fightSuccess || "* Это было... не очень дружелюбно.", () => startBulletHell());
+    showDialogue(scene.fightSuccess || "* That was... not very friendly.", () => startBulletHell());
   }
 }
 
@@ -299,7 +300,7 @@ function gameOver() {
   clearBullets();
   clearInterval(bulletInterval);
   dialogueText.textContent = '';
-  showDialogue("* Ты умер.\n* Но твоя решимость не угасла...", () => {
+  showDialogue("* You died.\n* But your determination hasn't faded...", () => {
     setTimeout(() => location.reload(), 2000);
   });
 }
@@ -307,7 +308,7 @@ function gameOver() {
 function victory() {
   state = 'victory';
   clearBullets();
-  showDialogue("* Ты прошел через все испытания...\n* Не убив никого.\n* Ты — настоящий герой.", () => {
+  showDialogue("* You've passed through all the trials...\n* Without killing anyone.\n* You are a true hero.", () => {
     dialogueText.innerHTML += "\n\n<span style='color:#FF0'>THE END</span>";
   });
 }
