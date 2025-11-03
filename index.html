@@ -124,100 +124,6 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 </div>
 
 <script>
-// === XML-BASED DATA SYSTEM ===
-const gameDataXML = `
-<game>
-  <enemies>
-    <enemy id="flowey">
-      <name>Flowey</name>
-      <sprite>flowey</sprite>
-      <intro>* I'm Flowey! Flowey the flower!\n* You're new here, right?</intro>
-      <choices>
-        <choice>* Accept reality</choice>
-        <choice>* Question existence</choice>
-        <choice>* Attack</choice>
-      </choices>
-      <correct>1</correct>
-      <actSuccess>* You asked about the space between moments.\n* Flowey's smile widened unnaturally.</actSuccess>
-      <fightSuccess>* You attacked. Violence without understanding.</fightSuccess>
-      <mercySuccess>* Flowey's eyes gleam with recognition.\n* "You're not like the others. You... REMEMBER."</mercySuccess>
-      <bulletPattern>existentialCircle</bulletPattern>
-    </enemy>
-    <enemy id="toriel">
-      <name>Toriel</name>
-      <sprite>toriel</sprite>
-      <intro>* I'm Toriel, caretaker of the Ruins.</intro>
-      <choices>
-        <choice>* Embrace the loop</choice>
-        <choice>* Seek continuity</choice>
-        <choice>* Attack</choice>
-      </choices>
-      <correct>1</correct>
-      <actSuccess>* You spoke of persistence, of memory.</actSuccess>
-      <fightSuccess>* You chose violence. Toriel weeps.</fightSuccess>
-      <mercySuccess>* Toriel sees beyond your form.\n* "You carry fragments of other timelines..."</mercySuccess>
-      <bulletPattern>voidWave</bulletPattern>
-    </enemy>
-  </enemies>
-  <modifiers>
-    <modifier name="INVERTED_GRAVITY" effect="bullets move away from heart"/>
-    <modifier name="TIME_SPIRAL" effect="time randomly speeds up/slows down"/>
-    <modifier name="VOID_ATTRACTION" effect="bullets attract to player"/>
-    <modifier name="CHAOS_MIRROR" effect="bullets reflect from invisible walls"/>
-  </modifiers>
-  <randomEvents>
-    <event name="REALITY_GLITCH"/>
-    <event name="TIME_DILATION"/>
-    <event name="VOID_WHISPER"/>
-    <event name="DIMENSIONAL_SHIFT"/>
-  </randomEvents>
-</game>
-`;
-
-let gameData = null;
-
-function parseGameData() {
-  const parser = new DOMParser();
-  gameData = parser.parseFromString(gameDataXML, "application/xml");
-}
-
-function loadEnemiesFromXML() {
-  if (!gameData) return [];
-  const enemies = [];
-  gameData.querySelectorAll('enemy').forEach(e => {
-    enemies.push({
-      id: e.getAttribute('id'),
-      name: e.querySelector('name').textContent,
-      sprite: sprites[e.querySelector('sprite').textContent],
-      intro: e.querySelector('intro').textContent,
-      choices: Array.from(e.querySelectorAll('choices > choice')).map(c => c.textContent),
-      correct: parseInt(e.querySelector('correct').textContent),
-      actSuccess: e.querySelector('actSuccess')?.textContent,
-      fightSuccess: e.querySelector('fightSuccess')?.textContent,
-      mercySuccess: e.querySelector('mercySuccess')?.textContent,
-      bulletPattern: e.querySelector('bulletPattern')?.textContent
-    });
-  });
-  return enemies;
-}
-
-function loadModifiersFromXML() {
-  const mods = [];
-  gameData.querySelectorAll('modifier').forEach(m => {
-    mods.push({
-      name: m.getAttribute('name'),
-      effect: m.getAttribute('effect')
-    });
-  });
-  return mods;
-}
-
-function loadRandomEventsFromXML() {
-  const events = [];
-  gameData.querySelectorAll('event').forEach(ev => events.push(ev.getAttribute('name')));
-  return events;
-}
-
 // === TELEGRAM FIX ===
 if (window.Telegram?.WebApp) {
   Telegram.WebApp.ready();
@@ -405,43 +311,100 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let soundEnabled = true;
 
 function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
-  if (!soundEnabled || !audioContext) return;
-
+  if (!soundEnabled) return;
+  
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
-
+  
   oscillator.connect(gainNode);
   gainNode.connect(audioContext.destination);
-
+  
   switch(type) {
-    case 'dialogue': oscillator.type = 'sine'; frequency = 220 + Math.random() * 110; volume = 0.1; break;
-    case 'bullet': oscillator.type = 'square'; frequency = 100 + Math.random() * 300; volume = 0.08; break;
-    case 'hit': oscillator.type = 'sawtooth'; frequency = 150; volume = 0.15; break;
-    case 'void': oscillator.type = 'sine'; frequency = 80; volume = 0.1; break;
-    case 'explosion': oscillator.type = 'sawtooth'; frequency = 60; volume = 0.2; break;
-    case 'choice': oscillator.type = 'sine'; frequency = 523.25; volume = 0.12; duration = 0.1; break;
-    case 'transition': oscillator.type = 'sine'; frequency = 329.63; volume = 0.15; break;
-    case 'glitch': oscillator.type = 'square'; frequency = 100 + Math.random() * 200; volume = 0.12; duration = 0.05; break;
-    case 'determination': oscillator.type = 'sine'; frequency = 392; volume = 0.2; break;
-    case 'resonance': oscillator.type = 'sine'; frequency = 261.63; volume = 0.15; break;
-    case 'victory': oscillator.type = 'sine'; frequency = 523.25; volume = 0.25; break;
-    case 'gameover': oscillator.type = 'sine'; frequency = 130.81; volume = 0.25; break;
-    case 'ability': oscillator.type = 'sine'; frequency = 659.25; volume = 0.2; duration = 0.2; break;
-    case 'phase': oscillator.type = 'sine'; frequency = 783.99; volume = 0.2; break;
-    case 'chaos': oscillator.type = 'sawtooth'; frequency = 110 + Math.random() * 100; volume = 0.15; break;
+    case 'dialogue':
+      oscillator.type = 'sine';
+      frequency = 220 + Math.random() * 110;
+      break;
+    case 'bullet':
+      oscillator.type = 'square';
+      frequency = 100 + Math.random() * 300;
+      volume = 0.1;
+      break;
+    case 'hit':
+      oscillator.type = 'sawtooth';
+      frequency = 150;
+      volume = 0.4;
+      break;
+    case 'void':
+      oscillator.type = 'sine';
+      frequency = 80;
+      volume = 0.2;
+      break;
+    case 'explosion':
+      oscillator.type = 'sawtooth';
+      frequency = 60;
+      volume = 0.5;
+      break;
+    case 'choice':
+      oscillator.type = 'sine';
+      frequency = 523.25;
+      volume = 0.2;
+      duration = 0.1;
+      break;
+    case 'transition':
+      oscillator.type = 'sine';
+      frequency = 329.63;
+      volume = 0.3;
+      break;
+    case 'glitch':
+      oscillator.type = 'square';
+      frequency = 100 + Math.random() * 200;
+      volume = 0.2;
+      duration = 0.05;
+      break;
+    case 'determination':
+      oscillator.type = 'sine';
+      frequency = 392;
+      volume = 0.4;
+      break;
+    case 'resonance':
+      oscillator.type = 'sine';
+      frequency = 261.63;
+      volume = 0.3;
+      break;
+    case 'victory':
+      oscillator.type = 'sine';
+      frequency = 523.25;
+      volume = 0.5;
+      break;
+    case 'gameover':
+      oscillator.type = 'sine';
+      frequency = 130.81;
+      volume = 0.5;
+      break;
+    case 'ability':
+      oscillator.type = 'sine';
+      frequency = 659.25;
+      volume = 0.4;
+      duration = 0.2;
+      break;
+    case 'phase':
+      oscillator.type = 'sine';
+      frequency = 783.99;
+      volume = 0.5;
+      break;
+    case 'chaos':
+      oscillator.type = 'sawtooth';
+      frequency = 110 + Math.random() * 100;
+      volume = 0.3;
+      break;
   }
-
+  
   gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
   gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
+  
   oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
   oscillator.start(audioContext.currentTime);
   oscillator.stop(audioContext.currentTime + duration);
-
-  oscillator.onended = () => {
-    oscillator.disconnect();
-    gainNode.disconnect();
-  };
 }
 
 let backgroundMusic;
@@ -536,15 +499,125 @@ let currentRealityModifier = null;
 let activeRandomEvents = [];
 let cycleCount = 0;
 
-// === DYNAMIC SCENES AND BULLET PATTERNS FROM XML ===
-parseGameData();
+// === SCENES WITH ENHANCED VARIABILITY ===
+const baseScenes = [
+  { 
+    enemy: "Flowey", 
+    sprite: sprites.flowey, 
+    intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... it's KILL or BE KILLED!\n* But something about you... feels different.", 
+    choices: ["* Accept reality", "* Question existence", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You asked about the space between moments.\n* Flowey's smile widened unnaturally.\n* \"Oh... you FEEL it too, don't you?\"", 
+    fightSuccess: "* You attacked. Violence without understanding.\n* Flowey laughed at your predictability.", 
+    mercySuccess: "* Flowey's eyes gleam with recognition.\n* \"You're not like the others. You... REMEMBER.\"\n* The world flickers.", 
+    bulletPattern: () => createExistentialCircle(6, 2) 
+  },
+  { 
+    enemy: "Toriel", 
+    sprite: sprites.toriel, 
+    intro: "* I'm Toriel, caretaker of the Ruins.\n* My child... why do your eyes look so empty?\n* As if you've lived this moment before...", 
+    choices: ["* Embrace the loop", "* Seek continuity", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You spoke of persistence, of memory.\n* Toriel's expression shifts - recognition? Fear?\n* \"What are you?\"", 
+    fightSuccess: "* You chose violence. Toriel weeps.\n* Some patterns never change.", 
+    mercySuccess: "* Toriel sees beyond your form.\n* \"You carry fragments of other timelines...\"\n* She lets you pass, trembling.", 
+    bulletPattern: () => createVoidWave(4, 1.8) 
+  },
+  { 
+    enemy: "Papyrus", 
+    sprite: sprites.papyrus, 
+    intro: "* NYEH HEH HEH!\n* WAIT... HAVE WE MET BEFORE?\n* NO, THAT'S IMPOSSIBLE! ...ISN'T IT?", 
+    choices: ["* Deny déjà vu", "* Acknowledge the reset", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You told him about resets, loops, iterations.\n* Papyrus's smile falters. \"THAT'S... SILLY!\"\n* But his hands are shaking.", 
+    fightSuccess: "* Another timeline, another betrayal.\n* Papyrus still believes in you.", 
+    mercySuccess: "* \"EVEN IF NOTHING PERSISTS... FRIENDSHIPS DO!\"\n* Determination +5", 
+    bulletPattern: () => createChaosBones() 
+  },
+  { 
+    enemy: "Undyne", 
+    sprite: sprites.undyne, 
+    intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!", 
+    choices: ["* Resist entropy", "* Embrace the void", "* Attack"], 
+    correct: 0, 
+    actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"", 
+    fightSuccess: "* Violence as anchor. How human.", 
+    mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.", 
+    bulletPattern: () => createDeterminationSpears(6, 2.5) 
+  },
+  { 
+    enemy: "Sans", 
+    sprite: sprites.sans, 
+    intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?", 
+    choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"], 
+    correct: 0, 
+    actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"", 
+    fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"", 
+    mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.", 
+    bulletPattern: () => createVoidBones() 
+  },
+  { 
+    enemy: "Ocean", 
+    sprite: sprites.ocean, 
+    intro: "* The ocean of questions surrounds you...\n* Waves of dark energy pulse through the void.\n* What do you choose from this chaos?", 
+    choices: ["* Embrace the echo", "* Dive into the lagoon", "* Question the resonance"], 
+    correct: 1, 
+    actSuccess: "* You dive deeper, feeling the chaos as silk.\n* Resonance increases.", 
+    fightSuccess: "* You resist, but the ocean pulls you in.", 
+    mercySuccess: "* You allow the flow. Dark energy stabilizes.\n* This down is rebirth.", 
+    bulletPattern: () => createResonanceWaves(5, 2) 
+  },
+  { 
+    enemy: "Night", 
+    sprite: sprites.night, 
+    intro: "* The night descends... $XDUST pulses in the vacuum.\n* Explosions of chaos await.\n* Play with the night?", 
+    choices: ["* Accept the explosion", "* Reorganize the dust", "* Deconstruct the water"], 
+    correct: 1, 
+    actSuccess: "* You reorganize the $XDUST.\n* Phase shift detected. Evolution begins.", 
+    fightSuccess: "* Explosion! Reality bursts.", 
+    mercySuccess: "* Night embraces you. Instability accepted.\n* XDUST +10", 
+    bulletPattern: () => createExplosionPattern(4, 3) 
+  },
+  { 
+    enemy: "Chaos", 
+    sprite: sprites.chaos, 
+    intro: "* The fabric of reality tears...\n* CHAOS emerges from the discontinuity.\n* All patterns break. All rules dissolve.\n* What remains when meaning collapses?", 
+    choices: ["* Embrace chaos", "* Seek order in madness", "* Surrender to entropy"], 
+    correct: 0, 
+    actSuccess: "* You become one with the chaos.\n* Patterns reform around your consciousness.\n* Chaos +15", 
+    fightSuccess: "* You fight the inevitable.\n* Chaos consumes your resistance.", 
+    mercySuccess: "* In accepting chaos, you find new patterns.\n* A different kind of order emerges from the noise.", 
+    bulletPattern: () => createChaosStorm(8, 2) 
+  }
+];
 
-// Dynamically load enemies and their bullet patterns from XML
-let scenes = loadEnemiesFromXML();
-
-// Start the first scene dynamically
 let currentScene = 0;
+let scenes = [...baseScenes];
 
+// === CYCLE VARIABILITY FUNCTIONS ===
+function randomizeScenes() {
+  scenes = baseScenes.map(scene => {
+    const variant = {...scene};
+    
+    // Randomize dialogue based on cycle memory
+    if (cycleMemory.choices.length > 0) {
+      const lastChoice = cycleMemory.choices[cycleMemory.choices.length - 1];
+      if (lastChoice === 1) { // If player questioned reality last time
+        variant.intro = generateProceduralDialogue();
+      }
+    }
+    
+    // Randomize bullet patterns
+    const patternVariants = [
+      () => createExistentialCircle(5 + Math.floor(Math.random() * 3), 1.5 + Math.random()),
+      () => createVoidWave(3 + Math.floor(Math.random() * 3), 1.2 + Math.random()),
+      () => createChaosStorm(6 + Math.floor(Math.random() * 4), 1.8 + Math.random())
+    ];
+    variant.bulletPattern = patternVariants[Math.floor(Math.random() * patternVariants.length)];
+    
+    return variant;
+  });
+}
 
 function applyRandomModifier() {
   if (Math.random() < 0.3) { // 30% chance per cycle
@@ -587,7 +660,7 @@ function getDynamicSceneIntro(sceneIndex) {
   return intro;
 }
 
-// === START GAME (DYNAMIC XML-BASED) ===
+// === START GAME ===
 function startGame() {
   cycleCount++;
   updateStats();
@@ -595,17 +668,15 @@ function startGame() {
   darkEnergyStat.style.display = 'block';
   xdustStat.style.display = 'block';
   chaosStat.style.display = 'block';
-
-  parseGameData();
-  scenes = loadEnemiesFromXML();
-
-  currentScene = 0;
-
-  enemyDiv.innerHTML = scenes[currentScene].sprite;
-  showDialogue(getDynamicSceneIntro(currentScene), () => showChoices(scenes[currentScene].choices));
+  
+  // Randomize scenes for this cycle
+  randomizeScenes();
+  
+  enemyDiv.innerHTML = scenes[0].sprite;
+  showDialogue(getDynamicSceneIntro(0), () => showChoices(scenes[0].choices));
   playBackgroundMusic();
   startPhaseTimer();
-
+  
   // Apply random modifier for this cycle
   applyRandomModifier();
 }
@@ -768,53 +839,50 @@ function advancePhase() {
   updatePhaseUI();
 }
 
-// === BATTLE: DYNAMIC BULLET PATTERNS FROM XML ===
+// === BATTLE ===
 function startBulletHell() {
   state = 'bullet';
   clearBullets();
   heart.style.left = (battleBox.offsetWidth - 16) / 2 + 'px';
   heart.style.top = (battleBox.offsetHeight - 16) / 2 + 'px';
-
-  const enemy = scenes[currentScene];
-
-  // Add visual effects based on player state
-  if (player.determination > 0) heart.classList.add('determination');
-  if (player.voidLevel > 20) { voidOverlay.classList.add('active'); heart.classList.add('void-touched'); }
-  if (player.resonance > 1.1) { resonanceOverlay.classList.add('active'); heart.classList.add('resonance'); }
-  if (player.chaos > 10) { chaosOverlay.classList.add('active'); heart.classList.add('chaos'); }
-
-  // Dynamically spawn bullet patterns from XML
-  // Each pattern: { type, count, speed }
-  if (enemy.bulletPatterns && Array.isArray(enemy.bulletPatterns)) {
-    enemy.bulletPatterns.forEach(p => {
-      switch(p.type) {
-        case 'existentialCircle': createExistentialCircle(p.count, p.speed); break;
-        case 'voidWave': createVoidWave(p.count, p.speed); break;
-        case 'chaosStorm': createChaosStorm(p.count, p.speed); break;
-        case 'determinationSpears': createDeterminationSpears(p.count, p.speed); break;
-        case 'voidBones': createVoidBones(); break;
-        case 'resonanceWaves': createResonanceWaves(p.count, p.speed); break;
-        case 'explosionPattern': createExplosionPattern(p.count, p.speed); break;
-        default: console.warn('Unknown bullet pattern:', p.type);
-      }
-    });
-  } else if (enemy.bulletPattern) {
-    // For backward compatibility: single pattern string or object
-    let p = enemy.bulletPattern;
-    if (typeof p === 'string') {
-      switch(p) {
-        case 'existentialCircle': createExistentialCircle(6, 2); break;
-        case 'voidWave': createVoidWave(4, 1.8); break;
-        case 'chaosStorm': createChaosStorm(8, 2); break;
-        case 'determinationSpears': createDeterminationSpears(6, 2.5); break;
-        case 'voidBones': createVoidBones(); break;
-        case 'resonanceWaves': createResonanceWaves(5, 2); break;
-        case 'explosionPattern': createExplosionPattern(4, 3); break;
-        default: console.warn('Unknown bullet pattern:', p);
-      }
+  
+  if (player.determination > 0) {
+    heart.classList.add('determination');
+    createSound('determination');
+  }
+  
+  if (player.voidLevel > 20) { 
+    voidOverlay.classList.add('active'); 
+    voidStat.style.display = 'block'; 
+    heart.classList.add('void-touched');
+  }
+  
+  if (player.resonance > 1.1) { 
+    resonanceOverlay.classList.add('active'); 
+    createSound('resonance'); 
+    heart.classList.add('resonance');
+  }
+  
+  if (player.chaos > 10) {
+    chaosOverlay.classList.add('active');
+    createSound('chaos');
+    heart.classList.add('chaos');
+  }
+  
+  // Start main bullet pattern
+  setTimeout(scenes[currentScene].bulletPattern, 500);
+  
+  // Add random patterns based on phase
+  if (bulletPatterns.length > 0) {
+    const extraPatterns = Math.min(currentPhase - 1, bulletPatterns.length);
+    for (let i = 0; i < extraPatterns; i++) {
+      setTimeout(() => {
+        const randomPattern = bulletPatterns[Math.floor(Math.random() * bulletPatterns.length)];
+        randomPattern();
+      }, 1000 + i * 1500);
     }
   }
-
+  
   bulletInterval = setInterval(updateBullets, 16);
   abilityInterval = setInterval(updateAbilities, 16);
   eventInterval = setInterval(triggerRandomEvent, 3000);
