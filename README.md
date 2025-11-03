@@ -144,7 +144,7 @@ if (window.Telegram?.WebApp) {
 ## ❤️ Credits
 
 **Created with love, glitch, and determination**  
-by Edriia ✨
+by 0penAGI ✨
 
 **Special Thanks:**
 - The void, for its endless inspiration
