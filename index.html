@@ -40,6 +40,8 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 #void-overlay.active{opacity:1}
 .reality-text{position:absolute;font-size:10px;color:#9400D3;text-shadow:0 0 4px #9400D3;pointer-events:none;animation:fadeFloat 2.5s forwards;z-index:15}
 @keyframes fadeFloat{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
+#reset-tap-prompt{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#9400D3;text-shadow:0 0 4px #9400D3;font-size:12px;pointer-events:none;opacity:0;transition:opacity 0.5s}
+#reset-tap-prompt.visible{opacity:1}
 </style>
 </head>
 <body>
@@ -60,6 +62,7 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
   <div id="dialogue-box">
     <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY.</div>
     <div id="choices"></div>
+    <div id="reset-tap-prompt">* Tap anywhere to continue existing.</div>
   </div>
 </div>
 
@@ -98,6 +101,7 @@ const dtStat = document.getElementById('determination-stat');
 const voidStat = document.getElementById('void-stat');
 const dtSpan = document.getElementById('dt');
 const voidSpan = document.getElementById('void');
+const resetTapPrompt = document.getElementById('reset-tap-prompt');
 
 // === ИГРОК ===
 let player = { hp: 20, maxHp: 20, lv: 1, determination: 0, voidLevel: 0, hasMetFlowey: false, questionedReality: false };
@@ -108,6 +112,7 @@ let keys = {};
 let touchActive = false;
 let bulletInterval;
 let metaMode = false;
+let resetMode = false;
 
 // === СЦЕНЫ ===
 const scenes = [
@@ -137,6 +142,7 @@ function showDialogue(text, callback) {
 function typeText(text, callback) {
   dialogueText.textContent = '';
   choicesDiv.innerHTML = '';
+  resetTapPrompt.classList.remove('visible');
   let i = 0;
   const interval = setInterval(() => {
     if (i < text.length) {
@@ -309,7 +315,12 @@ function clearBullets() { bullets.forEach(b => b.el.remove()); bullets = []; cle
 // === КОНЕЦ ===
 function gameOver() {
   state = 'gameover'; clearBullets();
-  showDialogue(player.questionedReality ? "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation." : "* You died.\n* But your determination hasn't faded...", () => setTimeout(() => location.reload(), 2500));
+  showDialogue(player.questionedReality ? "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation." : "* You died.\n* But your determination hasn't faded...", () => {
+    setTimeout(() => {
+      resetTapPrompt.classList.add('visible');
+      resetMode = true;
+    }, 2500);
+  });
 }
 
 function victory() {
@@ -317,8 +328,25 @@ function victory() {
   const end = player.determination >= 15 && player.questionedReality
     ? "* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET"
     : "* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\nTHE END";
-  showDialogue(end, () => { if (player.determination >= 15) setTimeout(() => { dialogueBox.classList.add('meta'); dialogueText.innerHTML += "\n\n<span style='color:#9400D3'>* Press RESET to continue existing.</span>"; }, 2000); });
+  showDialogue(end, () => { 
+    if (player.determination >= 15) {
+      setTimeout(() => { 
+        dialogueText.innerHTML += "\n\n<span style='color:#9400D3'>* Tap anywhere to continue existing.</span>"; 
+        dialogueBox.classList.add('meta'); 
+        resetTapPrompt.classList.add('visible');
+        resetMode = true;
+      }, 2000); 
+    }
+  });
 }
+
+// === TAP TO CONTINUE ===
+document.addEventListener('touchstart', e => {
+  if (resetMode && state !== 'bullet') {
+    e.preventDefault();
+    location.reload();
+  }
+});
 
 // === УПРАВЛЕНИЕ ===
 battleBox.addEventListener('touchstart', e => { e.preventDefault(); if (state !== 'bullet') return; touchActive = true; touchIndicator.style.display = 'block'; moveHeartToTouch(e.touches[0]); }, { passive: false });
