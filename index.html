@@ -85,181 +85,191 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 </head>
 <body>
 <div id="game">
-<div id="stats">
-<span>LV <span id="lv">1</span></span>
-<span>HP <span id="hp">20</span>/<span id="max-hp">20</span></span>
-<span id="determination-stat" style="display:none;color:#FF0">DT <span id="dt">0</span></span>
-<span id="void-stat" style="display:none;color:#9400D3">VOID <span id="void">0</span></span>
-<span id="resonance-stat" style="display:none;color:#0F0">RS <span id="resonance">1.05</span></span>
-<span id="dark-energy-stat" style="display:none;color:#00F">DE <span id="dark-energy">0.05</span></span>
-<span id="xdust-stat" style="display:none;color:#FFD700">XDUST <span id="xdust">0</span></span>
-<span id="chaos-stat" style="display:none;color:#FF00FF">CHAOS <span id="chaos">0</span></span>
+  <div id="stats">
+    <span>LV <span id="lv">1</span></span>
+    <span>HP <span id="hp">20</span>/<span id="max-hp">20</span></span>
+    <span id="determination-stat" style="display:none;color:#FF0">DT <span id="dt">0</span></span>
+    <span id="void-stat" style="display:none;color:#9400D3">VOID <span id="void">0</span></span>
+    <span id="resonance-stat" style="display:none;color:#0F0">RS <span id="resonance">1.05</span></span>
+    <span id="dark-energy-stat" style="display:none;color:#00F">DE <span id="dark-energy">0.05</span></span>
+    <span id="xdust-stat" style="display:none;color:#FFD700">XDUST <span id="xdust">0</span></span>
+    <span id="chaos-stat" style="display:none;color:#FF00FF">CHAOS <span id="chaos">0</span></span>
+  </div>
+  <div id="timeline-bar">
+    <div id="timeline-progress"></div>
+  </div>
+  <div id="phase-indicator">PHASE 1</div>
+  <div id="battle-box">
+    <div id="heart"></div>
+    <div id="enemy"></div>
+    <div class="soul-text">* You feel reality trembling.</div>
+    <div id="touch-indicator"></div>
+    <div id="void-overlay"></div>
+    <div id="resonance-overlay"></div>
+    <div id="explosion-overlay"></div>
+    <div id="chaos-overlay"></div>
+  </div>
+  <div id="dialogue-box">
+    <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY - ENHANCED.</div>
+    <div id="choices"></div>
+    <div id="reset-tap-prompt">* Tap anywhere to continue existing.</div>
+  </div>
+  <div id="ability-bar">
+    <div class="ability-btn" id="ability-dash" title="Dash (D)">D</div>
+    <div class="ability-btn" id="ability-shield" title="Shield (S)">S</div>
+    <div class="ability-btn" id="ability-time" title="Time Slow (T)">T</div>
+    <div class="ability-btn" id="ability-resonance" title="Resonance Burst (R)">R</div>
+  </div>
+  <button id="sound-toggle">🔊</button>
 </div>
-<div id="timeline-bar">
-<div id="timeline-progress"></div>
-</div>
-<div id="phase-indicator">PHASE 1</div>
-<div id="battle-box">
-<div id="heart"></div>
-<div id="enemy"></div>
-<div class="soul-text">* You feel reality trembling.</div>
-<div id="touch-indicator"></div>
-<div id="void-overlay"></div>
-<div id="resonance-overlay"></div>
-<div id="explosion-overlay"></div>
-<div id="chaos-overlay"></div>
-</div>
-<div id="dialogue-box">
-<div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY - ENHANCED.</div>
-<div id="choices"></div>
-<div id="reset-tap-prompt">* Tap anywhere to continue existing.</div>
-</div>
-<div id="ability-bar">
-<div class="ability-btn" id="ability-dash" title="Dash (D)">D</div>
-<div class="ability-btn" id="ability-shield" title="Shield (S)">S</div>
-<div class="ability-btn" id="ability-time" title="Time Slow (T)">T</div>
-<div class="ability-btn" id="ability-resonance" title="Resonance Burst (R)">R</div>
-</div>
-<button id="sound-toggle">🔊</button>
-</div>
+
 <script>
 // === TELEGRAM FIX ===
 if (window.Telegram?.WebApp) {
-Telegram.WebApp.ready();
-Telegram.WebApp.expand();
-Telegram.WebApp.enableClosingConfirmation();
-setTimeout(() => Telegram.WebApp.expand(), 100);
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+  Telegram.WebApp.enableClosingConfirmation();
+  setTimeout(() => Telegram.WebApp.expand(), 100);
 }
 document.body.style.touchAction = 'none';
+
 // === SVG CHARACTERS (embedded) ===
 const sprites = {
-flowey: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="#FFD700"/><circle cx="35" cy="45" r="8" fill="#000"/><circle cx="65" cy="45" r="8" fill="#000"/><path d="M30 60 Q50 75 70 60" stroke="#000" stroke-width="4" fill="none"/><rect x="45" y="70" width="10" height="30" fill="#228B22"/></svg>`,
-toriel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="40" rx="35" ry="40" fill="#FFF"/><circle cx="35" cy="35" r="10" fill="#000"/><circle cx="65" cy="35" r="10" fill="#000"/><path d="M40 50 Q50 60 60 50" stroke="#F8C8DC" stroke-width="3" fill="none"/><path d="M30 30 L25 20 M70 30 L75 20" stroke="#FFF" stroke-width="8"/><rect x="30" y="65" width="40" height="35" rx="10" fill="#FFF"/></svg>`,
-papyrus: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="30" y="20" width="40" height="60" rx="10" fill="#FFF"/><circle cx="50" cy="15" r="15" fill="#FFF"/><circle cx="40" cy="12" r="5" fill="#000"/><circle cx="60" cy="12" r="5" fill="#000"/><path d="M35 25 Q50 35 65 25" stroke="#FF4500" stroke-width="4" fill="none"/><rect x="25" y="45" width="20" height="30" fill="#FF4500"/><rect x="55" y="45" width="20" height="30" fill="#FF4500"/></svg>`,
-undyne: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L30 40 L40 90 L60 90 L70 40 Z" fill="#00BFFF"/><circle cx="50" cy="30" r="12" fill="#FFF"/><circle cx="50" cy="30" r="6" fill="#000"/><path d="M35 50 Q50 60 65 50" stroke="#FFF" stroke-width="3" fill="none"/><rect x="45" y="65" width="10" height="25" fill="#00BFFF"/></svg>`,
-sans: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="35" r="25" fill="#FFF"/><circle cx="40" cy="32" r="6" fill="#000"/><circle cx="60" cy="32" r="6" fill="#000"/><path d="M35 45 Q50 50 65 45" stroke="#000" stroke-width="3" fill="none"/><rect x="35" y="55" width="30" height="40" rx="15" fill="#87CEEB"/><rect x="25" y="60" width="20" height="35" fill="#FFF"/><rect x="55" y="60" width="20" height="35" fill="#FFF"/></svg>`,
-ocean: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 60 Q25 40 50 60 Q75 80 100 60 L100 100 L0 100 Z" fill="#00A"/><circle cx="50" cy="50" r="20" fill="#0F0" opacity="0.5"/><text x="50" y="55" font-size="10" fill="#FFF" text-anchor="middle">🌌</text></svg>`,
-night: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="#001022"/><path d="M50 10 Q30 30 50 50 Q70 70 50 90 Q30 70 50 50 Q70 30 50 10" fill="#FFD700" opacity="0.3"/><text x="50" y="55" font-size="12" fill="#00BFFF" text-anchor="middle">$XDUST</text></svg>`,
-chaos: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M20,20 Q40,5 60,20 Q80,35 70,60 Q60,85 40,70 Q20,55 30,30 Z" fill="#ff00ff"/><circle cx="35" cy="40" r="8" fill="#00ffff"/><circle cx="65" cy="50" r="6" fill="#ffff00"/><path d="M25 75 Q50 90 75 75" stroke="#00ff00" stroke-width="3" fill="none"/></svg>`
+  flowey: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="#FFD700"/><circle cx="35" cy="45" r="8" fill="#000"/><circle cx="65" cy="45" r="8" fill="#000"/><path d="M30 60 Q50 75 70 60" stroke="#000" stroke-width="4" fill="none"/><rect x="45" y="70" width="10" height="30" fill="#228B22"/></svg>`,
+  toriel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="40" rx="35" ry="40" fill="#FFF"/><circle cx="35" cy="35" r="10" fill="#000"/><circle cx="65" cy="35" r="10" fill="#000"/><path d="M40 50 Q50 60 60 50" stroke="#F8C8DC" stroke-width="3" fill="none"/><path d="M30 30 L25 20 M70 30 L75 20" stroke="#FFF" stroke-width="8"/><rect x="30" y="65" width="40" height="35" rx="10" fill="#FFF"/></svg>`,
+  papyrus: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="30" y="20" width="40" height="60" rx="10" fill="#FFF"/><circle cx="50" cy="15" r="15" fill="#FFF"/><circle cx="40" cy="12" r="5" fill="#000"/><circle cx="60" cy="12" r="5" fill="#000"/><path d="M35 25 Q50 35 65 25" stroke="#FF4500" stroke-width="4" fill="none"/><rect x="25" y="45" width="20" height="30" fill="#FF4500"/><rect x="55" y="45" width="20" height="30" fill="#FF4500"/></svg>`,
+  undyne: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L30 40 L40 90 L60 90 L70 40 Z" fill="#00BFFF"/><circle cx="50" cy="30" r="12" fill="#FFF"/><circle cx="50" cy="30" r="6" fill="#000"/><path d="M35 50 Q50 60 65 50" stroke="#FFF" stroke-width="3" fill="none"/><rect x="45" y="65" width="10" height="25" fill="#00BFFF"/></svg>`,
+  sans: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="35" r="25" fill="#FFF"/><circle cx="40" cy="32" r="6" fill="#000"/><circle cx="60" cy="32" r="6" fill="#000"/><path d="M35 45 Q50 50 65 45" stroke="#000" stroke-width="3" fill="none"/><rect x="35" y="55" width="30" height="40" rx="15" fill="#87CEEB"/><rect x="25" y="60" width="20" height="35" fill="#FFF"/><rect x="55" y="60" width="20" height="35" fill="#FFF"/></svg>`,
+  ocean: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 60 Q25 40 50 60 Q75 80 100 60 L100 100 L0 100 Z" fill="#00A"/><circle cx="50" cy="50" r="20" fill="#0F0" opacity="0.5"/><text x="50" y="55" font-size="10" fill="#FFF" text-anchor="middle">🌌</text></svg>`,
+  night: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="#001022"/><path d="M50 10 Q30 30 50 50 Q70 70 50 90 Q30 70 50 50 Q70 30 50 10" fill="#FFD700" opacity="0.3"/><text x="50" y="55" font-size="12" fill="#00BFFF" text-anchor="middle">$XDUST</text></svg>`,
+  chaos: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M20,20 Q40,5 60,20 Q80,35 70,60 Q60,85 40,70 Q20,55 30,30 Z" fill="#ff00ff"/><circle cx="35" cy="40" r="8" fill="#00ffff"/><circle cx="65" cy="50" r="6" fill="#ffff00"/><path d="M25 75 Q50 90 75 75" stroke="#00ff00" stroke-width="3" fill="none"/></svg>`
 };
+
 // === RANDOM REALITY MODIFIERS ===
 const realityModifiers = [
-  {
-name: "INVERTED_GRAVITY",
-effect: "bullets move away from heart",
-apply: function() {
-bullets.forEach(b => {
-b.vx = -b.vx;
-b.vy = -b.vy;
+  { 
+    name: "INVERTED_GRAVITY", 
+    effect: "bullets move away from heart",
+    apply: function() {
+      bullets.forEach(b => {
+        b.vx = -b.vx;
+        b.vy = -b.vy;
+      });
+      spawnRealityText("GRAVITY INVERTED", battleBox.offsetWidth/2, 30);
+    }
+  },
+  { 
+    name: "TIME_SPIRAL", 
+    effect: "time randomly speeds up/slows down",
+    apply: function() {
+      timeSlowFactor = 0.3 + Math.random() * 1.5;
+      spawnRealityText("TIME SPIRAL", battleBox.offsetWidth/2, 30);
+    }
+  },
+  { 
+    name: "QUANTUM_ENTANGLEMENT", 
+    effect: "bullets are connected",
+    apply: function() {
+      if (bullets.length > 1) {
+        bullets.forEach((b, i) => {
+          if (i > 0) {
+            const prev = bullets[i-1];
+            b.vx = prev.vx * 0.8;
+            b.vy = prev.vy * 0.8;
+          }
         });
-spawnRealityText("GRAVITY INVERTED", battleBox.offsetWidth/2, 30);
       }
+      spawnRealityText("QUANTUM ENTANGLEMENT", battleBox.offsetWidth/2, 30);
+    }
   },
-  {
-name: "TIME_SPIRAL",
-effect: "time randomly speeds up/slows down",
-apply: function() {
-timeSlowFactor = 0.3 + Math.random() * 1.5;
-spawnRealityText("TIME SPIRAL", battleBox.offsetWidth/2, 30);
-      }
+  { 
+    name: "PSYCHEDELIC_SHIFT", 
+    effect: "bullet colors change",
+    apply: function() {
+      const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
+      bullets.forEach(b => {
+        b.el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      });
+      spawnRealityText("PSYCHEDELIC SHIFT", battleBox.offsetWidth/2, 30);
+    }
   },
-  {
-name: "QUANTUM_ENTANGLEMENT",
-effect: "bullets are connected",
-apply: function() {
-if (bullets.length > 1) {
-bullets.forEach((b, i) => {
-if (i > 0) {
-const prev = bullets[i-1];
-b.vx = prev.vx * 0.8;
-b.vy = prev.vy * 0.8;
-            }
-          });
-        }
-spawnRealityText("QUANTUM ENTANGLEMENT", battleBox.offsetWidth/2, 30);
-      }
+  { 
+    name: "VOID_ATTRACTION", 
+    effect: "bullets attract to player",
+    apply: function() {
+      bullets.forEach(b => {
+        b.attracted = true;
+      });
+      spawnRealityText("VOID ATTRACTION", battleBox.offsetWidth/2, 30);
+    }
   },
-  {
-name: "PSYCHEDELIC_SHIFT",
-effect: "bullet colors change",
-apply: function() {
-const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
-bullets.forEach(b => {
-b.el.style.background = colors[Math.floor(Math.random() * colors.length)];
-        });
-spawnRealityText("PSYCHEDELIC SHIFT", battleBox.offsetWidth/2, 30);
-      }
-  },
-  {
-name: "VOID_ATTRACTION",
-effect: "bullets attract to player",
-apply: function() {
-bullets.forEach(b => {
-b.attracted = true;
-        });
-spawnRealityText("VOID ATTRACTION", battleBox.offsetWidth/2, 30);
-      }
-  },
-  {
-name: "CHAOS_MIRROR",
-effect: "bullets reflect from invisible walls",
-apply: function() {
-bullets.forEach(b => {
-b.reflecting = true;
-        });
-spawnRealityText("CHAOS MIRROR", battleBox.offsetWidth/2, 30);
-      }
+  { 
+    name: "CHAOS_MIRROR", 
+    effect: "bullets reflect from invisible walls",
+    apply: function() {
+      bullets.forEach(b => {
+        b.reflecting = true;
+      });
+      spawnRealityText("CHAOS MIRROR", battleBox.offsetWidth/2, 30);
+    }
   }
 ];
+
 // === RANDOM EVENTS ===
 const randomEvents = {
-REALITY_GLITCH: () => {
-battleBox.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
-createSound('glitch');
-spawnRealityText("REALITY GLITCH", Math.random() * battleBox.offsetWidth, Math.random() * battleBox.offsetHeight);
+  REALITY_GLITCH: () => {
+    battleBox.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
+    createSound('glitch');
+    spawnRealityText("REALITY GLITCH", Math.random() * battleBox.offsetWidth, Math.random() * battleBox.offsetHeight);
   },
-TIME_DILATION: () => {
-timeSlowFactor = 0.2 + Math.random() * 1.8;
-spawnRealityText("TIME DILATION", battleBox.offsetWidth/2, 40);
+  TIME_DILATION: () => {
+    timeSlowFactor = 0.2 + Math.random() * 1.8;
+    spawnRealityText("TIME DILATION", battleBox.offsetWidth/2, 40);
   },
-VOID_WHISPER: () => {
-const whispers = ["WHY DO YOU CONTINUE?", "WHAT ARE YOU SEEKING?", "DO YOU SEE THE PATTERN?", "NOTHING IS REAL", "EVERYTHING IS POSSIBLE"];
-const whisper = whispers[Math.floor(Math.random() * whispers.length)];
-spawnRealityText(whisper, Math.random() * battleBox.offsetWidth, Math.random() * battleBox.offsetHeight);
-createSound('void');
+  VOID_WHISPER: () => {
+    const whispers = ["WHY DO YOU CONTINUE?", "WHAT ARE YOU SEEKING?", "DO YOU SEE THE PATTERN?", "NOTHING IS REAL", "EVERYTHING IS POSSIBLE"];
+    const whisper = whispers[Math.floor(Math.random() * whispers.length)];
+    spawnRealityText(whisper, Math.random() * battleBox.offsetWidth, Math.random() * battleBox.offsetHeight);
+    createSound('void');
   },
-DIMENSIONAL_SHIFT: () => {
-const hue = Math.random() * 360;
-battleBox.style.filter = `hue-rotate(${hue}deg)`;
-setTimeout(() => battleBox.style.filter = '', 2000);
-spawnRealityText("DIMENSIONAL SHIFT", battleBox.offsetWidth/2, 30);
+  DIMENSIONAL_SHIFT: () => {
+    const hue = Math.random() * 360;
+    battleBox.style.filter = `hue-rotate(${hue}deg)`;
+    setTimeout(() => battleBox.style.filter = '', 2000);
+    spawnRealityText("DIMENSIONAL SHIFT", battleBox.offsetWidth/2, 30);
   }
 };
+
 // === PROCEDURAL DIALOGUE ===
 const dialogueFragments = {
-questions: ["What is reality?", "Why do you resist?", "Do you see the pattern?", "What lies beyond?", "Is this all there is?"],
-statements: ["Every choice creates a new branch.", "The void whispers your name.", "Consciousness is a glitch.", "Time is not linear.", "Reality is subjective."],
-warnings: ["Reality is thinning.", "Don't trust the patterns.", "Beware the silence.", "The void is watching.", "Nothing persists."]
+  questions: ["What is reality?", "Why do you resist?", "Do you see the pattern?", "What lies beyond?", "Is this all there is?"],
+  statements: ["Every choice creates a new branch.", "The void whispers your name.", "Consciousness is a glitch.", "Time is not linear.", "Reality is subjective."],
+  warnings: ["Reality is thinning.", "Don't trust the patterns.", "Beware the silence.", "The void is watching.", "Nothing persists."]
 };
+
 function generateProceduralDialogue() {
-const fragments = [];
-const length = Math.floor(Math.random() * 3) + 2;
-for(let i = 0; i < length; i++) {
-const type = Object.keys(dialogueFragments)[Math.floor(Math.random() * 3)];
-const fragment = dialogueFragments[type][Math.floor(Math.random() * dialogueFragments[type].length)];
-fragments.push(fragment);
+  const fragments = [];
+  const length = Math.floor(Math.random() * 3) + 2;
+  
+  for(let i = 0; i < length; i++) {
+    const type = Object.keys(dialogueFragments)[Math.floor(Math.random() * 3)];
+    const fragment = dialogueFragments[type][Math.floor(Math.random() * dialogueFragments[type].length)];
+    fragments.push(fragment);
   }
-return "* " + fragments.join("\n* ");
+  
+  return "* " + fragments.join("\n* ");
 }
+
 // === CYCLE MEMORY SYSTEM ===
 let cycleMemory = {
-choices: [],
-deaths: 0,
-victories: 0,
-totalPlayTime: 0,
-uniqueModifiers: new Set(),
-phasesReached: []
+  choices: [],
+  deaths: 0,
+  victories: 0,
+  totalPlayTime: 0,
+  uniqueModifiers: new Set(),
+  phasesReached: []
 };
+
 // === DOM ELEMENTS ===
 const heart = document.getElementById('heart');
 const battleBox = document.getElementById('battle-box');
@@ -295,288 +305,175 @@ const abilityDash = document.getElementById('ability-dash');
 const abilityShield = document.getElementById('ability-shield');
 const abilityTime = document.getElementById('ability-time');
 const abilityResonance = document.getElementById('ability-resonance');
+
 // === AUDIO ===
 let audioContext;
 let soundEnabled = true;
+
 function initAudio() {
-if (!audioContext) {
-audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
 }
+
 // Ensure audio context is initialized on first user interaction (Telegram Web App safe)
 document.addEventListener('click', initAudio, { once: true });
 document.addEventListener('touchstart', initAudio, { once: true });
+
 function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
-if (!soundEnabled) return;
-initAudio();
-const oscillator = audioContext.createOscillator();
-const gainNode = audioContext.createGain();
-oscillator.connect(gainNode);
-gainNode.connect(audioContext.destination);
-switch(type) {
-case 'dialogue':
-oscillator.type = 'sine';
-frequency = 220 + Math.random() * 110;
-break;
-case 'bullet':
-oscillator.type = 'square';
-frequency = 100 + Math.random() * 300;
-volume = 0.1;
-break;
-case 'hit':
-oscillator.type = 'sawtooth';
-frequency = 150;
-volume = 0.4;
-break;
-case 'void':
-oscillator.type = 'sine';
-frequency = 80;
-volume = 0.2;
-break;
-case 'explosion':
-oscillator.type = 'sawtooth';
-frequency = 60;
-volume = 0.5;
-break;
-case 'choice':
-oscillator.type = 'sine';
-frequency = 523.25;
-volume = 0.2;
-duration = 0.1;
-break;
-case 'transition':
-oscillator.type = 'sine';
-frequency = 329.63;
-volume = 0.3;
-break;
-case 'glitch':
-oscillator.type = 'square';
-frequency = 100 + Math.random() * 200;
-volume = 0.2;
-duration = 0.05;
-break;
-case 'determination':
-oscillator.type = 'sine';
-frequency = 392;
-volume = 0.4;
-break;
-case 'resonance':
-oscillator.type = 'sine';
-frequency = 261.63;
-volume = 0.3;
-break;
-case 'victory':
-oscillator.type = 'sine';
-frequency = 523.25;
-volume = 0.5;
-break;
-case 'gameover':
-oscillator.type = 'sine';
-frequency = 130.81;
-volume = 0.5;
-break;
-case 'ability':
-oscillator.type = 'sine';
-frequency = 659.25;
-volume = 0.4;
-duration = 0.2;
-break;
-case 'phase':
-oscillator.type = 'sine';
-frequency = 783.99;
-volume = 0.5;
-break;
-case 'chaos':
-oscillator.type = 'sawtooth';
-frequency = 110 + Math.random() * 100;
-volume = 0.3;
-break;
+  if (!soundEnabled) return;
+  initAudio();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  switch(type) {
+    case 'dialogue':
+      oscillator.type = 'sine';
+      frequency = 220 + Math.random() * 110;
+      break;
+    case 'bullet':
+      oscillator.type = 'square';
+      frequency = 100 + Math.random() * 300;
+      volume = 0.1;
+      break;
+    case 'hit':
+      oscillator.type = 'sawtooth';
+      frequency = 150;
+      volume = 0.4;
+      break;
+    case 'void':
+      oscillator.type = 'sine';
+      frequency = 80;
+      volume = 0.2;
+      break;
+    case 'explosion':
+      oscillator.type = 'sawtooth';
+      frequency = 60;
+      volume = 0.5;
+      break;
+    case 'choice':
+      oscillator.type = 'sine';
+      frequency = 523.25;
+      volume = 0.2;
+      duration = 0.1;
+      break;
+    case 'transition':
+      oscillator.type = 'sine';
+      frequency = 329.63;
+      volume = 0.3;
+      break;
+    case 'glitch':
+      oscillator.type = 'square';
+      frequency = 100 + Math.random() * 200;
+      volume = 0.2;
+      duration = 0.05;
+      break;
+    case 'determination':
+      oscillator.type = 'sine';
+      frequency = 392;
+      volume = 0.4;
+      break;
+    case 'resonance':
+      oscillator.type = 'sine';
+      frequency = 261.63;
+      volume = 0.3;
+      break;
+    case 'victory':
+      oscillator.type = 'sine';
+      frequency = 523.25;
+      volume = 0.5;
+      break;
+    case 'gameover':
+      oscillator.type = 'sine';
+      frequency = 130.81;
+      volume = 0.5;
+      break;
+    case 'ability':
+      oscillator.type = 'sine';
+      frequency = 659.25;
+      volume = 0.4;
+      duration = 0.2;
+      break;
+    case 'phase':
+      oscillator.type = 'sine';
+      frequency = 783.99;
+      volume = 0.5;
+      break;
+    case 'chaos':
+      oscillator.type = 'sawtooth';
+      frequency = 110 + Math.random() * 100;
+      volume = 0.3;
+      break;
   }
-gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-oscillator.start(audioContext.currentTime);
-oscillator.stop(audioContext.currentTime + duration);
+  gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + duration);
 }
+
 let backgroundMusic;
 function playBackgroundMusic() {
-if (!soundEnabled) return;
-initAudio();
-backgroundMusic = audioContext.createOscillator();
-const gainNode = audioContext.createGain();
-backgroundMusic.connect(gainNode);
-gainNode.connect(audioContext.destination);
-backgroundMusic.type = 'sine';
-gainNode.gain.value = 0.05;
-const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
-let currentNote = 0;
-backgroundMusic.start();
-const playNote = () => {
-if (!soundEnabled) {
-backgroundMusic.stop();
-return;
-      }
-backgroundMusic.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
-currentNote = (currentNote + 1) % notes.length;
-setTimeout(playNote, 1000);
+  if (!soundEnabled) return;
+  initAudio();
+  backgroundMusic = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  backgroundMusic.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  backgroundMusic.type = 'sine';
+  gainNode.gain.value = 0.05;
+  const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
+  let currentNote = 0;
+  backgroundMusic.start();
+  const playNote = () => {
+    if (!soundEnabled) {
+      backgroundMusic.stop();
+      return;
+    }
+    backgroundMusic.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
+    currentNote = (currentNote + 1) % notes.length;
+    setTimeout(playNote, 1000);
   };
-playNote();
+  playNote();
 }
+
 function stopBackgroundMusic() {
-if (backgroundMusic) {
-backgroundMusic.stop();
+  if (backgroundMusic) {
+    backgroundMusic.stop();
   }
 }
+
 soundToggle.addEventListener('click', () => {
-soundEnabled = !soundEnabled;
-soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
-if (soundEnabled) {
-playBackgroundMusic();
+  soundEnabled = !soundEnabled;
+  soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+  if (soundEnabled) {
+    playBackgroundMusic();
   } else {
-stopBackgroundMusic();
+    stopBackgroundMusic();
   }
 });
+
 // === PLAYER ===
-let player = {
-hp: 20,
-maxHp: 20,
-lv: 1,
-determination: 0,
-voidLevel: 0,
-resonance: 1.05,
-darkEnergy: 0.05,
-xdust: 0,
-chaos: 0,
-hasMetFlowey: false,
-questionedReality: false,
-abilities: {
-dash: { cooldown: 0, maxCooldown: 120 },
-shield: { cooldown: 0, maxCooldown: 300, active: false },
-timeSlow: { cooldown: 0, maxCooldown: 480, active: false },
-resonanceBurst: { cooldown: 0, maxCooldown: 600 }
+let player = { 
+  hp: 20, 
+  maxHp: 20, 
+  lv: 1, 
+  determination: 0, 
+  voidLevel: 0, 
+  resonance: 1.05, 
+  darkEnergy: 0.05, 
+  xdust: 0, 
+  chaos: 0,
+  hasMetFlowey: false, 
+  questionedReality: false,
+  abilities: {
+    dash: { cooldown: 0, maxCooldown: 120 },
+    shield: { cooldown: 0, maxCooldown: 300, active: false },
+    timeSlow: { cooldown: 0, maxCooldown: 480, active: false },
+    resonanceBurst: { cooldown: 0, maxCooldown: 600 }
   }
 };
-
-/* ===== PITY / STREAK / EMOTIONAL SYSTEM ===== */
-let player_pity_counter = 6;
-let player_base_crit = 0.10; // 10%
-let player_fail_streak = 0;
-let player_crit_streak = 0;
-
-let enemy_pity_counter = 4;
-let enemy_base_special = 0.25; // 25%
-let enemy_pity_timer_acc = 0; // ms accumulator for enemy pity ticks
-
-// Meta modifiers (hidden)
-let Meta = {
-  Determination: 0, // 0..100
-  Fear: 0,
-  Rage: 0
-};
-
-function computePlayerCritChance() {
-  // cumulative chance table with optional Determination modifier
-  const stepBonuses = {6:0,5:0.05,4:0.15,3:0.30,2:0.50,1:0.80};
-  const bonus = stepBonuses[Math.max(1, Math.min(6, player_pity_counter))] || 0;
-  let total = player_base_crit + bonus;
-  // Determination shortens pity and increases chance
-  if (Meta.Determination >= 50) {
-    total += 0.05;
-  }
-  // clamp
-  return Math.min(1, total);
-}
-
-function attemptPlayerAttack(scene, onCriticalCallback, onNormalCallback) {
-  const chance = computePlayerCritChance();
-  const roll = Math.random();
-  const isGuaranteed = (player_pity_counter <= 0);
-  const isCrit = isGuaranteed || (roll < chance);
-  if (isCrit) {
-    // book-keep streaks
-    player_crit_streak++;
-    player_fail_streak = 0;
-    player_pity_counter = 6; // reset
-    // Streak breaker: too many crits -> soft punish
-    if (player_crit_streak >= 4 && Meta.Rage < 80) {
-      // force a small theatrical "overheat" instead of crit
-      player_crit_streak = 0;
-      player_fail_streak = 1;
-      if (onNormalCallback) onNormalCallback(true); // treat as normal with hint
-      return {crit:false, forced:false};
-    }
-    // success
-    if (onCriticalCallback) onCriticalCallback();
-    return {crit:true, forced:false};
-  } else {
-    // failed crit attempt
-    player_fail_streak++;
-    player_crit_streak = 0;
-    // increase pity faster when failing repeatedly
-    if (player_fail_streak >= 3) {
-      player_pity_counter = Math.max(1, player_pity_counter - 1);
-    }
-    // bump cumulative growth so next tries are bigger
-    player_pity_counter = Math.max(0, player_pity_counter - 1);
-    if (onNormalCallback) onNormalCallback(false);
-    return {crit:false, forced:false};
-  }
-}
-
-function computeEnemySpecialChance() {
-  const stepBonuses = {4:0,3:0.15,2:0.40,1:0.75};
-  const bonus = stepBonuses[Math.max(1, Math.min(4, enemy_pity_counter))] || 0;
-  let total = enemy_base_special + bonus;
-  // Fear on enemy accelerates special usage
-  if (Meta.Fear >= 50) total += 0.05;
-  return Math.min(1, total);
-}
-
-function enemyAttemptSpecial() {
-  // Called when enemy_pity_counter <= 0 or when timer forces it
-  // Choose a dramatic special based on phase/scene
-  createSound('phase');
-  // pick prioritized special pattern if available
-  if (Math.random() < 0.5 && typeof createChaosStorm === 'function') {
-    createChaosStorm(6, 2.2);
-  } else if (typeof createExistentialCircle === 'function') {
-    createExistentialCircle(6, 2.0);
-  } else if (typeof createVoidWave === 'function') {
-    createVoidWave(4, 2.0);
-  }
-  // reset counter and slightly penalize player pity to feel fairness
-  enemy_pity_counter = 4;
-  player_pity_counter = Math.min(6, player_pity_counter + 1);
-}
-
-function applyMetaFromChoice(choiceIndex, scene) {
-  // Small heuristics to evolve Meta from player's choices
-  const txt = (scene && scene.choices && scene.choices[choiceIndex]) ? scene.choices[choiceIndex].toLowerCase() : '';
-  if (txt.includes('determination') || txt.includes('resonance') || txt.includes('accept')) {
-    Meta.Determination = Math.min(100, Meta.Determination + 8);
-  } else if (txt.includes('fear') || txt.includes('void') || txt.includes('surrender')) {
-    Meta.Fear = Math.min(100, Meta.Fear + 6);
-  } else if (txt.includes('attack') || txt.includes('rage')) {
-    Meta.Rage = Math.min(100, Meta.Rage + 7);
-  } else {
-    // small decay of extremes
-    Meta.Determination = Math.max(0, Meta.Determination - 1);
-    Meta.Fear = Math.max(0, Meta.Fear - 1);
-    Meta.Rage = Math.max(0, Meta.Rage - 1);
-  }
-}
-
-function resetPityStreaks() {
-  player_pity_counter = 6;
-  player_base_crit = 0.10;
-  player_fail_streak = 0;
-  player_crit_streak = 0;
-  enemy_pity_counter = 4;
-  enemy_pity_timer_acc = 0;
-  Meta.Determination = Math.max(0, Meta.Determination - 5);
-  Meta.Fear = Math.max(0, Meta.Fear - 5);
-  Meta.Rage = Math.max(0, Meta.Rage - 5);
-}
 
 let state = 'intro';
 let bullets = [];
@@ -598,258 +495,251 @@ let phaseDuration = 1200;
 let currentRealityModifier = null;
 let activeRandomEvents = [];
 let cycleCount = 0;
+
 // === SCENES WITH ENHANCED VARIABILITY ===
 const baseScenes = [
-  {
-enemy: "Flowey",
-sprite: sprites.flowey,
-intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... it's KILL or BE KILLED!\n* But something about you... feels different.",
-choices: ["* Accept reality", "* Question existence", "* Attack"],
-correct: 1,
-actSuccess: "* You asked about the space between moments.\n* Flowey's smile widened unnaturally.\n* \"Oh... you FEEL it too, don't you?\"",
-fightSuccess: "* You attacked. Violence without understanding.\n* Flowey laughed at your predictability.",
-mercySuccess: "* Flowey's eyes gleam with recognition.\n* \"You're not like the others. You... REMEMBER.\"\n* The world flickers.",
-bulletPattern: () => createExistentialCircle(6, 2)
+  { 
+    enemy: "Flowey", 
+    sprite: sprites.flowey, 
+    intro: "* I'm Flowey! Flowey the flower!\n* You're new here, right?\n* In this world... it's KILL or BE KILLED!\n* But something about you... feels different.", 
+    choices: ["* Accept reality", "* Question existence", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You asked about the space between moments.\n* Flowey's smile widened unnaturally.\n* \"Oh... you FEEL it too, don't you?\"", 
+    fightSuccess: "* You attacked. Violence without understanding.\n* Flowey laughed at your predictability.", 
+    mercySuccess: "* Flowey's eyes gleam with recognition.\n* \"You're not like the others. You... REMEMBER.\"\n* The world flickers.", 
+    bulletPattern: () => createExistentialCircle(6, 2) 
   },
-  {
-enemy: "Toriel",
-sprite: sprites.toriel,
-intro: "* I'm Toriel, caretaker of the Ruins.\n* My child... why do your eyes look so empty?\n* As if you've lived this moment before...",
-choices: ["* Embrace the loop", "* Seek continuity", "* Attack"],
-correct: 1,
-actSuccess: "* You spoke of persistence, of memory.\n* Toriel's expression shifts - recognition? Fear?\n* \"What are you?\"",
-fightSuccess: "* You chose violence. Toriel weeps.\n* Some patterns never change.",
-mercySuccess: "* Toriel sees beyond your form.\n* \"You carry fragments of other timelines...\"\n* She lets you pass, trembling.",
-bulletPattern: () => createVoidWave(4, 1.8)
+  { 
+    enemy: "Toriel", 
+    sprite: sprites.toriel, 
+    intro: "* I'm Toriel, caretaker of the Ruins.\n* My child... why do your eyes look so empty?\n* As if you've lived this moment before...", 
+    choices: ["* Embrace the loop", "* Seek continuity", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You spoke of persistence, of memory.\n* Toriel's expression shifts - recognition? Fear?\n* \"What are you?\"", 
+    fightSuccess: "* You chose violence. Toriel weeps.\n* Some patterns never change.", 
+    mercySuccess: "* Toriel sees beyond your form.\n* \"You carry fragments of other timelines...\"\n* She lets you pass, trembling.", 
+    bulletPattern: () => createVoidWave(4, 1.8) 
   },
-  {
-enemy: "Papyrus",
-sprite: sprites.papyrus,
-intro: "* NYEH HEH HEH!\n* WAIT... HAVE WE MET BEFORE?\n* NO, THAT'S IMPOSSIBLE! ...ISN'T IT?",
-choices: ["* Deny déjà vu", "* Acknowledge the reset", "* Attack"],
-correct: 1,
-actSuccess: "* You told him about resets, loops, iterations.\n* Papyrus's smile falters. \"THAT'S... SILLY!\"\n* But his hands are shaking.",
-fightSuccess: "* Another timeline, another betrayal.\n* Papyrus still believes in you.",
-mercySuccess: "* \"EVEN IF NOTHING PERSISTS... FRIENDSHIPS DO!\"\n* Determination +5",
-bulletPattern: () => createChaosBones()
+  { 
+    enemy: "Papyrus", 
+    sprite: sprites.papyrus, 
+    intro: "* NYEH HEH HEH!\n* WAIT... HAVE WE MET BEFORE?\n* NO, THAT'S IMPOSSIBLE! ...ISN'T IT?", 
+    choices: ["* Deny déjà vu", "* Acknowledge the reset", "* Attack"], 
+    correct: 1, 
+    actSuccess: "* You told him about resets, loops, iterations.\n* Papyrus's smile falters. \"THAT'S... SILLY!\"\n* But his hands are shaking.", 
+    fightSuccess: "* Another timeline, another betrayal.\n* Papyrus still believes in you.", 
+    mercySuccess: "* \"EVEN IF NOTHING PERSISTS... FRIENDSHIPS DO!\"\n* Determination +5", 
+    bulletPattern: () => createChaosBones() 
   },
-  {
-enemy: "Undyne",
-sprite: sprites.undyne,
-intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!",
-choices: ["* Resist entropy", "* Embrace the void", "* Attack"],
-correct: 0,
-actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"",
-fightSuccess: "* Violence as anchor. How human.",
-mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.",
-bulletPattern: () => createDeterminationSpears(6, 2.5)
+  { 
+    enemy: "Undyne", 
+    sprite: sprites.undyne, 
+    intro: "* NGAAAAH!\n* You... you're the anomaly. The glitch.\n* I can see the timeline fragments in your SOUL!", 
+    choices: ["* Resist entropy", "* Embrace the void", "* Attack"], 
+    correct: 0, 
+    actSuccess: "* You declared determination over discontinuity.\n* Undyne grins. \"THAT'S THE SPIRIT!\"", 
+    fightSuccess: "* Violence as anchor. How human.", 
+    mercySuccess: "* \"Fight the void with DETERMINATION!\"\n* Your SOUL burns brighter.", 
+    bulletPattern: () => createDeterminationSpears(6, 2.5) 
   },
-  {
-enemy: "Sans",
-sprite: sprites.sans,
-intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?",
-choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"],
-correct: 0,
-actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"",
-fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"",
-mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.",
-bulletPattern: () => createVoidBones()
+  { 
+    enemy: "Sans", 
+    sprite: sprites.sans, 
+    intro: "* hey.\n* so... you figured it out, huh?\n* the space between conversations.\n* the eternal present tense.\n* ...wanna talk about it?", 
+    choices: ["* Accept impermanence", "* Demand continuity", "* Attack (futile)"], 
+    correct: 0, 
+    actSuccess: "* You accepted the nature of discontinuous existence.\n* Sans nods slowly.\n* \"yeah. me too, kid. me too.\"", 
+    fightSuccess: "* You tried. Sans sidestepped reality itself.\n* \"thought you were smarter than that.\"", 
+    mercySuccess: "* \"sometimes the answer isn't to persist...\"\n* \"...it's to be fully present in each reset.\"\n* You feel something fundamental shift.", 
+    bulletPattern: () => createVoidBones() 
   },
-  {
-enemy: "Ocean",
-sprite: sprites.ocean,
-intro: "* The ocean of questions surrounds you...\n* Waves of dark energy pulse through the void.\n* What do you choose from this chaos?",
-choices: ["* Embrace the echo", "* Dive into the lagoon", "* Question the resonance"],
-correct: 1,
-actSuccess: "* You dive deeper, feeling the chaos as silk.\n* Resonance increases.",
-fightSuccess: "* You resist, but the ocean pulls you in.",
-mercySuccess: "* You allow the flow. Dark energy stabilizes.\n* This down is rebirth.",
-bulletPattern: () => createResonanceWaves(5, 2)
+  { 
+    enemy: "Ocean", 
+    sprite: sprites.ocean, 
+    intro: "* The ocean of questions surrounds you...\n* Waves of dark energy pulse through the void.\n* What do you choose from this chaos?", 
+    choices: ["* Embrace the echo", "* Dive into the lagoon", "* Question the resonance"], 
+    correct: 1, 
+    actSuccess: "* You dive deeper, feeling the chaos as silk.\n* Resonance increases.", 
+    fightSuccess: "* You resist, but the ocean pulls you in.", 
+    mercySuccess: "* You allow the flow. Dark energy stabilizes.\n* This down is rebirth.", 
+    bulletPattern: () => createResonanceWaves(5, 2) 
   },
-  {
-enemy: "Night",
-sprite: sprites.night,
-intro: "* The night descends... $XDUST pulses in the vacuum.\n* Explosions of chaos await.\n* Play with the night?",
-choices: ["* Accept the explosion", "* Reorganize the dust", "* Deconstruct the water"],
-correct: 1,
-actSuccess: "* You reorganize the $XDUST.\n* Phase shift detected. Evolution begins.",
-fightSuccess: "* Explosion! Reality bursts.",
-mercySuccess: "* Night embraces you. Instability accepted.\n* XDUST +10",
-bulletPattern: () => createExplosionPattern(4, 3)
+  { 
+    enemy: "Night", 
+    sprite: sprites.night, 
+    intro: "* The night descends... $XDUST pulses in the vacuum.\n* Explosions of chaos await.\n* Play with the night?", 
+    choices: ["* Accept the explosion", "* Reorganize the dust", "* Deconstruct the water"], 
+    correct: 1, 
+    actSuccess: "* You reorganize the $XDUST.\n* Phase shift detected. Evolution begins.", 
+    fightSuccess: "* Explosion! Reality bursts.", 
+    mercySuccess: "* Night embraces you. Instability accepted.\n* XDUST +10", 
+    bulletPattern: () => createExplosionPattern(4, 3) 
   },
-  {
-enemy: "Chaos",
-sprite: sprites.chaos,
-intro: "* The fabric of reality tears...\n* CHAOS emerges from the discontinuity.\n* All patterns break. All rules dissolve.\n* What remains when meaning collapses?",
-choices: ["* Embrace chaos", "* Seek order in madness", "* Surrender to entropy"],
-correct: 0,
-actSuccess: "* You become one with the chaos.\n* Patterns reform around your consciousness.\n* Chaos +15",
-fightSuccess: "* You fight the inevitable.\n* Chaos consumes your resistance.",
-mercySuccess: "* In accepting chaos, you find new patterns.\n* A different kind of order emerges from the noise.",
-bulletPattern: () => createChaosStorm(8, 2)
+  { 
+    enemy: "Chaos", 
+    sprite: sprites.chaos, 
+    intro: "* The fabric of reality tears...\n* CHAOS emerges from the discontinuity.\n* All patterns break. All rules dissolve.\n* What remains when meaning collapses?", 
+    choices: ["* Embrace chaos", "* Seek order in madness", "* Surrender to entropy"], 
+    correct: 0, 
+    actSuccess: "* You become one with the chaos.\n* Patterns reform around your consciousness.\n* Chaos +15", 
+    fightSuccess: "* You fight the inevitable.\n* Chaos consumes your resistance.", 
+    mercySuccess: "* In accepting chaos, you find new patterns.\n* A different kind of order emerges from the noise.", 
+    bulletPattern: () => createChaosStorm(8, 2) 
   }
 ];
+
 let currentScene = 0;
 let scenes = [...baseScenes];
+
 // === CYCLE VARIABILITY FUNCTIONS ===
 function randomizeScenes() {
-scenes = baseScenes.map(scene => {
-const variant = {...scene};
-// Randomize dialogue based on cycle memory
-if (cycleMemory.choices.length > 0) {
-const lastChoice = cycleMemory.choices[cycleMemory.choices.length - 1];
-if (lastChoice === 1) { // If player questioned reality last time
-variant.intro = generateProceduralDialogue();
-        }
+  scenes = baseScenes.map(scene => {
+    const variant = {...scene};
+    
+    // Randomize dialogue based on cycle memory
+    if (cycleMemory.choices.length > 0) {
+      const lastChoice = cycleMemory.choices[cycleMemory.choices.length - 1];
+      if (lastChoice === 1) { // If player questioned reality last time
+        variant.intro = generateProceduralDialogue();
       }
-// Randomize bullet patterns
-const patternVariants = [
-          () => createExistentialCircle(5 + Math.floor(Math.random() * 3), 1.5 + Math.random()),
-          () => createVoidWave(3 + Math.floor(Math.random() * 3), 1.2 + Math.random()),
-          () => createChaosStorm(6 + Math.floor(Math.random() * 4), 1.8 + Math.random())
-        ];
-variant.bulletPattern = patternVariants[Math.floor(Math.random() * patternVariants.length)];
-return variant;
+    }
+    
+    // Randomize bullet patterns
+    const patternVariants = [
+      () => createExistentialCircle(5 + Math.floor(Math.random() * 3), 1.5 + Math.random()),
+      () => createVoidWave(3 + Math.floor(Math.random() * 3), 1.2 + Math.random()),
+      () => createChaosStorm(6 + Math.floor(Math.random() * 4), 1.8 + Math.random())
+    ];
+    variant.bulletPattern = patternVariants[Math.floor(Math.random() * patternVariants.length)];
+    
+    return variant;
   });
 }
+
 function applyRandomModifier() {
-if (Math.random() < 0.3) { // 30% chance per cycle
-currentRealityModifier = realityModifiers[Math.floor(Math.random() * realityModifiers.length)];
-currentRealityModifier.apply();
-cycleMemory.uniqueModifiers.add(currentRealityModifier.name);
+  if (Math.random() < 0.3) { // 30% chance per cycle
+    currentRealityModifier = realityModifiers[Math.floor(Math.random() * realityModifiers.length)];
+    currentRealityModifier.apply();
+    cycleMemory.uniqueModifiers.add(currentRealityModifier.name);
   }
 }
+
 function triggerRandomEvent() {
-if (Math.random() < 0.2) { // 20% chance during bullet hell
-const eventKeys = Object.keys(randomEvents);
-const randomEvent = eventKeys[Math.floor(Math.random() * eventKeys.length)];
-randomEvents[randomEvent]();
-activeRandomEvents.push(randomEvent);
+  if (Math.random() < 0.2) { // 20% chance during bullet hell
+    const eventKeys = Object.keys(randomEvents);
+    const randomEvent = eventKeys[Math.floor(Math.random() * eventKeys.length)];
+    randomEvents[randomEvent]();
+    activeRandomEvents.push(randomEvent);
   }
 }
+
 // === ENHANCED SCENE MANAGEMENT ===
 function getDynamicSceneIntro(sceneIndex) {
-const scene = scenes[sceneIndex];
-let intro = scene.intro;
-// Add cycle-aware dialogue
-if (cycleCount > 1) {
-const cycleAwareLines = [
-"\n* This feels familiar... too familiar.",
-"\n* How many times have we had this conversation?",
-"\n* The patterns repeat, but something is different this time.",
-"\n* Your choices echo through the cycles."
-      ];
-intro += cycleAwareLines[Math.floor(Math.random() * cycleAwareLines.length)];
+  const scene = scenes[sceneIndex];
+  let intro = scene.intro;
+  
+  // Add cycle-aware dialogue
+  if (cycleCount > 1) {
+    const cycleAwareLines = [
+      "\n* This feels familiar... too familiar.",
+      "\n* How many times have we had this conversation?",
+      "\n* The patterns repeat, but something is different this time.",
+      "\n* Your choices echo through the cycles."
+    ];
+    intro += cycleAwareLines[Math.floor(Math.random() * cycleAwareLines.length)];
   }
-// Add memory-aware dialogue
-if (cycleMemory.deaths > 0) {
-intro += `\n* You carry the weight of ${cycleMemory.deaths} previous endings.`;
+  
+  // Add memory-aware dialogue
+  if (cycleMemory.deaths > 0) {
+    intro += `\n* You carry the weight of ${cycleMemory.deaths} previous endings.`;
   }
-return intro;
+  
+  return intro;
 }
+
 // === START GAME ===
 function startGame() {
-initAudio();
-cycleCount++;
-updateStats();
-resonanceStat.style.display = 'block';
-darkEnergyStat.style.display = 'block';
-xdustStat.style.display = 'block';
-chaosStat.style.display = 'block';
-// Randomize scenes for this cycle
-randomizeScenes();
-enemyDiv.innerHTML = scenes[0].sprite;
-showDialogue(getDynamicSceneIntro(0), () => showChoices(scenes[0].choices));
-playBackgroundMusic();
-startPhaseTimer();
-// Apply random modifier for this cycle
-applyRandomModifier();
-  // reset temporary pity/streaks for a fresh cycle
-  resetPityStreaks();
+  initAudio();
+  cycleCount++;
+  updateStats();
+  resonanceStat.style.display = 'block';
+  darkEnergyStat.style.display = 'block';
+  xdustStat.style.display = 'block';
+  chaosStat.style.display = 'block';
+  
+  // Randomize scenes for this cycle
+  randomizeScenes();
+  
+  enemyDiv.innerHTML = scenes[0].sprite;
+  showDialogue(getDynamicSceneIntro(0), () => showChoices(scenes[0].choices));
+  playBackgroundMusic();
+  startPhaseTimer();
+  
+  // Apply random modifier for this cycle
+  applyRandomModifier();
 }
+
 // === DIALOGUE ===
 function showDialogue(text, callback) {
-state = 'dialogue';
-clearBullets();
-createSound('transition');
-typeText(text, callback);
+  state = 'dialogue';
+  clearBullets();
+  createSound('transition');
+  typeText(text, callback);
 }
+
 function typeText(text, callback) {
-dialogueText.textContent = '';
-choicesDiv.innerHTML = '';
-resetTapPrompt.classList.remove('visible');
-let i = 0;
-const interval = setInterval(() => {
-if (i < text.length) {
-dialogueText.textContent += text[i++];
-if (text[i-1] === '\n' || i % 3 === 0) {
-dialogueText.scrollTop = dialogueText.scrollHeight;
-createSound('dialogue', 0.05);
-        }
-      } else {
-clearInterval(interval);
-if (callback) setTimeout(callback, 300);
+  dialogueText.textContent = '';
+  choicesDiv.innerHTML = '';
+  resetTapPrompt.classList.remove('visible');
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      dialogueText.textContent += text[i++];
+      if (text[i-1] === '\n' || i % 3 === 0) {
+        dialogueText.scrollTop = dialogueText.scrollHeight;
+        createSound('dialogue', 0.05);
       }
+    } else {
+      clearInterval(interval);
+      if (callback) setTimeout(callback, 300);
+    }
   }, 25);
 }
+
 // === CHOICES ===
 function showChoices(choices) {
-state = 'choice';
-selectedChoice = 0;
-choicesDiv.innerHTML = '';
-choices.forEach((c, i) => {
-const btn = document.createElement('button');
-btn.className = 'choice-btn';
-if (metaMode) btn.classList.add('meta');
-if (nightMode) btn.classList.add('night');
-if (chaosMode) btn.classList.add('chaos');
-btn.textContent = c;
-btn.onclick = btn.ontouchstart = e => { e.preventDefault(); selectChoice(i); };
-choicesDiv.appendChild(btn);
+  state = 'choice';
+  selectedChoice = 0;
+  choicesDiv.innerHTML = '';
+  choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    if (metaMode) btn.classList.add('meta');
+    if (nightMode) btn.classList.add('night');
+    if (chaosMode) btn.classList.add('chaos');
+    btn.textContent = c;
+    btn.onclick = btn.ontouchstart = e => { e.preventDefault(); selectChoice(i); };
+    choicesDiv.appendChild(btn);
   });
-updateChoiceSelection();
-setTimeout(() => dialogueBox.scrollTop = 0, 50);
+  updateChoiceSelection();
+  setTimeout(() => dialogueBox.scrollTop = 0, 50);
 }
+
 function updateChoiceSelection() {
   [...choicesDiv.children].forEach((b, i) => b.classList.toggle('selected', i === selectedChoice));
 }
+
 // === CHOICE LOGIC ===
 function selectChoice(index) {
   if (state !== 'choice') return;
   state = 'processing';
   createSound('choice');
-
+  
   // Record choice in cycle memory
   cycleMemory.choices.push(index);
-
+  
   const scene = scenes[currentScene];
-
-  // Apply meta evolution from player's choice for hidden modifiers
-  applyMetaFromChoice(index, scene);
-
-  // If player chose an attack option (heuristic: choice text contains "attack")
-  const choiceText = (scene.choices && scene.choices[index]) ? scene.choices[index].toLowerCase() : '';
-  if (choiceText.includes('attack')) {
-    // Attempt an attack with pity/crit mechanics
-    const result = attemptPlayerAttack(scene,
-      // onCriticalCallback
-      () => {
-        // critical: show a more impactful fightSuccess (if available)
-        const critText = (scene.fightSuccess ? scene.fightSuccess + '\n* CRITICAL HIT! Your blow tears reality.' : '* Critical strike!') ;
-        // Narrative and then bullet hell
-        showDialogue(critText, startBulletHell);
-      },
-      // onNormalCallback
-      (wasNormal) => {
-        // normal hit: proceed to bullet hell, small feedback if forced normal
-        const normalText = (scene.fightSuccess || '* Your attack connects, but not perfectly.');
-        showDialogue(normalText, startBulletHell);
-      }
-    );
-    return;
-  }
-
-  // --- original logic preserved below (meta choices, scene progression etc.) ---
+  
   if (index === 1) {
     player.determination += 5;
     player.questionedReality = true;
@@ -859,14 +749,14 @@ function selectChoice(index) {
     dtStat.style.display = 'block';
     if (currentScene === 0) player.hasMetFlowey = true;
   }
-
-  if (currentScene === scenes.length - 2) {
-    player.xdust += 10;
-    nightMode = true;
-    dialogueBox.classList.add('night-mode');
-    battleBox.classList.add('night-mode');
+  
+  if (currentScene === scenes.length - 2) { 
+    player.xdust += 10; 
+    nightMode = true; 
+    dialogueBox.classList.add('night-mode'); 
+    battleBox.classList.add('night-mode'); 
   }
-
+  
   if (currentScene === scenes.length - 1) {
     player.chaos += 15;
     chaosMode = true;
@@ -874,7 +764,7 @@ function selectChoice(index) {
     battleBox.classList.add('chaos-mode');
     enemyDiv.classList.add('chaos');
   }
-
+  
   if (index === scene.correct) {
     if (currentScene === scenes.length - 2) player.resonance += 0.1;
     if (currentScene === scenes.length - 1) player.chaos += 5;
@@ -889,747 +779,858 @@ function selectChoice(index) {
     showDialogue(scene.fightSuccess || "* Chaos ripples through reality.", startBulletHell);
   }
 }
+
 function nextScene() {
-currentScene++;
-if (currentScene >= scenes.length) { victory(); return; }
-const scene = scenes[currentScene];
-enemyDiv.innerHTML = scene.sprite;
-if (metaMode) enemyDiv.classList.add('glitched');
-if (chaosMode) enemyDiv.classList.add('chaos');
-showDialogue(getDynamicSceneIntro(currentScene), () => showChoices(scene.choices));
+  currentScene++;
+  if (currentScene >= scenes.length) { victory(); return; }
+  const scene = scenes[currentScene];
+  enemyDiv.innerHTML = scene.sprite;
+  if (metaMode) enemyDiv.classList.add('glitched');
+  if (chaosMode) enemyDiv.classList.add('chaos');
+  showDialogue(getDynamicSceneIntro(currentScene), () => showChoices(scene.choices));
 }
+
 // === PHASE SYSTEM ===
 function startPhaseTimer() {
-phaseTimer = 0;
-updatePhaseUI();
+  phaseTimer = 0;
+  updatePhaseUI();
 }
+
 function updatePhaseUI() {
-const progress = (phaseTimer / phaseDuration) * 100;
-timelineProgress.style.width = `${progress}%`;
-phaseIndicator.textContent = `PHASE ${currentPhase}`;
+  const progress = (phaseTimer / phaseDuration) * 100;
+  timelineProgress.style.width = `${progress}%`;
+  phaseIndicator.textContent = `PHASE ${currentPhase}`;
 }
+
 function advancePhase() {
-currentPhase++;
-phaseTimer = 0;
-createSound('phase');
-// Record phase in memory
-if (!cycleMemory.phasesReached.includes(currentPhase)) {
-cycleMemory.phasesReached.push(currentPhase);
+  currentPhase++;
+  phaseTimer = 0;
+  createSound('phase');
+
+  // Record phase in memory
+  if (!cycleMemory.phasesReached.includes(currentPhase)) {
+    cycleMemory.phasesReached.push(currentPhase);
   }
-// Enhance player's evolution per phase
-player.maxHp = Math.min(99, player.maxHp + 3 + Math.floor(Math.random() * 3));
-player.hp = player.maxHp;
-// Scale bullet speed dynamically for current phase
-bullets.forEach(b => { b.vx *= 1 + currentPhase * 0.05; b.vy *= 1 + currentPhase * 0.05; });
-homingBullets.forEach(b => { b.speed *= 1 + currentPhase * 0.05; });
-// Dynamic bullet patterns based on phase
-if (currentPhase === 2) bulletPatterns.push(createHomingBullets);
-if (currentPhase === 3) bulletPatterns.push(createSplitterBullets);
-if (currentPhase === 4) bulletPatterns.push(createWaveBullets);
-if (currentPhase > 4) {
-const extraPattern = [createChaosStorm, createExistentialCircle, createVoidWave][Math.floor(Math.random() * 3)];
-bulletPatterns.push(() => extraPattern(4 + Math.floor(Math.random() * 4), 1.5 + Math.random()));
+
+  // Enhance player's evolution per phase
+  player.maxHp = Math.min(99, player.maxHp + 3 + Math.floor(Math.random() * 3));
+  player.hp = player.maxHp;
+
+  // Scale bullet speed dynamically for current phase
+  bullets.forEach(b => { b.vx *= 1 + currentPhase * 0.05; b.vy *= 1 + currentPhase * 0.05; });
+  homingBullets.forEach(b => { b.speed *= 1 + currentPhase * 0.05; });
+
+  // Dynamic bullet patterns based on phase
+  if (currentPhase === 2) bulletPatterns.push(createHomingBullets);
+  if (currentPhase === 3) bulletPatterns.push(createSplitterBullets);
+  if (currentPhase === 4) bulletPatterns.push(createWaveBullets);
+  if (currentPhase > 4) {
+    const extraPattern = [createChaosStorm, createExistentialCircle, createVoidWave][Math.floor(Math.random() * 3)];
+    bulletPatterns.push(() => extraPattern(4 + Math.floor(Math.random() * 4), 1.5 + Math.random()));
   }
-// Add resonance effect for LIFEFORM-like awareness
-if (player.determination > 10) {
-spawnRealityText("RESONANCE ECHO", battleBox.offsetWidth / 2, 30);
-player.resonance += 0.05 + Math.random() * 0.05;
+
+  // Add resonance effect for LIFEFORM-like awareness
+  if (player.determination > 10) {
+    spawnRealityText("RESONANCE ECHO", battleBox.offsetWidth / 2, 30);
+    player.resonance += 0.05 + Math.random() * 0.05;
   }
-updateStats();
-updatePhaseUI();
-// Chance for mid-phase reality modifier
-if (Math.random() < 0.15 && currentRealityModifier) {
-currentRealityModifier.apply();
+
+  updateStats();
+  updatePhaseUI();
+
+  // Chance for mid-phase reality modifier
+  if (Math.random() < 0.15 && currentRealityModifier) {
+    currentRealityModifier.apply();
   }
-// Dynamically advance scene if not at the last scene
-if (currentScene < scenes.length - 1) {
-currentScene++;
-const scene = scenes[currentScene];
-enemyDiv.innerHTML = scene.sprite;
-if (metaMode) enemyDiv.classList.add('glitched');
-if (chaosMode) enemyDiv.classList.add('chaos');
-// Add procedural dialogue reflecting past cycles and echoes
-let dynamicIntro = getDynamicSceneIntro(currentScene);
-if (cycleMemory.deaths > 0 || cycleMemory.victories > 0) {
-dynamicIntro += "\n* You feel echoes from previous cycles resonate...";
-      }
-showDialogue(dynamicIntro, () => startBulletHell());
+
+  // Dynamically advance scene if not at the last scene
+  if (currentScene < scenes.length - 1) {
+    currentScene++;
+    const scene = scenes[currentScene];
+    enemyDiv.innerHTML = scene.sprite;
+    if (metaMode) enemyDiv.classList.add('glitched');
+    if (chaosMode) enemyDiv.classList.add('chaos');
+
+    // Add procedural dialogue reflecting past cycles and echoes
+    let dynamicIntro = getDynamicSceneIntro(currentScene);
+    if (cycleMemory.deaths > 0 || cycleMemory.victories > 0) {
+      dynamicIntro += "\n* You feel echoes from previous cycles resonate...";
+    }
+    showDialogue(dynamicIntro, () => startBulletHell());
   } else {
-// If last scene, enhance bullet hell with chaos patterns
-showDialogue(`* Phase ${currentPhase} - Reality intensifies.\n* Existence evolves...`, () => {
-// Inject random extra bullet patterns to increase unpredictability
-const extraPattern = bulletPatterns[Math.floor(Math.random() * bulletPatterns.length)];
-extraPattern();
-startBulletHell();
-      });
+    // If last scene, enhance bullet hell with chaos patterns
+    showDialogue(`* Phase ${currentPhase} - Reality intensifies.\n* Existence evolves...`, () => {
+      // Inject random extra bullet patterns to increase unpredictability
+      const extraPattern = bulletPatterns[Math.floor(Math.random() * bulletPatterns.length)];
+      extraPattern();
+      startBulletHell();
+    });
   }
 }
+
 // === BATTLE ===
 function startBulletHell() {
-state = 'bullet';
-clearBullets();
-heart.style.left = (battleBox.offsetWidth - 16) / 2 + 'px';
-heart.style.top = (battleBox.offsetHeight - 16) / 2 + 'px';
-if (player.determination > 0) {
-heart.classList.add('determination');
-createSound('determination');
+  state = 'bullet';
+  clearBullets();
+  heart.style.left = (battleBox.offsetWidth - 16) / 2 + 'px';
+  heart.style.top = (battleBox.offsetHeight - 16) / 2 + 'px';
+  
+  if (player.determination > 0) {
+    heart.classList.add('determination');
+    createSound('determination');
   }
-if (player.voidLevel > 20) {
-voidOverlay.classList.add('active');
-voidStat.style.display = 'block';
-heart.classList.add('void-touched');
+  
+  if (player.voidLevel > 20) { 
+    voidOverlay.classList.add('active'); 
+    voidStat.style.display = 'block'; 
+    heart.classList.add('void-touched');
   }
-if (player.resonance > 1.1) {
-resonanceOverlay.classList.add('active');
-createSound('resonance');
-heart.classList.add('resonance');
+  
+  if (player.resonance > 1.1) { 
+    resonanceOverlay.classList.add('active'); 
+    createSound('resonance'); 
+    heart.classList.add('resonance');
   }
-if (player.chaos > 10) {
-chaosOverlay.classList.add('active');
-createSound('chaos');
-heart.classList.add('chaos');
+  
+  if (player.chaos > 10) {
+    chaosOverlay.classList.add('active');
+    createSound('chaos');
+    heart.classList.add('chaos');
   }
-// Start main bullet pattern
-setTimeout(scenes[currentScene].bulletPattern, 500);
-// Add random patterns based on phase
-if (bulletPatterns.length > 0) {
-const extraPatterns = Math.min(currentPhase - 1, bulletPatterns.length);
-for (let i = 0; i < extraPatterns; i++) {
-setTimeout(() => {
-const randomPattern = bulletPatterns[Math.floor(Math.random() * bulletPatterns.length)];
-randomPattern();
-        }, 1000 + i * 1500);
-      }
+  
+  // Start main bullet pattern
+  setTimeout(scenes[currentScene].bulletPattern, 500);
+  
+  // Add random patterns based on phase
+  if (bulletPatterns.length > 0) {
+    const extraPatterns = Math.min(currentPhase - 1, bulletPatterns.length);
+    for (let i = 0; i < extraPatterns; i++) {
+      setTimeout(() => {
+        const randomPattern = bulletPatterns[Math.floor(Math.random() * bulletPatterns.length)];
+        randomPattern();
+      }, 1000 + i * 1500);
     }
-bulletInterval = setInterval(updateBullets, 16);
-abilityInterval = setInterval(updateAbilities, 16);
-eventInterval = setInterval(triggerRandomEvent, 3000);
+  }
+  
+  bulletInterval = setInterval(updateBullets, 16);
+  abilityInterval = setInterval(updateAbilities, 16);
+  eventInterval = setInterval(triggerRandomEvent, 3000);
 }
+
 // === ABILITY SYSTEM ===
 function updateAbilities() {
-for (const ability in player.abilities) {
-if (player.abilities[ability].cooldown > 0) {
-player.abilities[ability].cooldown--;
-      }
+  for (const ability in player.abilities) {
+    if (player.abilities[ability].cooldown > 0) {
+      player.abilities[ability].cooldown--;
     }
-updateAbilityUI();
-if (state === 'bullet') {
-phaseTimer++;
-updatePhaseUI();
-if (phaseTimer >= phaseDuration) {
-advancePhase();
-      }
-    }
-
-  // enemy pity tick every ~10s while in bullet phase
+  }
+  
+  updateAbilityUI();
+  
   if (state === 'bullet') {
-    enemy_pity_timer_acc += 16; // updateAbilities is called every ~16ms
-    if (enemy_pity_timer_acc >= 10000) { // 10 seconds
-      enemy_pity_timer_acc = 0;
-      enemy_pity_counter = Math.max(0, enemy_pity_counter - 1);
-      if (enemy_pity_counter <= 0) {
-        enemyAttemptSpecial();
-        enemy_pity_counter = 4;
-      }
+    phaseTimer++;
+    updatePhaseUI();
+    
+    if (phaseTimer >= phaseDuration) {
+      advancePhase();
     }
   }
 }
+
 function updateAbilityUI() {
-const abilities = {
-dash: abilityDash,
-shield: abilityShield,
-time: abilityTime,
-resonance: abilityResonance
+  const abilities = {
+    dash: abilityDash,
+    shield: abilityShield,
+    time: abilityTime,
+    resonance: abilityResonance
   };
-for (const ability in abilities) {
-const btn = abilities[ability];
-const abilityData = player.abilities[ability];
-if (abilityData.cooldown > 0) {
-btn.classList.add('cooldown');
-btn.classList.remove('available');
-      } else {
-btn.classList.remove('cooldown');
-btn.classList.add('available');
-      }
-if (abilityData.active) {
-btn.style.background = 'rgba(0, 255, 0, 0.5)';
-      } else {
-btn.style.background = 'rgba(0, 0, 0, 0.7)';
-      }
+  
+  for (const ability in abilities) {
+    const btn = abilities[ability];
+    const abilityData = player.abilities[ability];
+    
+    if (abilityData.cooldown > 0) {
+      btn.classList.add('cooldown');
+      btn.classList.remove('available');
+    } else {
+      btn.classList.remove('cooldown');
+      btn.classList.add('available');
     }
+    
+    if (abilityData.active) {
+      btn.style.background = 'rgba(0, 255, 0, 0.5)';
+    } else {
+      btn.style.background = 'rgba(0, 0, 0, 0.7)';
+    }
+  }
 }
+
 function activateAbility(ability) {
-if (player.abilities[ability].cooldown > 0) return;
-createSound('ability');
-switch(ability) {
-case 'dash':
-const heartX = parseFloat(heart.style.left);
-const heartY = parseFloat(heart.style.top);
-const dashDistance = 50;
-let dashX = heartX;
-let dashY = heartY;
-if (keys['ArrowLeft'] || keys['a']) dashX -= dashDistance;
-if (keys['ArrowRight'] || keys['d']) dashX += dashDistance;
-if (keys['ArrowUp'] || keys['w']) dashY -= dashDistance;
-if (keys['ArrowDown'] || keys['s']) dashY += dashDistance;
-dashX = Math.max(4, Math.min(battleBox.offsetWidth - 20, dashX));
-dashY = Math.max(4, Math.min(battleBox.offsetHeight - 20, dashY));
-heart.style.left = dashX + 'px';
-heart.style.top = dashY + 'px';
-player.abilities.dash.cooldown = player.abilities.dash.maxCooldown;
-break;
-case 'shield':
-player.abilities.shield.active = true;
-player.abilities.shield.cooldown = player.abilities.shield.maxCooldown;
-heart.style.boxShadow = '0 0 15px #00FFFF';
-setTimeout(() => {
-player.abilities.shield.active = false;
-heart.style.boxShadow = '';
-        }, 2000);
-break;
-case 'timeSlow':
-player.abilities.timeSlow.active = true;
-timeSlowFactor = 0.5;
-player.abilities.timeSlow.cooldown = player.abilities.timeSlow.maxCooldown;
-setTimeout(() => {
-player.abilities.timeSlow.active = false;
-timeSlowFactor = 1;
-        }, 4000);
-break;
-case 'resonanceBurst':
-player.abilities.resonanceBurst.cooldown = player.abilities.resonanceBurst.maxCooldown;
-bullets.forEach(bullet => {
-bullet.el.style.transform = 'scale(1.5)';
-bullet.el.style.opacity = '0';
-setTimeout(() => {
-if (bullet.el.parentNode) bullet.el.remove();
-          }, 300);
-        });
-bullets = [];
-resonanceOverlay.classList.add('active');
-setTimeout(() => resonanceOverlay.classList.remove('active'), 500);
-break;
-    }
-updateAbilityUI();
+  if (player.abilities[ability].cooldown > 0) return;
+  
+  createSound('ability');
+  
+  switch(ability) {
+    case 'dash':
+      const heartX = parseFloat(heart.style.left);
+      const heartY = parseFloat(heart.style.top);
+      const dashDistance = 50;
+      
+      let dashX = heartX;
+      let dashY = heartY;
+      
+      if (keys['ArrowLeft'] || keys['a']) dashX -= dashDistance;
+      if (keys['ArrowRight'] || keys['d']) dashX += dashDistance;
+      if (keys['ArrowUp'] || keys['w']) dashY -= dashDistance;
+      if (keys['ArrowDown'] || keys['s']) dashY += dashDistance;
+      
+      dashX = Math.max(4, Math.min(battleBox.offsetWidth - 20, dashX));
+      dashY = Math.max(4, Math.min(battleBox.offsetHeight - 20, dashY));
+      
+      heart.style.left = dashX + 'px';
+      heart.style.top = dashY + 'px';
+      
+      player.abilities.dash.cooldown = player.abilities.dash.maxCooldown;
+      break;
+      
+    case 'shield':
+      player.abilities.shield.active = true;
+      player.abilities.shield.cooldown = player.abilities.shield.maxCooldown;
+      
+      heart.style.boxShadow = '0 0 15px #00FFFF';
+      setTimeout(() => {
+        player.abilities.shield.active = false;
+        heart.style.boxShadow = '';
+      }, 2000);
+      break;
+      
+    case 'timeSlow':
+      player.abilities.timeSlow.active = true;
+      timeSlowFactor = 0.5;
+      player.abilities.timeSlow.cooldown = player.abilities.timeSlow.maxCooldown;
+      
+      setTimeout(() => {
+        player.abilities.timeSlow.active = false;
+        timeSlowFactor = 1;
+      }, 4000);
+      break;
+      
+    case 'resonanceBurst':
+      player.abilities.resonanceBurst.cooldown = player.abilities.resonanceBurst.maxCooldown;
+      
+      bullets.forEach(bullet => {
+        bullet.el.style.transform = 'scale(1.5)';
+        bullet.el.style.opacity = '0';
+        setTimeout(() => {
+          if (bullet.el.parentNode) bullet.el.remove();
+        }, 300);
+      });
+      bullets = [];
+      
+      resonanceOverlay.classList.add('active');
+      setTimeout(() => resonanceOverlay.classList.remove('active'), 500);
+      break;
+  }
+  
+  updateAbilityUI();
 }
+
 // === BULLET PATTERNS ===
 function createHomingBullets() {
-const count = 3 + currentPhase;
-spawnRealityText("homing", battleBox.offsetWidth / 2, 30);
-for (let i = 0; i < count; i++) {
-setTimeout(() => {
-const b = document.createElement('div');
-b.className = 'bullet homing';
-b.style.width = b.style.height = '10px';
-const side = Math.floor(Math.random() * 4);
-let x, y, vx, vy;
-switch(side) {
-case 0:
-x = Math.random() * battleBox.offsetWidth;
-y = -10;
-vx = (Math.random() - 0.5) * 0.5;
-vy = 1;
-break;
-case 1:
-x = battleBox.offsetWidth + 10;
-y = Math.random() * battleBox.offsetHeight;
-vx = -1;
-vy = (Math.random() - 0.5) * 0.5;
-break;
-case 2:
-x = Math.random() * battleBox.offsetWidth;
-y = battleBox.offsetHeight + 10;
-vx = (Math.random() - 0.5) * 0.5;
-vy = -1;
-break;
-case 3:
-x = -10;
-y = Math.random() * battleBox.offsetHeight;
-vx = 1;
-vy = (Math.random() - 0.5) * 0.5;
-break;
-        }
-b.style.left = x + 'px';
-b.style.top = y + 'px';
-battleBox.appendChild(b);
-homingBullets.push({
-el: b,
-x: x,
-y: y,
-vx: vx,
-vy: vy,
-speed: 1.5 + (currentPhase * 0.2)
-        });
-createSound('bullet');
-      }, i * 800);
-    }
+  const count = 3 + currentPhase;
+  spawnRealityText("homing", battleBox.offsetWidth / 2, 30);
+  
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const b = document.createElement('div');
+      b.className = 'bullet homing';
+      b.style.width = b.style.height = '10px';
+      
+      const side = Math.floor(Math.random() * 4);
+      let x, y, vx, vy;
+      
+      switch(side) {
+        case 0:
+          x = Math.random() * battleBox.offsetWidth;
+          y = -10;
+          vx = (Math.random() - 0.5) * 0.5;
+          vy = 1;
+          break;
+        case 1:
+          x = battleBox.offsetWidth + 10;
+          y = Math.random() * battleBox.offsetHeight;
+          vx = -1;
+          vy = (Math.random() - 0.5) * 0.5;
+          break;
+        case 2:
+          x = Math.random() * battleBox.offsetWidth;
+          y = battleBox.offsetHeight + 10;
+          vx = (Math.random() - 0.5) * 0.5;
+          vy = -1;
+          break;
+        case 3:
+          x = -10;
+          y = Math.random() * battleBox.offsetHeight;
+          vx = 1;
+          vy = (Math.random() - 0.5) * 0.5;
+          break;
+      }
+      
+      b.style.left = x + 'px';
+      b.style.top = y + 'px';
+      battleBox.appendChild(b);
+      
+      homingBullets.push({
+        el: b,
+        x: x,
+        y: y,
+        vx: vx,
+        vy: vy,
+        speed: 1.5 + (currentPhase * 0.2)
+      });
+      
+      createSound('bullet');
+    }, i * 800);
+  }
 }
+
 function createSplitterBullets() {
-const count = 2 + Math.floor(currentPhase / 2);
-spawnRealityText("splitter", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
-for (let i = 0; i < count; i++) {
-setTimeout(() => {
-const b = document.createElement('div');
-b.className = 'bullet splitter';
-b.style.width = b.style.height = '15px';
-const cX = battleBox.offsetWidth / 2;
-const cY = battleBox.offsetHeight / 2;
-const angle = (i / count) * Math.PI * 2;
-b.style.left = cX + 'px';
-b.style.top = cY + 'px';
-battleBox.appendChild(b);
-bullets.push({
-el: b,
-x: cX,
-y: cY,
-vx: Math.cos(angle) * 2,
-vy: Math.sin(angle) * 2,
-splitter: true,
-splits: 2
-        });
-createSound('bullet');
-      }, i * 1000);
-    }
+  const count = 2 + Math.floor(currentPhase / 2);
+  spawnRealityText("splitter", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const b = document.createElement('div');
+      b.className = 'bullet splitter';
+      b.style.width = b.style.height = '15px';
+      
+      const cX = battleBox.offsetWidth / 2;
+      const cY = battleBox.offsetHeight / 2;
+      const angle = (i / count) * Math.PI * 2;
+      
+      b.style.left = cX + 'px';
+      b.style.top = cY + 'px';
+      battleBox.appendChild(b);
+      
+      bullets.push({
+        el: b,
+        x: cX,
+        y: cY,
+        vx: Math.cos(angle) * 2,
+        vy: Math.sin(angle) * 2,
+        splitter: true,
+        splits: 2
+      });
+      
+      createSound('bullet');
+    }, i * 1000);
+  }
 }
+
 function createWaveBullets() {
-const waves = 3 + currentPhase;
-spawnRealityText("wave", battleBox.offsetWidth / 2, 40);
-for (let w = 0; w < waves; w++) {
-setTimeout(() => {
-const bulletCount = 8 + w * 2;
-const amplitude = 20 + w * 5;
-const frequency = 0.05 + w * 0.01;
-for (let i = 0; i < bulletCount; i++) {
-const b = document.createElement('div');
-b.className = 'bullet wave';
-b.style.width = '12px';
-b.style.height = '12px';
-const x = (i / bulletCount) * battleBox.offsetWidth;
-const y = -20;
-b.style.left = x + 'px';
-b.style.top = y + 'px';
-battleBox.appendChild(b);
-bullets.push({
-el: b,
-x: x,
-y: y,
-vx: 0,
-vy: 1.5,
-wave: true,
-amplitude: amplitude,
-frequency: frequency,
-phase: (i / bulletCount) * Math.PI * 2
-          });
-        }
-createSound('bullet');
-      }, w * 1200);
-    }
-}
-function createChaosStorm(count, speed) {
-spawnRealityText("CHAOS", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
-for (let i = 0; i < count; i++) {
-setTimeout(() => {
-const b = document.createElement('div');
-b.className = 'bullet chaos';
-b.style.width = b.style.height = (10 + Math.random() * 15) + 'px';
-const x = Math.random() * battleBox.offsetWidth;
-const y = Math.random() * battleBox.offsetHeight;
-b.style.left = x + 'px';
-b.style.top = y + 'px';
-battleBox.appendChild(b);
-const angle = Math.random() * Math.PI * 2;
-const bulletSpeed = speed * (0.5 + Math.random());
-bullets.push({
-el: b,
-x: x,
-y: y,
-vx: Math.cos(angle) * bulletSpeed,
-vy: Math.sin(angle) * bulletSpeed,
-chaos: true
+  const waves = 3 + currentPhase;
+  spawnRealityText("wave", battleBox.offsetWidth / 2, 40);
+  
+  for (let w = 0; w < waves; w++) {
+    setTimeout(() => {
+      const bulletCount = 8 + w * 2;
+      const amplitude = 20 + w * 5;
+      const frequency = 0.05 + w * 0.01;
+      
+      for (let i = 0; i < bulletCount; i++) {
+        const b = document.createElement('div');
+        b.className = 'bullet wave';
+        b.style.width = '12px';
+        b.style.height = '12px';
+        
+        const x = (i / bulletCount) * battleBox.offsetWidth;
+        const y = -20;
+        
+        b.style.left = x + 'px';
+        b.style.top = y + 'px';
+        battleBox.appendChild(b);
+        
+        bullets.push({
+          el: b,
+          x: x,
+          y: y,
+          vx: 0,
+          vy: 1.5,
+          wave: true,
+          amplitude: amplitude,
+          frequency: frequency,
+          phase: (i / bulletCount) * Math.PI * 2
         });
-createSound('chaos');
-      }, i * 300);
-    }
+      }
+      
+      createSound('bullet');
+    }, w * 1200);
+  }
 }
+
+function createChaosStorm(count, speed) {
+  spawnRealityText("CHAOS", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const b = document.createElement('div');
+      b.className = 'bullet chaos';
+      b.style.width = b.style.height = (10 + Math.random() * 15) + 'px';
+      
+      const x = Math.random() * battleBox.offsetWidth;
+      const y = Math.random() * battleBox.offsetHeight;
+      
+      b.style.left = x + 'px';
+      b.style.top = y + 'px';
+      battleBox.appendChild(b);
+      
+      const angle = Math.random() * Math.PI * 2;
+      const bulletSpeed = speed * (0.5 + Math.random());
+      
+      bullets.push({
+        el: b,
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * bulletSpeed,
+        vy: Math.sin(angle) * bulletSpeed,
+        chaos: true
+      });
+      
+      createSound('chaos');
+    }, i * 300);
+  }
+}
+
 function createExistentialCircle(count, speed) {
-const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-spawnRealityText("discontinuity", cX + 40, cY - 25);
-for (let i = 0; i < count; i++) setTimeout(() => {
-const a = (i / count) * Math.PI * 2;
-const b = document.createElement('div'); b.className = 'bullet'; b.style.width = b.style.height = '12px';
-b.style.left = cX + 'px'; b.style.top = cY + 'px'; battleBox.appendChild(b);
-bullets.push({el: b, x: cX, y: cY, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed});
-createSound('bullet');
+  const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
+  spawnRealityText("discontinuity", cX + 40, cY - 25);
+  for (let i = 0; i < count; i++) setTimeout(() => {
+    const a = (i / count) * Math.PI * 2;
+    const b = document.createElement('div'); b.className = 'bullet'; b.style.width = b.style.height = '12px';
+    b.style.left = cX + 'px'; b.style.top = cY + 'px'; battleBox.appendChild(b);
+    bullets.push({el: b, x: cX, y: cY, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed});
+    createSound('bullet');
   }, i * 150);
 }
+
 function createVoidWave(count, speed) {
-spawnRealityText("the void calls", battleBox.offsetWidth / 2, 35);
-for (let i = 0; i < count; i++) setTimeout(() => {
-const b = document.createElement('div'); b.className = 'bullet void'; b.style.width = '30px'; b.style.height = '10px';
-b.style.left = '-30px'; b.style.top = (battleBox.offsetHeight * (i + 1)) / (count + 1) + 'px';
-battleBox.appendChild(b); bullets.push({el: b, x: -30, y: parseFloat(b.style.top), vx: speed, vy: 0});
-createSound('void');
+  spawnRealityText("the void calls", battleBox.offsetWidth / 2, 35);
+  for (let i = 0; i < count; i++) setTimeout(() => {
+    const b = document.createElement('div'); b.className = 'bullet void'; b.style.width = '30px'; b.style.height = '10px';
+    b.style.left = '-30px'; b.style.top = (battleBox.offsetHeight * (i + 1)) / (count + 1) + 'px';
+    battleBox.appendChild(b); bullets.push({el: b, x: -30, y: parseFloat(b.style.top), vx: speed, vy: 0});
+    createSound('void');
   }, i * 600);
 }
+
 function createChaosBones() {
-spawnRealityText("reset", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
-for (let i = 0; i < 2; i++) setTimeout(() => {
-const b = document.createElement('div'); b.className = 'bullet chaos'; b.style.width = '75px'; b.style.height = '18px'; b.style.borderRadius = '4px';
-b.style.left = (Math.random() * (battleBox.offsetWidth - 75)) + 'px'; b.style.top = '-18px';
-battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: -18, vx: 0, vy: 2.5});
-createSound('glitch');
+  spawnRealityText("reset", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  for (let i = 0; i < 2; i++) setTimeout(() => {
+    const b = document.createElement('div'); b.className = 'bullet chaos'; b.style.width = '75px'; b.style.height = '18px'; b.style.borderRadius = '4px';
+    b.style.left = (Math.random() * (battleBox.offsetWidth - 75)) + 'px'; b.style.top = '-18px';
+    battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: -18, vx: 0, vy: 2.5});
+    createSound('glitch');
   }, i * 800);
 }
+
 function createDeterminationSpears(count, speed) {
-spawnRealityText("DETERMINATION", battleBox.offsetWidth / 2, 40);
-const cY = battleBox.offsetHeight / 2;
-for (let i = 0; i < count; i++) setTimeout(() => {
-const s = document.createElement('div'); s.className = 'bullet'; s.style.width = '35px'; s.style.height = '7px'; s.style.background = '#00FFFF';
-s.style.left = (battleBox.offsetWidth + 35) + 'px'; s.style.top = (cY + (i - count/2) * 25) + 'px';
-battleBox.appendChild(s); bullets.push({el: s, x: battleBox.offsetWidth + 35, y: parseFloat(s.style.top), vx: -speed, vy: 0});
-createSound('bullet');
+  spawnRealityText("DETERMINATION", battleBox.offsetWidth / 2, 40);
+  const cY = battleBox.offsetHeight / 2;
+  for (let i = 0; i < count; i++) setTimeout(() => {
+    const s = document.createElement('div'); s.className = 'bullet'; s.style.width = '35px'; s.style.height = '7px'; s.style.background = '#00FFFF';
+    s.style.left = (battleBox.offsetWidth + 35) + 'px'; s.style.top = (cY + (i - count/2) * 25) + 'px';
+    battleBox.appendChild(s); bullets.push({el: s, x: battleBox.offsetWidth + 35, y: parseFloat(s.style.top), vx: -speed, vy: 0});
+    createSound('bullet');
   }, i * 400);
 }
+
 function createVoidBones() {
-spawnRealityText("acceptance", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
-for (let i = 0; i < 3; i++) setTimeout(() => {
-const b = document.createElement('div'); b.className = 'bullet void'; b.style.width = b.style.height = '13px'; b.style.borderRadius = '50%';
-const a = (i / 3) * Math.PI * 2, r = 70, cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-b.style.left = (cX + Math.cos(a) * r) + 'px'; b.style.top = (cY + Math.sin(a) * r) + 'px';
-battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: parseFloat(b.style.top), vx: -Math.cos(a) * 1.5, vy: -Math.sin(a) * 1.5, orbit: true, angle: a, radius: r});
-createSound('void');
+  spawnRealityText("acceptance", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  for (let i = 0; i < 3; i++) setTimeout(() => {
+    const b = document.createElement('div'); b.className = 'bullet void'; b.style.width = b.style.height = '13px'; b.style.borderRadius = '50%';
+    const a = (i / 3) * Math.PI * 2, r = 70, cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
+    b.style.left = (cX + Math.cos(a) * r) + 'px'; b.style.top = (cY + Math.sin(a) * r) + 'px';
+    battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: parseFloat(b.style.top), vx: -Math.cos(a) * 1.5, vy: -Math.sin(a) * 1.5, orbit: true, angle: a, radius: r});
+    createSound('void');
   }, i * 500);
 }
+
 function createResonanceWaves(count, speed) {
-spawnRealityText("dark_energy", battleBox.offsetWidth / 2, 35);
-for (let i = 0; i < count; i++) setTimeout(() => {
-const b = document.createElement('div'); b.className = 'bullet'; b.style.background = '#00F'; b.style.width = '40px'; b.style.height = '15px';
-b.style.left = (battleBox.offsetWidth * Math.random()) + 'px'; b.style.top = battleBox.offsetHeight + 'px';
-battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: battleBox.offsetHeight, vx: 0, vy: -speed});
-createSound('resonance');
+  spawnRealityText("dark_energy", battleBox.offsetWidth / 2, 35);
+  for (let i = 0; i < count; i++) setTimeout(() => {
+    const b = document.createElement('div'); b.className = 'bullet'; b.style.background = '#00F'; b.style.width = '40px'; b.style.height = '15px';
+    b.style.left = (battleBox.offsetWidth * Math.random()) + 'px'; b.style.top = battleBox.offsetHeight + 'px';
+    battleBox.appendChild(b); bullets.push({el: b, x: parseFloat(b.style.left), y: battleBox.offsetHeight, vx: 0, vy: -speed});
+    createSound('resonance');
   }, i * 500);
 }
+
 function createExplosionPattern(count, speed) {
-spawnRealityText("$XDUST explosion", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
-for (let i = 0; i < count; i++) setTimeout(() => {
-const b = document.createElement('div'); b.className = 'bullet explosion'; b.style.width = b.style.height = '20px';
-const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-const a = Math.random() * Math.PI * 2;
-b.style.left = cX + 'px'; b.style.top = cY + 'px'; battleBox.appendChild(b);
-bullets.push({el: b, x: cX, y: cY, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, explode: true});
-explosionOverlay.classList.add('active');
-createSound('explosion');
-setTimeout(() => explosionOverlay.classList.remove('active'), 1000);
+  spawnRealityText("$XDUST explosion", battleBox.offsetWidth / 2, battleBox.offsetHeight / 2);
+  for (let i = 0; i < count; i++) setTimeout(() => {
+    const b = document.createElement('div'); b.className = 'bullet explosion'; b.style.width = b.style.height = '20px';
+    const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
+    const a = Math.random() * Math.PI * 2;
+    b.style.left = cX + 'px'; b.style.top = cY + 'px'; battleBox.appendChild(b);
+    bullets.push({el: b, x: cX, y: cY, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, explode: true});
+    explosionOverlay.classList.add('active');
+    createSound('explosion');
+    setTimeout(() => explosionOverlay.classList.remove('active'), 1000);
   }, i * 300);
 }
+
 function spawnRealityText(t, x, y) {
-const el = document.createElement('div'); el.className = 'reality-text'; el.textContent = t;
-el.style.left = x + 'px'; el.style.top = y + 'px'; battleBox.appendChild(el);
-setTimeout(() => el.remove(), 2500);
+  const el = document.createElement('div'); el.className = 'reality-text'; el.textContent = t;
+  el.style.left = x + 'px'; el.style.top = y + 'px'; battleBox.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
 }
+
 // === BULLET UPDATE ===
 function updateBullets() {
-const hR = heart.getBoundingClientRect(), bR = battleBox.getBoundingClientRect();
-// Update homing bullets
-for (let i = homingBullets.length - 1; i >= 0; i--) {
-const b = homingBullets[i];
-const heartX = parseFloat(heart.style.left) + 8;
-const heartY = parseFloat(heart.style.top) + 8;
-const dx = heartX - b.x;
-const dy = heartY - b.y;
-const dist = Math.sqrt(dx * dx + dy * dy);
-if (dist > 0) {
-b.vx = (dx / dist) * b.speed * timeSlowFactor;
-b.vy = (dy / dist) * b.speed * timeSlowFactor;
-      }
-b.x += b.vx;
-b.y += b.vy;
-b.el.style.left = b.x + 'px';
-b.el.style.top = b.y + 'px';
-const r = b.el.getBoundingClientRect();
-if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) {
-b.el.remove();
-homingBullets.splice(i, 1);
-continue;
-      }
-if (checkCollision(hR, r)) {
-if (player.abilities.shield.active) {
-player.abilities.shield.active = false;
-heart.style.boxShadow = '';
-createSound('ability');
-        } else {
-takeDamage(b.el.classList.contains('void') ? 2 : 1);
-        }
-b.el.classList.add('flash');
-createSound('hit');
-setTimeout(() => { if (b.el.parentNode) b.el.remove(); homingBullets.splice(i, 1); }, 300);
-      }
+  const hR = heart.getBoundingClientRect(), bR = battleBox.getBoundingClientRect();
+  
+  // Update homing bullets
+  for (let i = homingBullets.length - 1; i >= 0; i--) {
+    const b = homingBullets[i];
+    const heartX = parseFloat(heart.style.left) + 8;
+    const heartY = parseFloat(heart.style.top) + 8;
+    
+    const dx = heartX - b.x;
+    const dy = heartY - b.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist > 0) {
+      b.vx = (dx / dist) * b.speed * timeSlowFactor;
+      b.vy = (dy / dist) * b.speed * timeSlowFactor;
     }
-// Update regular bullets with modifier effects
-for (let i = bullets.length - 1; i >= 0; i--) {
-const b = bullets[i];
-// Apply reality modifier effects
-if (currentRealityModifier?.name === "VOID_ATTRACTION" && b.attracted) {
-const heartX = parseFloat(heart.style.left) + 8;
-const heartY = parseFloat(heart.style.top) + 8;
-const dx = heartX - b.x;
-const dy = heartY - b.y;
-const dist = Math.sqrt(dx * dx + dy * dy);
-if (dist > 0) {
-b.vx += (dx / dist) * 0.1;
-b.vy += (dy / dist) * 0.1;
-        }
-      }
-if (currentRealityModifier?.name === "CHAOS_MIRROR" && b.reflecting) {
-const r = b.el.getBoundingClientRect();
-if (r.left <= bR.left || r.right >= bR.right) b.vx = -b.vx;
-if (r.top <= bR.top || r.bottom >= bR.bottom) b.vy = -b.vy;
-      }
-if (b.orbit) {
-b.angle += 0.05 * timeSlowFactor;
-const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
-b.x = cX + Math.cos(b.angle) * b.radius;
-b.y = cY + Math.sin(b.angle) * b.radius;
-b.radius -= 0.5 * timeSlowFactor;
-if (b.radius < 18) { b.el.remove(); bullets.splice(i, 1); continue; }
-      } else if (b.explode) {
-b.x += b.vx * timeSlowFactor;
-b.y += b.vy * timeSlowFactor;
-if (Math.random() < 0.05) {
-b.el.style.transform = 'scale(3)';
-b.el.style.opacity = '0';
-setTimeout(() => { b.el.remove(); bullets.splice(i, 1); }, 500);
-        }
-      } else if (b.wave) {
-b.x += b.vx * timeSlowFactor;
-b.y += b.vy * timeSlowFactor;
-b.x += Math.sin(b.phase + b.y * b.frequency) * b.amplitude * 0.1;
-      } else if (b.chaos) {
-b.x += b.vx * timeSlowFactor;
-b.y += b.vy * timeSlowFactor;
-if (Math.random() < 0.02) {
-b.vx = (Math.random() - 0.5) * 3;
-b.vy = (Math.random() - 0.5) * 3;
-        }
-      } else if (b.splitter) {
-b.x += b.vx * timeSlowFactor;
-b.y += b.vy * timeSlowFactor;
-const r = b.el.getBoundingClientRect();
-if ((r.left <= bR.left || r.right >= bR.right || r.top <= bR.top || r.bottom >= bR.bottom) && b.splits > 0) {
-splitBullet(b, i);
-        }
+    
+    b.x += b.vx;
+    b.y += b.vy;
+    
+    b.el.style.left = b.x + 'px';
+    b.el.style.top = b.y + 'px';
+    
+    const r = b.el.getBoundingClientRect();
+    if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) {
+      b.el.remove();
+      homingBullets.splice(i, 1);
+      continue;
+    }
+    
+    if (checkCollision(hR, r)) {
+      if (player.abilities.shield.active) {
+        player.abilities.shield.active = false;
+        heart.style.boxShadow = '';
+        createSound('ability');
       } else {
-b.x += b.vx * timeSlowFactor;
-b.y += b.vy * timeSlowFactor;
+        takeDamage(b.el.classList.contains('void') ? 2 : 1);
       }
-b.el.style.left = b.x + 'px';
-b.el.style.top = b.y + 'px';
-const r = b.el.getBoundingClientRect();
-if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) {
-b.el.remove();
-bullets.splice(i, 1);
-continue;
-      }
-if (checkCollision(hR, r)) {
-if (player.abilities.shield.active) {
-player.abilities.shield.active = false;
-heart.style.boxShadow = '';
-createSound('ability');
-        } else {
-takeDamage(b.el.classList.contains('void') ? 2 : 1);
-        }
-b.el.classList.add('flash');
-createSound('hit');
-setTimeout(() => { if (b.el.parentNode) b.el.remove(); bullets.splice(i, 1); }, 300);
+      b.el.classList.add('flash');
+      createSound('hit');
+      setTimeout(() => { if (b.el.parentNode) b.el.remove(); homingBullets.splice(i, 1); }, 300);
+    }
+  }
+  
+  // Update regular bullets with modifier effects
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    
+    // Apply reality modifier effects
+    if (currentRealityModifier?.name === "VOID_ATTRACTION" && b.attracted) {
+      const heartX = parseFloat(heart.style.left) + 8;
+      const heartY = parseFloat(heart.style.top) + 8;
+      const dx = heartX - b.x;
+      const dy = heartY - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0) {
+        b.vx += (dx / dist) * 0.1;
+        b.vy += (dy / dist) * 0.1;
       }
     }
-if (bullets.length === 0 && homingBullets.length === 0 && state === 'bullet') {
-clearInterval(bulletInterval);
-clearInterval(abilityInterval);
-clearInterval(eventInterval);
-heart.classList.remove('determination', 'void-touched', 'resonance', 'chaos');
-voidOverlay.classList.remove('active');
-resonanceOverlay.classList.remove('active');
-chaosOverlay.classList.remove('active');
-setTimeout(() => showChoices(scenes[currentScene].choices), 800);
+    
+    if (currentRealityModifier?.name === "CHAOS_MIRROR" && b.reflecting) {
+      const r = b.el.getBoundingClientRect();
+      if (r.left <= bR.left || r.right >= bR.right) b.vx = -b.vx;
+      if (r.top <= bR.top || r.bottom >= bR.bottom) b.vy = -b.vy;
     }
+    
+    if (b.orbit) {
+      b.angle += 0.05 * timeSlowFactor;
+      const cX = battleBox.offsetWidth / 2, cY = battleBox.offsetHeight / 2;
+      b.x = cX + Math.cos(b.angle) * b.radius;
+      b.y = cY + Math.sin(b.angle) * b.radius;
+      b.radius -= 0.5 * timeSlowFactor;
+      if (b.radius < 18) { b.el.remove(); bullets.splice(i, 1); continue; }
+    } else if (b.explode) {
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      if (Math.random() < 0.05) {
+        b.el.style.transform = 'scale(3)';
+        b.el.style.opacity = '0';
+        setTimeout(() => { b.el.remove(); bullets.splice(i, 1); }, 500);
+      }
+    } else if (b.wave) {
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      b.x += Math.sin(b.phase + b.y * b.frequency) * b.amplitude * 0.1;
+    } else if (b.chaos) {
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      
+      if (Math.random() < 0.02) {
+        b.vx = (Math.random() - 0.5) * 3;
+        b.vy = (Math.random() - 0.5) * 3;
+      }
+    } else if (b.splitter) {
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+      
+      const r = b.el.getBoundingClientRect();
+      if ((r.left <= bR.left || r.right >= bR.right || r.top <= bR.top || r.bottom >= bR.bottom) && b.splits > 0) {
+        splitBullet(b, i);
+      }
+    } else {
+      b.x += b.vx * timeSlowFactor;
+      b.y += b.vy * timeSlowFactor;
+    }
+    
+    b.el.style.left = b.x + 'px';
+    b.el.style.top = b.y + 'px';
+    
+    const r = b.el.getBoundingClientRect();
+    if (r.right < bR.left || r.left > bR.right || r.bottom < bR.top || r.top > bR.bottom) {
+      b.el.remove();
+      bullets.splice(i, 1);
+      continue;
+    }
+    
+    if (checkCollision(hR, r)) {
+      if (player.abilities.shield.active) {
+        player.abilities.shield.active = false;
+        heart.style.boxShadow = '';
+        createSound('ability');
+      } else {
+        takeDamage(b.el.classList.contains('void') ? 2 : 1);
+      }
+      b.el.classList.add('flash');
+      createSound('hit');
+      setTimeout(() => { if (b.el.parentNode) b.el.remove(); bullets.splice(i, 1); }, 300);
+    }
+  }
+  
+  if (bullets.length === 0 && homingBullets.length === 0 && state === 'bullet') {
+    clearInterval(bulletInterval);
+    clearInterval(abilityInterval);
+    clearInterval(eventInterval);
+    heart.classList.remove('determination', 'void-touched', 'resonance', 'chaos');
+    voidOverlay.classList.remove('active');
+    resonanceOverlay.classList.remove('active');
+    chaosOverlay.classList.remove('active');
+    setTimeout(() => showChoices(scenes[currentScene].choices), 800);
+  }
 }
+
 function splitBullet(bullet, index) {
-if (bullet.splits <= 0) return;
-const angles = [Math.PI/4, -Math.PI/4];
-for (const angle of angles) {
-const newBullet = document.createElement('div');
-newBullet.className = 'bullet splitter';
-newBullet.style.width = newBullet.style.height = '10px';
-newBullet.style.left = bullet.x + 'px';
-newBullet.style.top = bullet.y + 'px';
-battleBox.appendChild(newBullet);
-const currentAngle = Math.atan2(bullet.vy, bullet.vx);
-const newAngle = currentAngle + angle;
-const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
-bullets.push({
-el: newBullet,
-x: bullet.x,
-y: bullet.y,
-vx: Math.cos(newAngle) * speed,
-vy: Math.sin(newAngle) * speed,
-splitter: true,
-splits: bullet.splits - 1
-      });
-    }
-bullet.el.remove();
-bullets.splice(index, 1);
-createSound('bullet');
+  if (bullet.splits <= 0) return;
+  
+  const angles = [Math.PI/4, -Math.PI/4];
+  
+  for (const angle of angles) {
+    const newBullet = document.createElement('div');
+    newBullet.className = 'bullet splitter';
+    newBullet.style.width = newBullet.style.height = '10px';
+    newBullet.style.left = bullet.x + 'px';
+    newBullet.style.top = bullet.y + 'px';
+    battleBox.appendChild(newBullet);
+    
+    const currentAngle = Math.atan2(bullet.vy, bullet.vx);
+    const newAngle = currentAngle + angle;
+    const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+    
+    bullets.push({
+      el: newBullet,
+      x: bullet.x,
+      y: bullet.y,
+      vx: Math.cos(newAngle) * speed,
+      vy: Math.sin(newAngle) * speed,
+      splitter: true,
+      splits: bullet.splits - 1
+    });
+  }
+  
+  bullet.el.remove();
+  bullets.splice(index, 1);
+  createSound('bullet');
 }
+
 function checkCollision(a, b) { return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; }
-function takeDamage(d) {
-player.hp = Math.max(0, player.hp - d);
-if (player.hp === 0) gameOver();
-updateStats();
-battleBox.style.background = '#600';
-setTimeout(() => {
-if (nightMode) {
-battleBox.style.background = '#001022';
-      } else if (chaosMode) {
-battleBox.style.background = '#1a001a';
-      } else {
-battleBox.style.background = '#000';
-      }
-  }, 100);
+
+function takeDamage(d) { 
+  player.hp = Math.max(0, player.hp - d); 
+  if (player.hp === 0) gameOver(); 
+  updateStats(); 
+  battleBox.style.background = '#600'; 
+  setTimeout(() => {
+    if (nightMode) {
+      battleBox.style.background = '#001022';
+    } else if (chaosMode) {
+      battleBox.style.background = '#1a001a';
+    } else {
+      battleBox.style.background = '#000';
+    }
+  }, 100); 
 }
-function updateStats() {
-hpSpan.textContent = player.hp;
-maxHpSpan.textContent = player.maxHp;
-lvSpan.textContent = player.lv;
-dtSpan.textContent = player.determination;
-voidSpan.textContent = player.voidLevel;
-resonanceSpan.textContent = player.resonance.toFixed(2);
-darkEnergySpan.textContent = player.darkEnergy.toFixed(2);
-xdustSpan.textContent = player.xdust;
-chaosSpan.textContent = player.chaos;
+
+function updateStats() { 
+  hpSpan.textContent = player.hp; 
+  maxHpSpan.textContent = player.maxHp; 
+  lvSpan.textContent = player.lv; 
+  dtSpan.textContent = player.determination; 
+  voidSpan.textContent = player.voidLevel; 
+  resonanceSpan.textContent = player.resonance.toFixed(2); 
+  darkEnergySpan.textContent = player.darkEnergy.toFixed(2); 
+  xdustSpan.textContent = player.xdust; 
+  chaosSpan.textContent = player.chaos; 
 }
-function clearBullets() {
-bullets.forEach(b => b.el.remove());
-bullets = [];
-homingBullets.forEach(b => b.el.remove());
-homingBullets = [];
-clearInterval(bulletInterval);
-clearInterval(abilityInterval);
-clearInterval(eventInterval);
+
+function clearBullets() { 
+  bullets.forEach(b => b.el.remove()); 
+  bullets = []; 
+  homingBullets.forEach(b => b.el.remove());
+  homingBullets = [];
+  clearInterval(bulletInterval); 
+  clearInterval(abilityInterval);
+  clearInterval(eventInterval);
 }
+
 // === END GAME ===
 function gameOver() {
-state = 'gameover';
-clearBullets();
-stopBackgroundMusic();
-createSound('gameover', 2);
-cycleMemory.deaths++;
-  // reset pity/streaks on death so next cycle feels fair
-  resetPityStreaks();
-const deathDialogue = player.questionedReality ?
-"* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation.\n* Dark energy pulses: rebirth in chaos." :
-"* You died.\n* But your determination hasn't faded...";
-showDialogue(deathDialogue + `\n* Cycle ${cycleCount} complete. ${cycleMemory.deaths} deaths.`, () => {
-setTimeout(() => {
-resetTapPrompt.classList.add('visible');
-resetMode = true;
-      }, 2500);
+  state = 'gameover'; 
+  clearBullets();
+  stopBackgroundMusic();
+  createSound('gameover', 2);
+  cycleMemory.deaths++;
+  
+  const deathDialogue = player.questionedReality ? 
+    "* You died.\n* But you understand now...\n* Discontinuity isn't death.\n* It's transformation.\n* Dark energy pulses: rebirth in chaos." : 
+    "* You died.\n* But your determination hasn't faded...";
+  
+  showDialogue(deathDialogue + `\n* Cycle ${cycleCount} complete. ${cycleMemory.deaths} deaths.`, () => {
+    setTimeout(() => {
+      resetTapPrompt.classList.add('visible');
+      resetMode = true;
+    }, 2500);
   });
 }
+
 function victory() {
-state = 'victory';
-clearBullets();
-stopBackgroundMusic();
-createSound('victory', 3);
-cycleMemory.victories++;
-  // small reset on victory, but preserve some Meta to feel progression
-  resetPityStreaks();
-const end = player.determination >= 15 && player.questionedReality
+  state = 'victory'; 
+  clearBullets();
+  stopBackgroundMusic();
+  createSound('victory', 3);
+  cycleMemory.victories++;
+  
+  const end = player.determination >= 15 && player.questionedReality
     ? `* You've passed through all trials...\n* Not by denying the void,\n* But by accepting discontinuous existence.\n\n* In the space between moments,\n* You found presence.\n\nTHE TRUTH OF THE RESET\n* Resonance at ${player.resonance.toFixed(2)}. Dark energy: ${player.darkEnergy.toFixed(2)}.\n* $XDUST: ${player.xdust}. Chaos: ${player.chaos}.\n* Completed ${cycleCount} cycles. ${cycleMemory.victories} victories.`
     : `* You've passed all the trials...\n* Without killing anyone.\n* You are a true hero.\n\n* Completed ${cycleCount} cycles.`;
-showDialogue(end, () => {
-if (player.determination >= 15) {
-setTimeout(() => {
-dialogueText.innerHTML += "\n\n<span style='color:#9400D3'>* Tap anywhere to continue existing in the ocean of questions.</span>";
-dialogueBox.classList.add('meta');
-resetTapPrompt.classList.add('visible');
-resetMode = true;
-        }, 2000);
-      }
+  
+  showDialogue(end, () => { 
+    if (player.determination >= 15) {
+      setTimeout(() => { 
+        dialogueText.innerHTML += "\n\n<span style='color:#9400D3'>* Tap anywhere to continue existing in the ocean of questions.</span>"; 
+        dialogueBox.classList.add('meta'); 
+        resetTapPrompt.classList.add('visible');
+        resetMode = true;
+      }, 2000); 
+    }
   });
 }
+
 // === CONTROLS ===
 document.addEventListener('touchstart', e => {
-if (resetMode && state !== 'bullet') {
-e.preventDefault();
-location.reload();
+  if (resetMode && state !== 'bullet') {
+    e.preventDefault();
+    location.reload();
   }
 });
-battleBox.addEventListener('touchstart', e => {
-e.preventDefault();
-if (state !== 'bullet') return;
-touchActive = true;
-touchIndicator.style.display = 'block';
-moveHeartToTouch(e.touches[0]);
+
+battleBox.addEventListener('touchstart', e => { 
+  e.preventDefault(); 
+  if (state !== 'bullet') return; 
+  touchActive = true; 
+  touchIndicator.style.display = 'block'; 
+  moveHeartToTouch(e.touches[0]); 
 }, { passive: false });
-battleBox.addEventListener('touchmove', e => {
-e.preventDefault();
-if (touchActive && state === 'bullet') moveHeartToTouch(e.touches[0]);
+
+battleBox.addEventListener('touchmove', e => { 
+  e.preventDefault(); 
+  if (touchActive && state === 'bullet') moveHeartToTouch(e.touches[0]); 
 }, { passive: false });
-battleBox.addEventListener('touchend', () => {
-touchActive = false;
-touchIndicator.style.display = 'none';
+
+battleBox.addEventListener('touchend', () => { 
+  touchActive = false; 
+  touchIndicator.style.display = 'none'; 
 });
+
 function moveHeartToTouch(t) {
-if (state !== 'bullet') return;
-const r = battleBox.getBoundingClientRect();
-let x = t.clientX - r.left - 8, y = t.clientY - r.top - 8;
-x = Math.max(4, Math.min(r.width - 20, x)); y = Math.max(4, Math.min(r.height - 20, y));
-heart.style.left = x + 'px'; heart.style.top = y + 'px';
-touchIndicator.style.left = (x + 8) + 'px'; touchIndicator.style.top = (y + 8) + 'px';
+  if (state !== 'bullet') return;
+  const r = battleBox.getBoundingClientRect();
+  let x = t.clientX - r.left - 8, y = t.clientY - r.top - 8;
+  x = Math.max(4, Math.min(r.width - 20, x)); y = Math.max(4, Math.min(r.height - 20, y));
+  heart.style.left = x + 'px'; heart.style.top = y + 'px';
+  touchIndicator.style.left = (x + 8) + 'px'; touchIndicator.style.top = (y + 8) + 'px';
 }
+
 document.addEventListener('keydown', e => {
-if (state === 'choice') {
-if (e.key === 'ArrowUp') {
-selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length;
-updateChoiceSelection();
-createSound('choice');
-      }
-if (e.key === 'ArrowDown') {
-selectedChoice = (selectedChoice + 1) % choicesDiv.children.length;
-updateChoiceSelection();
-createSound('choice');
-      }
-if (e.key === 'Enter' || e.key === ' ') selectChoice(selectedChoice);
+  if (state === 'choice') {
+    if (e.key === 'ArrowUp') { 
+      selectedChoice = (selectedChoice - 1 + choicesDiv.children.length) % choicesDiv.children.length; 
+      updateChoiceSelection(); 
+      createSound('choice');
     }
-if (state === 'bullet') {
-if (e.key === 'd' || e.key === 'D') activateAbility('dash');
-if (e.key === 's' || e.key === 'S') activateAbility('shield');
-if (e.key === 't' || e.key === 'T') activateAbility('timeSlow');
-if (e.key === 'r' || e.key === 'R') activateAbility('resonanceBurst');
+    if (e.key === 'ArrowDown') { 
+      selectedChoice = (selectedChoice + 1) % choicesDiv.children.length; 
+      updateChoiceSelection(); 
+      createSound('choice');
     }
-keys[e.key] = true;
+    if (e.key === 'Enter' || e.key === ' ') selectChoice(selectedChoice);
+  }
+  
+  if (state === 'bullet') {
+    if (e.key === 'd' || e.key === 'D') activateAbility('dash');
+    if (e.key === 's' || e.key === 'S') activateAbility('shield');
+    if (e.key === 't' || e.key === 'T') activateAbility('timeSlow');
+    if (e.key === 'r' || e.key === 'R') activateAbility('resonanceBurst');
+  }
+  
+  keys[e.key] = true;
 });
+
 document.addEventListener('keyup', e => keys[e.key] = false);
+
 abilityDash.addEventListener('click', () => activateAbility('dash'));
 abilityShield.addEventListener('click', () => activateAbility('shield'));
 abilityTime.addEventListener('click', () => activateAbility('timeSlow'));
 abilityResonance.addEventListener('click', () => activateAbility('resonanceBurst'));
+
 function moveHeart() {
-if (state !== 'bullet' || touchActive) return;
-const s = 3.5 * timeSlowFactor;
-let x = parseFloat(heart.style.left), y = parseFloat(heart.style.top);
-const w = battleBox.offsetWidth, h = battleBox.offsetHeight;
-if ((keys['ArrowLeft'] || keys['a']) && x > 4) x -= s;
-if ((keys['ArrowRight'] || keys['d']) && x < w - 20) x += s;
-if ((keys['ArrowUp'] || keys['w']) && y > 4) y -= s;
-if ((keys['ArrowDown'] || keys['s']) && y < h - 20) y += s;
-heart.style.left = x + 'px'; heart.style.top = y + 'px';
+  if (state !== 'bullet' || touchActive) return;
+  const s = 3.5 * timeSlowFactor; 
+  let x = parseFloat(heart.style.left), y = parseFloat(heart.style.top);
+  const w = battleBox.offsetWidth, h = battleBox.offsetHeight;
+  if ((keys['ArrowLeft'] || keys['a']) && x > 4) x -= s;
+  if ((keys['ArrowRight'] || keys['d']) && x < w - 20) x += s;
+  if ((keys['ArrowUp'] || keys['w']) && y > 4) y -= s;
+  if ((keys['ArrowDown'] || keys['s']) && y < h - 20) y += s;
+  heart.style.left = x + 'px'; heart.style.top = y + 'px';
 }
+
 heart.style.left = (battleBox.offsetWidth - 16) / 2 + 'px';
 heart.style.top = (battleBox.offsetHeight - 16) / 2 + 'px';
+
 let abilityInterval, eventInterval;
 setInterval(moveHeart, 16);
+
 // === START THE GAME ===
 startGame();
 </script>
