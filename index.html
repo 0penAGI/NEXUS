@@ -84,6 +84,9 @@ body{font-family:'Courier New',monospace;background:#000;color:#FFF;overflow:hid
 </style>
 </head>
 <body>
+<audio id="bgm" preload="auto" loop playsinline>
+    <source src="./audio/bgm.mp3" type="audio/mpeg">
+</audio>
 <div id="game">
   <div id="stats">
     <span>LV <span id="lv">1</span></span>
@@ -1633,6 +1636,42 @@ setInterval(moveHeart, 16);
 
 // === START THE GAME ===
 startGame();
+</script>
+<script>
+const bgm = document.getElementById("bgm");
+let bgmReady = false;
+let pendingPlay = false;
+
+function tryPlayBGM() {
+    if (!bgmReady) return;
+    bgm.play().catch(() => {
+        pendingPlay = true;
+        console.log("Retry audio play soon…");
+    });
+}
+
+function enableAudio() {
+    if (bgmReady) return;
+    bgmReady = true;
+    tryPlayBGM();
+}
+
+["pointerdown", "touchstart", "click"].forEach(evt => {
+    document.addEventListener(evt, () => {
+        enableAudio();
+        if (pendingPlay) tryPlayBGM();
+    }, { once: true });
+});
+
+Telegram.WebApp.ready();
+
+document.addEventListener("pointerdown", () => {
+    Telegram.WebApp.requestFullscreen?.();
+}, { once: true });
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && bgmReady) tryPlayBGM();
+});
 </script>
 </body>
 </html>
