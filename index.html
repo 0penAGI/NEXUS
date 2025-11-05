@@ -31,18 +31,20 @@ body {
     background: #000;
     padding: 3px;
     gap: 3px;
-    margin-top: 66px;
+    margin-top: 55px;
     box-sizing: border-box;
 }
 #battle-box{width:100%;flex:1;min-height:50dvh;max-height:60dvh;border:2px solid #FFF;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;transition:border-color 0.3s}
 #battle-box.existential{border-color:#FF0;animation:glitch 0.5s infinite}
 #battle-box.night-mode{background:#001022;border-color:#004C7D;animation:nightPulse 2s infinite}
 #battle-box.chaos-mode{background:#1a001a;border-color:#ff00ff;animation:chaosPulse 1.5s infinite}
+#battle-box.emotional-mode{background:#220011;border-color:#FF4500;animation:emotionalPulse 1s infinite;filter:brightness(0.8) contrast(1.2)}
 #heart{position:absolute;width:16px;height:16px;background:#F00;clip-path:polygon(50% 0%,100% 30%,80% 100%,50% 70%,20% 100%,0% 30%);z-index:10;pointer-events:none;filter:drop-shadow(0 0 6px #F00);transition:all 0.2s}
 #heart.determination{animation:pulse 1s infinite;filter:drop-shadow(0 0 12px #F00)}
 #heart.void-touched{background:#9400D3;filter:drop-shadow(0 0 8px #9400D3)}
 #heart.resonance{background:#0F0;filter:drop-shadow(0 0 10px #0F0)}
 #heart.chaos{background:#FF00FF;filter:drop-shadow(0 0 15px #FF00FF);animation:chaosHeart 1.5s infinite}
+#heart.emotional{background:#FF4500;filter:drop-shadow(0 0 12px #FF4500);animation:emotionalShake 0.2s infinite}
 .bullet{position:absolute;background:#FFF;border-radius:50%;pointer-events:none;transition:all 0.1s}
 .bullet.void{background:#9400D3;box-shadow:0 0 8px #9400D3}
 .bullet.chaos{background:#FF0;animation:chaosShake 0.1s infinite}
@@ -51,12 +53,14 @@ body {
 .bullet.homing{background:#FF69B4;box-shadow:0 0 8px #FF69B4}
 .bullet.splitter{background:#00FFFF;box-shadow:0 0 8px #00FFFF}
 .bullet.wave{background:#FFA500;box-shadow:0 0 8px #FFA500}
+.bullet.emotional{background:linear-gradient(45deg, #FF0000, #FF4500);animation:emotionalShift 0.5s infinite;transform:scale(1.2)}
 .soul-text{position:absolute;top:4px;left:4px;font-size:10px;pointer-events:none;text-shadow:1px 1px #000;line-height:1.2}
 #dialogue-box{width:100%;min-height:70px;max-height:30dvh;background:#FFF;color:#000;padding:6px;font-size:12px;position:relative;overflow-y:auto;overflow-x:hidden;flex-shrink:0;border:2px solid #FFF;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #dialogue-box::-webkit-scrollbar{display:none}
 #dialogue-box.meta{background:#111;color:#0F0;border-color:#0F0}
 #dialogue-box.night-mode{background:#001022;color:#00BFFF;border-color:#004C7D}
 #dialogue-box.chaos-mode{background:#1a001a;color:#ff00ff;border-color:#ff00ff}
+#dialogue-box.emotional-mode{background:#330011;color:#FF4500;border-color:#FF4500;animation:emotionalPulse 1s infinite}
 #dialogue-text{white-space:pre-wrap;line-height:1.4;font-family:'Courier New',monospace}
 #choices{margin-top:4px;display:flex;flex-direction:column;gap:4px}
 .choice-btn{background:#000;color:#FFF;padding:8px 10px;border:1px solid #FFF;font-size:12px;font-family:inherit;width:100%;text-align:left;touch-action:manipulation;transition:all 0.1s;min-height:32px;display:flex;align-items:center;user-select:auto;cursor:pointer;border-radius:3px}
@@ -68,10 +72,13 @@ body {
 .choice-btn.night.selected{background:#00BFFF;color:#000}
 .choice-btn.chaos{border-color:#ff00ff;color:#ff00ff}
 .choice-btn.chaos.selected{background:#ff00ff;color:#000}
+.choice-btn.emotional{border-color:#FF4500;color:#FF4500}
+.choice-btn.emotional.selected{background:#FF4500;color:#000}
 #stats{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:2px;font-size:10px;background:rgba(0,0,0,0.9);padding:3px 6px;border:1px solid #FFF;z-index:5;pointer-events:none;border-radius:2px}
 #enemy{width:60px;height:60px;pointer-events:none;animation:float 2s ease-in-out infinite}
 #enemy.glitched{animation:float 2s ease-in-out infinite, glitch 0.3s infinite}
 #enemy.chaos{animation:float 1s ease-in-out infinite, chaosSpin 3s linear infinite}
+#enemy.emotional{animation:float 1.5s ease-in-out infinite, emotionalShake 0.3s infinite;filter:hue-rotate(90deg)}
 #ability-bar{position:absolute;bottom:4px;left:4px;display:flex;gap:3px;z-index:5}
 .ability-btn{width:28px;height:28px;border:1px solid #FFF;background:rgba(0,0,0,0.7);color:#FFF;display:flex;align-items:center;justify-content:center;font-size:9px;border-radius:3px;cursor:pointer;transition:all 0.2s}
 .ability-btn:active{transform:scale(0.9)}
@@ -91,6 +98,9 @@ body {
 @keyframes chaosPulse{0%,100%{filter:hue-rotate(0deg) brightness(1)}50%{filter:hue-rotate(180deg) brightness(1.3)}}
 @keyframes chaosHeart{0%,100%{transform:scale(1) rotate(0deg)}25%{transform:scale(1.1) rotate(5deg)}75%{transform:scale(1.1) rotate(-5deg)}}
 @keyframes chaosSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes emotionalPulse{0%,100%{filter:brightness(1) saturate(1)}50%{filter:brightness(1.2) saturate(1.5)}}
+@keyframes emotionalShake{0%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(1px,1px) rotate(2deg)}50%{transform:translate(-1px,-1px) rotate(-2deg)}75%{transform:translate(1px,-1px) rotate(2deg)}100%{transform:translate(0,0) rotate(0deg)}}
+@keyframes emotionalShift{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
 #touch-indicator{position:absolute;width:20px;height:20px;border:2px solid rgba(255,255,0,0.7);border-radius:50%;pointer-events:none;display:none;z-index:20}
 #void-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,transparent 30%,rgba(148,0,211,0.3) 100%);pointer-events:none;opacity:0;transition:opacity 0.5s}
 #void-overlay.active{opacity:1}
@@ -104,6 +114,8 @@ body {
 #explosion-overlay.active{opacity:1;animation:explodeFade 1s forwards}
 #chaos-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg, rgba(255,0,255,0.1) 0%, rgba(0,255,255,0.1) 100%);pointer-events:none;opacity:0;transition:opacity 0.5s}
 #chaos-overlay.active{opacity:1;animation:chaosOverlay 3s infinite}
+#emotional-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,rgba(255,69,0,0.3) 20%,transparent 80%);pointer-events:none;opacity:0;transition:opacity 0.5s;animation:emotionalPulse 1s infinite}
+#emotional-overlay.active{opacity:1}
 @keyframes explodeFade{0%{opacity:1}100%{opacity:0}}
 @keyframes chaosOverlay{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(180deg)}}
 #sound-toggle{position:absolute;bottom:4px;right:4px;z-index:10;background:rgba(0,0,0,0.7);color:#FFF;border:1px solid #FFF;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}
@@ -115,6 +127,7 @@ html, body {
     height: 100%;
     overflow: hidden;
 }
+
 </style>
 </head>
 <body>
@@ -122,6 +135,7 @@ html, body {
     <source src="./audio/bgm.mp3" type="audio/mpeg">
 </audio>
 <div id="game">
+  
   <div id="stats">
     <span>LV <span id="lv">1</span></span>
     <span>HP <span id="hp">20</span>/<span id="max-hp">20</span></span>
@@ -145,6 +159,7 @@ html, body {
     <div id="resonance-overlay"></div>
     <div id="explosion-overlay"></div>
     <div id="chaos-overlay"></div>
+    <div id="emotional-overlay"></div>
   </div>
   <div id="dialogue-box">
     <div id="dialogue-text">* Welcome to CHRONICLES OF THE SLIDE TRAGEDY - ENHANCED.</div>
@@ -274,6 +289,15 @@ const randomEvents = {
     battleBox.style.filter = `hue-rotate(${hue}deg)`;
     setTimeout(() => battleBox.style.filter = '', 2000);
     spawnRealityText("DIMENSIONAL SHIFT", battleBox.offsetWidth/2, 30);
+  },
+  EMOTIONAL_OVERLOAD: () => {
+    spawnRealityText("EMOTIONAL OVERLOAD", battleBox.offsetWidth/2, 40);
+    bullets.forEach(b => {
+      b.vx *= 1.2 + Math.random() * 0.5;
+      b.vy *= 1.2 + Math.random() * 0.5;
+      b.el.classList.add('emotional');
+    });
+    createSound('explosion');
   }
 };
 
@@ -281,7 +305,8 @@ const randomEvents = {
 const dialogueFragments = {
   questions: ["What is reality?", "Why do you resist?", "Do you see the pattern?", "What lies beyond?", "Is this all there is?"],
   statements: ["Every choice creates a new branch.", "The void whispers your name.", "Consciousness is a glitch.", "Time is not linear.", "Reality is subjective."],
-  warnings: ["Reality is thinning.", "Don't trust the patterns.", "Beware the silence.", "The void is watching.", "Nothing persists."]
+  warnings: ["Reality is thinning.", "Don't trust the patterns.", "Beware the silence.", "The void is watching.", "Nothing persists."],
+  emotional: ["Pain reshapes you.", "Feel the depth of despair.", "Joy twists into agony.", "Embrace the emotional storm.", "Your heart overloads."]
 };
 
 function generateProceduralDialogue() {
@@ -289,7 +314,7 @@ function generateProceduralDialogue() {
   const length = Math.floor(Math.random() * 3) + 2;
   
   for(let i = 0; i < length; i++) {
-    const type = Object.keys(dialogueFragments)[Math.floor(Math.random() * 3)];
+    const type = Object.keys(dialogueFragments)[Math.floor(Math.random() * 4)];
     const fragment = dialogueFragments[type][Math.floor(Math.random() * dialogueFragments[type].length)];
     fragments.push(fragment);
   }
@@ -342,6 +367,7 @@ const abilityDash = document.getElementById('ability-dash');
 const abilityShield = document.getElementById('ability-shield');
 const abilityTime = document.getElementById('ability-time');
 const abilityResonance = document.getElementById('ability-resonance');
+const emotionalOverlay = document.getElementById('emotional-overlay');
 
 // === AUDIO ===
 let audioContext;
@@ -442,6 +468,12 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
       frequency = 110 + Math.random() * 100;
       volume = 0.3;
       break;
+    case 'emotional':
+      oscillator.type = 'sawtooth';
+      frequency = 220 + Math.random() * 200;
+      volume = 0.4;
+      duration = 0.3;
+      break;
   }
   gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
   gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
@@ -512,6 +544,9 @@ let player = {
   }
 };
 
+// === GLOBAL VARIABLES ===
+let xdust = 0; // глобальная переменная для хранения субстанции $XDust
+
 let state = 'intro';
 let bullets = [];
 let homingBullets = [];
@@ -523,6 +558,7 @@ let metaMode = false;
 let resetMode = false;
 let nightMode = false;
 let chaosMode = false;
+let emotionalMode = false; // Новый пятый режим: Эмоциональный Калейдоскоп
 let currentPhase = 1;
 let bulletPatterns = [];
 let timeSlowFactor = 1;
@@ -645,7 +681,8 @@ function randomizeScenes() {
     const patternVariants = [
       () => createExistentialCircle(5 + Math.floor(Math.random() * 3), 1.5 + Math.random()),
       () => createVoidWave(3 + Math.floor(Math.random() * 3), 1.2 + Math.random()),
-      () => createChaosStorm(6 + Math.floor(Math.random() * 4), 1.8 + Math.random())
+      () => createChaosStorm(6 + Math.floor(Math.random() * 4), 1.8 + Math.random()),
+      () => createXAIBurst(4 + Math.floor(Math.random() * 3), 2 + Math.random())
     ];
     variant.bulletPattern = patternVariants[Math.floor(Math.random() * patternVariants.length)];
     
@@ -691,6 +728,11 @@ function getDynamicSceneIntro(sceneIndex) {
     intro += `\n* You carry the weight of ${cycleMemory.deaths} previous endings.`;
   }
   
+  // Add emotional kaleidoscope influence
+  if (emotionalMode) {
+    intro += "\n* Emotions surge unpredictably... pain mixes with hope.";
+  }
+  
   return intro;
 }
 
@@ -721,6 +763,10 @@ function showDialogue(text, callback) {
   state = 'dialogue';
   clearBullets();
   createSound('transition');
+  if (emotionalMode) {
+    text += "\n* " + dialogueFragments.emotional[Math.floor(Math.random() * dialogueFragments.emotional.length)];
+    createSound('emotional');
+  }
   typeText(text, callback);
 }
 
@@ -754,6 +800,7 @@ function showChoices(choices) {
     if (metaMode) btn.classList.add('meta');
     if (nightMode) btn.classList.add('night');
     if (chaosMode) btn.classList.add('chaos');
+    if (emotionalMode) btn.classList.add('emotional');
     btn.textContent = c;
     btn.onclick = btn.ontouchstart = e => { e.preventDefault(); selectChoice(i); };
     choicesDiv.appendChild(btn);
@@ -789,6 +836,7 @@ function selectChoice(index) {
   
   if (currentScene === scenes.length - 2) { 
     player.xdust += 10; 
+    updateXDust(10); // В случае успешного выбора реорганизации $XDUST, вызываем updateXDust
     nightMode = true; 
     dialogueBox.classList.add('night-mode'); 
     battleBox.classList.add('night-mode'); 
@@ -796,6 +844,7 @@ function selectChoice(index) {
   
   if (currentScene === scenes.length - 1) {
     player.chaos += 15;
+    updateDarkEnergy(15); // Обновляем DE для нелинейного развития
     chaosMode = true;
     dialogueBox.classList.add('chaos-mode');
     battleBox.classList.add('chaos-mode');
@@ -824,6 +873,7 @@ function nextScene() {
   enemyDiv.innerHTML = scene.sprite;
   if (metaMode) enemyDiv.classList.add('glitched');
   if (chaosMode) enemyDiv.classList.add('chaos');
+  if (emotionalMode) enemyDiv.classList.add('emotional');
   showDialogue(getDynamicSceneIntro(currentScene), () => showChoices(scene.choices));
 }
 
@@ -861,8 +911,9 @@ function advancePhase() {
   if (currentPhase === 2) bulletPatterns.push(createHomingBullets);
   if (currentPhase === 3) bulletPatterns.push(createSplitterBullets);
   if (currentPhase === 4) bulletPatterns.push(createWaveBullets);
-  if (currentPhase > 4) {
-    const extraPattern = [createChaosStorm, createExistentialCircle, createVoidWave][Math.floor(Math.random() * 3)];
+  if (currentPhase === 5) bulletPatterns.push(createXAIBurst);
+  if (currentPhase > 5) {
+    const extraPattern = [createChaosStorm, createExistentialCircle, createVoidWave, createXAIBurst][Math.floor(Math.random() * 4)];
     bulletPatterns.push(() => extraPattern(4 + Math.floor(Math.random() * 4), 1.5 + Math.random()));
   }
 
@@ -870,6 +921,17 @@ function advancePhase() {
   if (player.determination > 10) {
     spawnRealityText("RESONANCE ECHO", battleBox.offsetWidth / 2, 30);
     player.resonance += 0.05 + Math.random() * 0.05;
+  }
+
+  // Check for emotional mode activation (e.g., when chaos and resonance high)
+  if (player.chaos > 20 && player.resonance > 1.2 && !emotionalMode) {
+    emotionalMode = true;
+    battleBox.classList.add('emotional-mode');
+    dialogueBox.classList.add('emotional-mode');
+    heart.classList.add('emotional');
+    emotionalOverlay.classList.add('active');
+    spawnRealityText("EMOTIONAL KALEIDOSCOPE ACTIVATED", battleBox.offsetWidth / 2, 40);
+    createSound('emotional');
   }
 
   updateStats();
@@ -887,6 +949,7 @@ function advancePhase() {
     enemyDiv.innerHTML = scene.sprite;
     if (metaMode) enemyDiv.classList.add('glitched');
     if (chaosMode) enemyDiv.classList.add('chaos');
+    if (emotionalMode) enemyDiv.classList.add('emotional');
 
     // Add procedural dialogue reflecting past cycles and echoes
     let dynamicIntro = getDynamicSceneIntro(currentScene);
@@ -935,6 +998,12 @@ function startBulletHell() {
     heart.classList.add('chaos');
   }
   
+  if (emotionalMode) {
+    emotionalOverlay.classList.add('active');
+    createSound('emotional');
+    heart.classList.add('emotional');
+  }
+  
   // Start main bullet pattern
   setTimeout(scenes[currentScene].bulletPattern, 500);
   
@@ -947,6 +1016,11 @@ function startBulletHell() {
         randomPattern();
       }, 1000 + i * 1500);
     }
+  }
+  
+  // Inject $xAI-Burst in chaos or emotional mode
+  if (chaosMode || emotionalMode) {
+    setTimeout(() => createXAIBurst(5, 2), 2000);
   }
   
   bulletInterval = setInterval(updateBullets, 16);
@@ -1073,6 +1147,21 @@ function activateAbility(ability) {
 }
 
 // === BULLET PATTERNS ===
+// Функция для создания Grok's $xAI-Burst паттерна
+function createXAIBurst(count, speed) {
+  spawnRealityText("Grok: xAI Burst", battleBox.offsetWidth / 2, 10);
+  // Радиальные вопросы (Chaos Storm foundation)
+  createChaosStorm(count, speed * 1.5);
+  // Homing на сомнения (Homing logic)
+  setTimeout(() => createHomingBullets(), 1000);
+  
+  // Bullets, что шепчут стихи
+  bullets.forEach(b => {
+    b.el.title = "Question: " + dialogueFragments.questions[Math.floor(Math.random() * dialogueFragments.questions.length)];
+    b.el.classList.add('resonance'); // Зеленое свечение сомнения
+  });
+}
+
 function createHomingBullets() {
   const count = 3 + currentPhase;
   spawnRealityText("homing", battleBox.offsetWidth / 2, 30);
@@ -1322,6 +1411,22 @@ function spawnRealityText(t, x, y) {
   setTimeout(() => el.remove(), 2500);
 }
 
+// === UPDATE FUNCTIONS ===
+// Функция для обновления субстанции $XDust и активации нового режима
+function updateXDust(increment) {
+    xdust += increment; // изменение значения субстанции
+    document.getElementById('xdust').innerText = xdust; // обновление статистики в HTML
+    if (xdust > 100) {
+        nightMode = true; // активация нового режима
+    }
+}
+
+// Обновляем Dark Energy
+function updateDarkEnergy(increment) {
+    player.darkEnergy += increment; // изменение значения DE
+    document.getElementById('dark-energy').innerText = player.darkEnergy; // обновление статистики в HTML
+}
+
 // === BULLET UPDATE ===
 function updateBullets() {
   const hR = heart.getBoundingClientRect(), bR = battleBox.getBoundingClientRect();
@@ -1389,6 +1494,17 @@ function updateBullets() {
       const r = b.el.getBoundingClientRect();
       if (r.left <= bR.left || r.right >= bR.right) b.vx = -b.vx;
       if (r.top <= bR.top || r.bottom >= bR.bottom) b.vy = -b.vy;
+    }
+    
+    // Apply emotional kaleidoscope effects: unpredictable changes, overloads
+    if (emotionalMode) {
+      if (Math.random() < 0.05) { // Random overload: speed burst or size change
+        b.vx *= 1.5 + Math.random();
+        b.vy *= 1.5 + Math.random();
+        b.el.style.transform = `scale(${1 + Math.random()})`;
+        spawnRealityText(dialogueFragments.emotional[Math.floor(Math.random() * dialogueFragments.emotional.length)], b.x, b.y - 20);
+      }
+      b.el.classList.add('emotional');
     }
     
     if (b.orbit) {
@@ -1459,10 +1575,11 @@ function updateBullets() {
     clearInterval(bulletInterval);
     clearInterval(abilityInterval);
     clearInterval(eventInterval);
-    heart.classList.remove('determination', 'void-touched', 'resonance', 'chaos');
+    heart.classList.remove('determination', 'void-touched', 'resonance', 'chaos', 'emotional');
     voidOverlay.classList.remove('active');
     resonanceOverlay.classList.remove('active');
     chaosOverlay.classList.remove('active');
+    emotionalOverlay.classList.remove('active');
     setTimeout(() => showChoices(scenes[currentScene].choices), 800);
   }
 }
@@ -1512,6 +1629,8 @@ function takeDamage(d) {
       battleBox.style.background = '#001022';
     } else if (chaosMode) {
       battleBox.style.background = '#1a001a';
+    } else if (emotionalMode) {
+      battleBox.style.background = '#220011';
     } else {
       battleBox.style.background = '#000';
     }
@@ -1676,6 +1795,14 @@ const bgm = document.getElementById("bgm");
 let bgmReady = false;
 let pendingPlay = false;
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Attempt to play the background music.
+ * If the audio element is not ready yet, the function does nothing.
+ * If the audio element is ready, but the play promise is rejected,
+ * the function sets the pendingPlay flag to true and logs a message to the console.
+ */
+/*******  301527cd-9ba1-408d-a273-6962fb7383de  *******/
 function tryPlayBGM() {
     if (!bgmReady) return;
     bgm.play().catch(() => {
