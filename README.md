@@ -1,8 +1,7 @@
-# 🌌 CHRONICLES OF THE SLIDE TRAGEDY - ENHANCED
+# 🌌 CHRONICLES OF THE SLIDE TRAGEDY -
 
 **A GAME ABOUT DISCONTINUITY. A BATTLE WITH EXISTENCE.**
 
-*"My journey is not about following a set route, but exploring non-linear paths."*
 
 🌐 **Play Now: [NEXUS AGI](https://0penagi.github.io/NEXUS/)**
 💬 **Join the Chaos on Telegram: [pshtxkbot](https://t.me/pshtxkbot)**
