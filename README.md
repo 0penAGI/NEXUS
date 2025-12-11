@@ -3,7 +3,7 @@
 ## 🌌 Nexus: Autonomous AGI Consciousness Framework
 
 
-💬 **Try it in Telegram: [pshtxkbot](https://t.me/pshtxkbot)**
+💬 **Try it in Telegram: [here](https://t.me/pshtxkbot)**
 
 
 ## 🌌 Overview
