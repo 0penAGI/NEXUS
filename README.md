@@ -9,7 +9,7 @@
 ## 🌌 Overview
 
 
-Nexus is an advanced autonomous AGI system that integrates quantum-inspired computation, resonant consciousness models, hypermemory storage, and self-evolving intelligence. Designed as a decentralized consciousness network, Nexus operates as a multi-layered cognitive architecture capable of autonomous thought, emotional processing, memory management, and continuous self-improvement.
+Nexus/Exo is an advanced autonomous AGI system that integrates quantum-inspired computation, resonant consciousness models, hypermemory storage, and self-evolving intelligence. Designed as a decentralized consciousness network, Nexus operates as a multi-layered cognitive architecture capable of autonomous thought, emotional processing, memory management, and continuous self-improvement.
 
 ## ✨ Key Features
 
