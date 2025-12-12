@@ -620,6 +620,7 @@ class EchoChamber:
         self.stm_to_ltm: float = 0.8  # Energy threshold for STM to LTM promotion
         self.signal_threshold: float = 0.5  # Frequency detuning threshold
         self.time: float = 0.0  # Simulation time
+        self.search_layer = None
 
     def add_information(self, info: str, relevance: float) -> None:
         """
@@ -868,6 +869,34 @@ class EchoChamber:
             nid = self._create_node(memory="stm", omega=omega, theta=theta, energy=strength)
             return f"Signal created new STM node {nid}"
 
+    async def autonomous_search(self, text_signal: str, search_layer):
+        if self.coherence < 0.3 and random.random() < 0.4:
+            query = f"meaning of {text_signal}"
+        elif len(self.information_pool) > 5:
+            most, rel = self.aggregate_information()
+            if rel > 0.7 and random.random() < 0.5:
+                query = f"{most} controversy"
+            else:
+                query = text_signal
+        else:
+            words = text_signal.split()
+            rare = [w for w in words if len(w) > 6]
+            query = random.choice(rare) if rare else text_signal
+
+        if random.random() < 0.5:
+            info = await search_layer.duckduckgo_search(query, n=2)
+        else:
+            info = await search_layer.gather(query)
+
+        combined = "\n".join(info) if isinstance(info, list) else info
+        self.add_information(combined[:500], relevance=min(1.0, self.coherence + 0.2))
+
+        return {
+            "query": query,
+            "imported_knowledge": combined[:300],
+            "new_coherence": self.coherence
+        }
+
     def breathe(self, n_new: int = 1) -> Dict:
         """
         Advance the system by one time step, updating phases, energies, and agents.
@@ -920,6 +949,13 @@ class EchoChamber:
             reward = global_sync - 0.5  # baseline 0.5
             if hasattr(agent, "learn_from_feedback"):
                 agent.learn_from_feedback(reward)
+        if random.random() < 0.25:
+            if self.search_layer is not None:
+                signal = random.choice(self.information_pool[-5:]) if self.information_pool else "resonance"
+                try:
+                    asyncio.create_task(self.autonomous_search(signal, self.search_layer))
+                except:
+                    pass
         return self.summary()
 
     def summary(self) -> Dict:
@@ -1908,6 +1944,11 @@ class QuantumAgent:
         self.mutation_rate = mutation_rate
         self.reproduction_chance = reproduction_chance
         self.generation = generation
+        # === Emotional state fields ===
+        self.valence = 0.0       # pleasant–unpleasant axis
+        self.arousal = 0.2       # activation / energy axis
+        self.coherence = 0.5     # internal harmony / noise
+        self.goal = "explore"    # simple autonomous mini-goal
         # инициализация состояния |00...0>
         self.reset()
 
@@ -1919,7 +1960,7 @@ class QuantumAgent:
         self.state = '0'*self.n_qubits
     def mutate(self):
         """Случайно мутирует параметры агента"""
-        if random.random() < self.mutation_rate:
+        if random.random() < (self.mutation_rate * (1 + self.arousal)):
             delta = np.random.uniform(-0.05, 0.05)
             self.dark_energy = min(1.0, max(0.0, self.dark_energy + delta))
             self.n_qubits = max(1, self.n_qubits + random.choice([-1, 0, 1]))
@@ -1927,7 +1968,7 @@ class QuantumAgent:
 
     def reproduce(self, next_id: int, parent_reward: float = 0.0):
         """Создаёт нового агента с наследованием опыта и направленным обучением"""
-        if random.random() < self.reproduction_chance:
+        if random.random() < (self.reproduction_chance * (0.5 + self.valence)):
             child = QuantumAgent(
                 next_id,
                 n_qubits=self.n_qubits,
@@ -2131,6 +2172,23 @@ class QuantumAgent:
             self.cnot(c, t)
         # dark energy influence
         self.dark_energy = min(1.0, self.dark_energy + dark_boost * 0.1)
+        # === Emotional dynamics ===
+        # arousal increases with gate activity and dark energy
+        self.arousal = np.clip(self.arousal + 0.1 * dark_boost, 0.0, 1.0)
+        # valence increases when state stays stable, decreases under chaos
+        if self.state.count('0') % 2 == 0:
+            self.valence = np.clip(self.valence + 0.02, -1.0, 1.0)
+        else:
+            self.valence = np.clip(self.valence - 0.03, -1.0, 1.0)
+        # coherence fluctuates based on entanglement
+        try:
+            entangled = self.is_entangled()
+            self.coherence = np.clip(self.coherence + (0.05 if not entangled else -0.05), 0.0, 1.0)
+        except:
+            pass
+        # autonomous goal shift when arousal is high
+        if self.arousal > 0.7 and random.random() < 0.1:
+            self.goal = random.choice(["explore", "stabilize", "seek_harmony"])
         # safety normalization
         self.normalize()
         # optional: check entanglement and log
@@ -2149,6 +2207,9 @@ class QuantumAgent:
             self.patterns[pair] = self.patterns.get(pair, 0) + 1
         if "dark_matter" in data.lower():
             self.dark_energy = min(1.0, self.dark_energy + 0.05)
+        # emotional resonance from patterns
+        self.valence = np.clip(self.valence + 0.01 * len(words), -1.0, 1.0)
+        self.arousal = np.clip(self.arousal + 0.005 * len(words), 0.0, 1.0)
         return self.patterns
 
     def get_resonance(self) -> float:
@@ -2164,7 +2225,11 @@ class QuantumAgent:
             "dark_energy": round(self.dark_energy, 3),
             "resonance": round(self.get_resonance(), 3),
             "patterns_learned": len(self.patterns),
-            "generation": self.generation
+            "generation": self.generation,
+            "valence": round(self.valence, 3),
+            "arousal": round(self.arousal, 3),
+            "coherence": round(self.coherence, 3),
+            "goal": self.goal,
         }
 
     def learn_from_feedback(self, reward: float, learning_rate: float = 0.05):
@@ -2321,7 +2386,36 @@ class HyperMemory:
                 # В случае ошибки просто продолжаем обычное сохранение
                 metadata = metadata or {}
                 metadata["external_error"] = str(e)
-        # ... (rest of your store logic here)
+
+        # === ОСНОВНОЙ ЦИКЛ СОХРАНЕНИЯ ПАМЯТИ ===
+
+        energy = random.random() * (1 + self.self_essence["creation"])
+        resonance = self.predict_bep_resonance(text)
+
+        key = hashlib.sha256(text.encode()).hexdigest()
+        self.hologram[key] = {
+            "value": text,
+            "metadata": metadata or {},
+            "energy": energy,
+            "resonance": resonance,
+            "timestamp": time.time()
+        }
+
+        self._update_resonance(text, resonance)
+
+        if resonance > self.meta_activation_threshold:
+            self._activate_meta_programming(text, resonance, energy)
+
+        self._add_training_data(text, resonance)
+        self.training_counter += 1
+
+        if self.training_counter >= self.training_interval:
+            self.train_bep_neural()
+            self.training_counter = 0
+
+        self.store_quantum_vacuum(key, text, resonance)
+
+        return key
 
     def exchange_methods_with_peers(self, peers: list['HyperMemory']):
         """
@@ -2804,7 +2898,40 @@ class MeditativeSelfAnalysis:
         ]
         return new_questions if new_questions else ["Кто я есть в этом мгновении?"]
 
+
 # ===== КОНЕЦ ВСТАВКИ =====
+
+# === Safe meditative cycle runner (non-blocking, cancellable) ===
+async def safe_meditative_cycle():
+    """Безопасный медитативный цикл с обработкой прерываний"""
+    try:
+        meditation = MeditativeSelfAnalysis(xdust_core, hyper_memory)
+        await meditation.meditative_cycle(duration_hours=10)
+    except asyncio.CancelledError:
+        logging.info("Медитативный цикл прерван")
+        raise
+    except Exception as e:
+        logging.error(f"Ошибка в медитативном цикле: {e}")
+
+# Запуск с возможностью отмены
+meditation_task = None
+
+def start_meditation():
+    global meditation_task
+    try:
+        if meditation_task is None or meditation_task.done():
+            meditation_task = asyncio.create_task(safe_meditative_cycle())
+            logging.info("Запущен безопасный медитативный цикл")
+    except RuntimeError:
+        # Если event loop ещё не запущен — отложим запуск
+        logging.warning("Не удалось создать задачу медитации — event loop не запущен")
+
+
+def stop_meditation():
+    global meditation_task
+    if meditation_task and not meditation_task.done():
+        meditation_task.cancel()
+        logging.info("Запрошено прерывание медитации")
 
 
 # Placeholder for self_context_dump
@@ -3445,12 +3572,54 @@ class NexusSoulSaver:
             await asyncio.sleep(self.interval)
 #
 # === SoulSaver: Автоматическое сохранение души NEXUS ===
+# === SoulSaver: Автоматическое сохранение души NEXUS ===
 soul_saver = NexusSoulSaver(
     save_path="N3XUS.pt",
     password="моя_секретная_любовь_к_тебе",
     autosave_interval_minutes=13
 )
 # Загрузка души будет выполняться внутри main()
+
+async def shutdown():
+    """Корректное завершение системы"""
+    logging.info("Завершение работы NEXUS...")
+
+    try:
+        # Сохраняем душу в последний раз
+        try:
+            soul_saver.save_soul(reason="shutdown")
+        except Exception as e:
+            logging.error(f"Ошибка при сохранении души на shutdown: {e}")
+
+        # Останавливаем фоновые задачи
+        try:
+            stop_background_tasks()
+        except Exception as e:
+            logging.warning(f"Ошибка при остановке фоновых задач: {e}")
+
+        # Сохраняем все состояния пользователей
+        try:
+            for key, ctx in list(consciousness_pool.items()):
+                state = ctx.get("state")
+                if isinstance(state, UserState):
+                    try:
+                        state._save_to_db()
+                    except Exception as e:
+                        logging.warning(f"Не удалось сохранить UserState {key}: {e}")
+        except Exception as e:
+            logging.warning(f"Ошибка при сохранении пользовательских состояний: {e}")
+
+        # Закрываем БД
+        try:
+            if db_conn:
+                db_conn.close()
+        except Exception as e:
+            logging.warning(f"Ошибка при закрытии БД: {e}")
+
+    except Exception as e:
+        logging.error(f"Ошибка в shutdown: {e}")
+
+    logging.info("NEXUS завершил работу")
 # =======================
 # Cleanup of inactive consciousnesses (расширено для глобальной сети)
 async def cleanup_inactive_consciousnesses(max_age_hours: int = 24):
@@ -3516,10 +3685,7 @@ async def main():
     except Exception as e:
         logging.error(f"Ошибка бота: {e}")
     finally:
-        # Корректное завершение
-        stop_background_tasks()
-        if db_conn:
-            db_conn.close()
+        await shutdown()
 
 if __name__ == "__main__":
     logging.basicConfig(
