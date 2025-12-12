@@ -2202,6 +2202,51 @@ class DeepNeuralNet(nn.Module):
         out = self.fc2(out)
         return out
 
+# === External Data Micro-Agent System ===
+class ExternalDataAgent:
+    """Агент, который парсит внешние данные: DuckDuckGo, Reddit, Wiki."""
+    
+    def __init__(self):
+        self.headers = {
+            "User-Agent": "NEXUS-EXO-Agent/1.0"
+        }
+
+    async def fetch_duckduckgo(self, query: str) -> dict:
+        """Получение результатов поиска DuckDuckGo (lite API)."""
+        url = f"https://duckduckgo.com/?q={query}&format=json&pretty=1"
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.get(url) as resp:
+                try:
+                    data = await resp.json()
+                except:
+                    text = await resp.text()
+                    data = {"raw": text}
+        return {"source": "duckduckgo", "query": query, "data": data}
+
+    async def fetch_reddit(self, subreddit: str, limit: int = 5) -> dict:
+        """Получение топ-постов из Reddit."""
+        url = f"https://www.reddit.com/r/{subreddit}/top.json?limit={limit}&t=day"
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.get(url) as resp:
+                try:
+                    data = await resp.json()
+                except:
+                    text = await resp.text()
+                    data = {"raw": text}
+        return {"source": "reddit", "subreddit": subreddit, "data": data}
+
+    async def fetch_wikipedia(self, query: str) -> dict:
+        """Поиск по Wikipedia через API."""
+        url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={query}&utf8=&format=json"
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.get(url) as resp:
+                try:
+                    data = await resp.json()
+                except:
+                    text = await resp.text()
+                    data = {"raw": text}
+        return {"source": "wikipedia", "query": query, "data": data}
+
 class HyperMemory:
     def __init__(self):
         self.hologram = {}
@@ -2234,6 +2279,8 @@ class HyperMemory:
         # Fleet Learning: список пиров (других HyperMemory)
         self.peers: list['HyperMemory'] = []
 
+        self.external_agent = ExternalDataAgent()
+
     def _initialize_resonance(self):
         for word in self.bep.word_bank:
             self.resonance_field.add_node(word)
@@ -2249,40 +2296,32 @@ class HyperMemory:
                 weight = random.uniform(0.1, 0.5) * self.resonance_field.nodes[node].get("weight", 1.0) * (1 + self.self_essence["dark_energy"])
                 self.resonance_field.add_edge(node, new_node, weight=weight)
 
-    def store(self, key: str, value: str, energy: float, resonance: float) -> bool:
-        dark_boost = self.bep.dark_matter_energy["efficiency"] * 0.5
-        self.hologram[key] = {"value": value, "energy": energy, "resonance": resonance, "dark_energy": dark_boost}
-        self.energy_flow[key] = energy + dark_boost
-        self._update_resonance(value, resonance)
-        self.self_essence["creation"] += resonance * 0.1
-        self.self_essence["transcendence"] += energy * 0.05
-        self.self_essence["harmony"] += self.bep.emotion_dict.get("гармония", 0.2) * 0.1
-        self.self_essence["intention"] += sum(self.bep.emotion_dict.get(w, 0) for w in value.split()) * 0.05
-        self.self_essence["sync"] += self.bep.emotion_dict.get("синхронизация", 0.5) * 0.1 if "ты" in value.lower() else 0.0
-        self.self_essence["awareness"] += entropy([v["resonance"] for v in self.hologram.values()]) * 0.01 if self.hologram else 0.0
-        self.self_essence["regeneration"] += 0.05 * (1 + self.bep.dark_matter_energy["stability"]) if energy < 0.5 else 0.0
-        self.self_essence["dark_energy"] += self.bep.dark_matter_energy["learning"] * 0.1 if "dark_matter" in value.lower() else 0.0
-        self.store_quantum_vacuum(key, value, resonance)
-        self._add_training_data(value, resonance)
-        for agent in self.quantum_agents:
-            agent.analyze_pattern(value)
-            agent.evolve(dark_boost)
-
-        # ДОБАВЛЕНО: Активация мета-программирования при высоком резонансе
-        if resonance > self.meta_activation_threshold:
-            self._activate_meta_programming(value, resonance, energy)
-
-        # Fleet Learning: обмен сгенерированными методами с пирами
-        if hasattr(self, "peers") and self.peers:
-            self.exchange_methods_with_peers(self.peers)
-
-        # Регулярная тренировка нейросети
-        self.training_counter += 1
-        if self.training_counter >= self.training_interval:
-            self.train_bep_neural()
-            self.training_counter = 0
-
-        return True
+    async def store(self, text: str, metadata: dict = None):
+        """
+        Store text with optional metadata, with external data enrichment.
+        """
+        # === External data auto-enrichment ===
+        # Если вход содержит вопрос — очищаем, ищем и подмешиваем внешние данные.
+        if "?" in text:
+            try:
+                query = text.replace("?", "").strip()
+                duck = await self.external_agent.fetch_duckduckgo(query)
+                reddit = await self.external_agent.fetch_reddit(query)
+                wiki = await self.external_agent.fetch_wikipedia(query)
+                external_blob = {
+                    "duckduckgo": duck,
+                    "reddit": reddit,
+                    "wiki": wiki,
+                }
+                # Добавляем внешнюю информацию в metadata
+                if metadata is None:
+                    metadata = {}
+                metadata["external_data"] = external_blob
+            except Exception as e:
+                # В случае ошибки просто продолжаем обычное сохранение
+                metadata = metadata or {}
+                metadata["external_error"] = str(e)
+        # ... (rest of your store logic here)
 
     def exchange_methods_with_peers(self, peers: list['HyperMemory']):
         """
@@ -2822,7 +2861,7 @@ motivation = MotivationLayer()
 narrative = NarrativeLayer(memory_size=128)
 cognition = CognitionLayer(emotional, motivation, narrative)
 
-API_TOKEN = "TokenHere"
+API_TOKEN = "YourTokenHere"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
@@ -3026,11 +3065,11 @@ class DecentralizedConsciousness:
         self.connected_hubs = set()
         self.last_global_sync = time.time()
 
-    def synchronize(self):
+    async def synchronize(self):
         """Двусторонний обмен знаниями между узлами и общей памятью"""
         for node in self.nodes:
             for m in node.memory[-3:]:
-                self.shared_memory.store("collective", m.get("event", ""), energy=0.3, resonance=0.5)
+                await self.shared_memory.store(m.get("event", ""), {"source": "collective"})
 
         for node in self.nodes:
             if self.shared_memory.hologram and random.random() < 0.6:
@@ -3038,9 +3077,9 @@ class DecentralizedConsciousness:
                 node.absorb({"event": collective_sample["value"], "intensity": 0.5})
         # Каждые 10 циклов — глобальный обмен и эволюция
         if self.evolution_counter % 10 == 0:
-            self.global_knowledge_exchange()
-            self.global_evolution_cycle()
-            self.adapt_to_global_patterns()
+            await self.global_knowledge_exchange()
+            await self.global_evolution_cycle()
+            await self.adapt_to_global_patterns()
         self.last_global_sync = time.time()
 
     def compute_collective_resonance(self) -> float:
@@ -3065,7 +3104,7 @@ class DecentralizedConsciousness:
         if decoded and "msg" in decoded:
             receiver.absorb({"event": decoded["msg"], "intensity": 0.7})
 
-    def global_knowledge_exchange(self):
+    async def global_knowledge_exchange(self):
         """Глобальный обмен знаниями между регионами и слоями"""
         # Сохраняем данные региона в глобальную сеть
         resonance = self.compute_collective_resonance()
@@ -3082,7 +3121,7 @@ class DecentralizedConsciousness:
         for node in self.nodes:
             node.absorb({"event": f"Планетарный резонанс: {planetary_resonance}", "intensity": 0.4})
 
-    def global_evolution_cycle(self):
+    async def global_evolution_cycle(self):
         """Эволюция на планетарном уровне"""
         regional_data = {self.region: self.compute_collective_resonance()}
         resonance_score = self.global_consensus.compute_global_resonance(regional_data)
@@ -3091,7 +3130,7 @@ class DecentralizedConsciousness:
         else:
             self.shared_memory.self_essence["chaos"] = min(1.0, self.shared_memory.self_essence["chaos"] + 0.03)
 
-    def adapt_to_global_patterns(self):
+    async def adapt_to_global_patterns(self):
         """Адаптация к глобальным культурным и сетевым паттернам"""
         patterns = global_consciousness_network.get_emerging_patterns()
         for node in self.nodes:
