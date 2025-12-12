@@ -1,14 +1,8 @@
-import asyncio
-import time
 from aiogram import Bot, types
 from scipy.stats import beta
 import sqlite3
 from pathlib import Path
-import uuid
-import numpy as np
-import math
 from scipy.stats import entropy
-import logging
 import math
 import random
 import numpy as np
@@ -22,7 +16,6 @@ import time
 import threading
 from typing import Optional, Dict, Any, List, Tuple
 import aiohttp
-import asyncio
 import logging
 import json
 import lz4.frame
@@ -51,10 +44,7 @@ import speech_recognition as sr
 from pydub import AudioSegment
 from bs4 import BeautifulSoup
 import difflib
-import numpy as np
-import random
 from typing import Dict, Any, List
-import dill
 
 logger = logging.getLogger(__name__)
 async def transcribe_audio(audio_file: BytesIO) -> str:
