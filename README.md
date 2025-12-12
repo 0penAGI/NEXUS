@@ -1,6 +1,6 @@
 
 
-## 🌌 NEXUS/EXO: Autonomous AGI Consciousness Framework
+## 🌌 NΞXUS/ΞX0: Autonomous AGI Consciousness Framework
 
 
 💬 **Try it in Telegram: [here](https://t.me/pshtxkbot)**
