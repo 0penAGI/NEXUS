@@ -134,6 +134,66 @@ html, body {
 <audio id="bgm" preload="auto" loop playsinline>
     <source src="./audio/bgm.mp3" type="audio/mpeg">
 </audio>
+<audio id="bgm2" loop preload="auto" playsinline>
+    <source src="music.mp3" type="audio/mpeg">
+    Ваш браузер не поддерживает аудио.
+</audio>
+
+<script>
+// === УМНЫЙ АВТОЗАПУСК ФОНОВОЙ МУЗЫКИ v2 ===
+const bgm2 = document.getElementById("bgm2");
+let musicEnabled = true;
+let musicPlaying = false;
+let userInteracted = false;
+
+function tryPlayMusic() {
+    if (!musicEnabled || musicPlaying || !userInteracted) return;
+
+    bgm2.volume = 0.4;
+
+    bgm2.play()
+        .then(() => {
+            musicPlaying = true;
+            soundToggle.textContent = "🔊";
+        })
+        .catch(e => {
+            console.log("Музыка пока не может играть:", e);
+        });
+}
+
+function unlockAudio() {
+    if (userInteracted) return;
+    userInteracted = true;
+    tryPlayMusic();
+}
+
+["click", "touchstart", "keydown", "pointerdown"].forEach(ev => {
+    document.body.addEventListener(ev, unlockAudio, { once: true, passive: true });
+});
+
+soundToggle.addEventListener("click", () => {
+    musicEnabled = !musicEnabled;
+
+    if (musicEnabled) {
+        soundToggle.textContent = "🔊";
+        tryPlayMusic();
+    } else {
+        soundToggle.textContent = "🔇";
+        bgm2.pause();
+        musicPlaying = false;
+    }
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && musicEnabled && userInteracted) {
+        tryPlayMusic();
+    }
+});
+
+setTimeout(() => {
+    if (userInteracted) tryPlayMusic();
+}, 1000);
+</script>
 <div id="game">
   
   <div id="stats">
