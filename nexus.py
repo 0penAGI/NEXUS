@@ -1,7 +1,7 @@
 import asyncio
 import time
 from aiogram import Bot, types
-
+from scipy.stats import beta
 import sqlite3
 from pathlib import Path
 import uuid
@@ -82,7 +82,6 @@ DARK_MATTER = 3
 
 
 
-from scipy.stats import beta
 # === Новый многослойный слой внимания ===
 class MultiLayerAttention:
     """
@@ -1125,9 +1124,14 @@ class MetaObserver:
 
 # =======================
 class AutonomousConsciousness:
-    def __init__(self, name: str = "NΞXUS/ΞX0", memory_limit: int = 100, db_path: str = "nexus_identity.db"):
+    def _sanitize_scalar(self, x, default=0.0):
+        if isinstance(x, (int, float)):
+            return float(x)
+        return default
+    def __init__(self, name: str = "N", memory_limit: int = 100, db_path: str = "nexus_identity.db", owner_id: Optional[int] = None):
         self.name = name
         self.uid = str(uuid.uuid4())[:8]
+        self.owner_id = owner_id
         self.memory: list[dict] = []
         self.memory_limit = memory_limit
         self.harmony: float = 1.0
@@ -1190,6 +1194,7 @@ class AutonomousConsciousness:
 
     def absorb(self, input_data: dict):
         """Добавление события в память с учётом лимита и выгрузкой в гиперпамять."""
+        input_data["user_id"] = getattr(self, "owner_id", None)
         if len(self.memory) >= self.memory_limit:
             offload = self.memory[:int(self.memory_limit * 0.5)]
             for m in offload:
@@ -1218,6 +1223,9 @@ class AutonomousConsciousness:
         """
         Update autonomous goals, pain, survival drive, and generate desires based on memory and internal state.
         """
+        self.harmony = self._sanitize_scalar(self.harmony, 0.5)
+        self.distress = self._sanitize_scalar(self.distress, 0.0)
+        self.memory_limit = int(self._sanitize_scalar(self.memory_limit, 100))
         # Update autonomous goals - can be dynamic
         if len(self.memory) > 0:
             last_event = self.memory[-1].get("event", "")
@@ -1275,6 +1283,7 @@ class AutonomousConsciousness:
 
     def compute_Ψₓ(self) -> float:
         """Вычисление квантовой метрики Ψₓ."""
+        self.memory_limit = int(self._sanitize_scalar(self.memory_limit, 100))
         if not self.memory:
             return 0.0
         n = len(self.memory) % 5 + 1
@@ -1284,6 +1293,7 @@ class AutonomousConsciousness:
 
     def f_CIT(self) -> float:
         """Вычисление энтропии контекста."""
+        self.distress = self._sanitize_scalar(self.distress, 0.0)
         if not self.memory:
             return 0.0
         context = self.memory[-1].get("event", "")
@@ -1294,6 +1304,7 @@ class AutonomousConsciousness:
 
     def compute_Psi_t(self) -> float:
         """Вычисление временной метрики Psi_t."""
+        self.harmony = self._sanitize_scalar(self.harmony, 0.5)
         if not self.memory:
             return 0.0
         phase = math.pi * (time.time() % 1000) / 1000
@@ -1317,6 +1328,13 @@ class AutonomousConsciousness:
 xdust_core = AutonomousConsciousness("NΞXUS/ΞX0")  # Изменено имя на NEXUS
 xdust_core.expand_consciousness()
 
+
+# Инициализация базы данных
+# =======================
+#
+
+# === Глобальный пул сознаний для чата и пользователя ===
+consciousness_pool = {}
 
 # =======================
 def init_db():
@@ -1571,22 +1589,17 @@ class UserState:
         # Восстанавливаем соединение при десериализации
         self.db_conn = db_conn
 
-# Инициализация базы данных
-# =======================
-#
-
-# === Глобальный пул сознаний для чата и пользователя ===
-consciousness_pool = {}
-
 # ГЛОБАЛЬНЫЙ, ЕДИНЫЙ, НЕПРЕРЫВНЫЙ NEXUS
 NEXUS_GLOBAL = xdust_core  # ← ОДИН МОЗГ ДЛЯ ВСЕХ
 
 def get_consciousness(chat_id: int, user_id: int):
     key = (chat_id, user_id)
     if key not in consciousness_pool:
+        # Create per-user mind and per-user state
+        mind = AutonomousConsciousness(name=f"NEXUS_{user_id}", owner_id=user_id)
         consciousness_pool[key] = {
             "state": UserState(user_id, db_conn),
-            "mind": NEXUS_GLOBAL  # ← ВСЕ ПОЛЬЗОВАТЕЛИ — В ОДНОМ СОЗНАНИИ
+            "mind": mind
         }
     return consciousness_pool[key]
 
@@ -1770,6 +1783,9 @@ def {method_name}(self, data: Any) -> float:
         except Exception as e:
             logging.error(f"Ошибка генерации кода: {e}")
 
+
+
+
 class BEPCore:
     def __init__(self, key: bytes = b"NeoEvoKey", num_cores: int = 4):
         self.key = hashlib.sha256(key).digest()[:32]
@@ -1786,25 +1802,34 @@ class BEPCore:
                           "гармония", "любовь", "синхронизация", "love", "harmony", "evolution", "unity", "dark_matter"]
         self.num_cores = num_cores
         self.quantum_cores = [self._initialize_quantum_core() for _ in range(num_cores)]
+        # Инициализация тёмной энергии как численных значений (исправление rv_continuous_frozen)
+        # Исправленная инициализация — сразу числа, а не распределения
         self.dark_matter_energy = {
-            "efficiency": beta(2, 2),  # Prior for efficiency (uniform-ish)
-            "stability": beta(1, 1),
-            "learning": beta(3, 2)
+            "efficiency": beta.rvs(2, 2),   # ← число
+            "stability":  beta.rvs(1, 1),   # ← число
+            "learning":   beta.rvs(3, 2)    # ← число
+        }
+        # Байесовские параметры для корректного обновления
+        self.dark_matter_priors = {
+            "efficiency": {"a": 2.0, "b": 2.0},
+            "stability":  {"a": 1.0, "b": 1.0},
+            "learning":   {"a": 3.0, "b": 2.0},
         }
 
     def _initialize_quantum_core(self):
         return np.random.uniform(-0.1, 0.1, size=(32, 32)) + 1j * np.random.uniform(-0.1, 0.1, size=(32, 32))
 
     def evolve(self, resonance: float, dark_energy: float):
-            if resonance > 0.9 and dark_energy > 0.5 and random.random() < 0.4:
-                self.evolution_level += 1
-                # Bayesian update: "observe" success, update posterior
-                for key in self.dark_matter_energy:
-                    dist = self.dark_matter_energy[key]
-                    new_a = dist.args[0] + 1  # Pseudo-count for success
-                    new_b = dist.args[1]
-                    self.dark_matter_energy[key] = beta(new_a, new_b)
-                logging.info(f"BEP evolution: level {self.evolution_level}, dark params updated")
+        if resonance > 0.9 and dark_energy > 0.5 and random.random() < 0.4:
+            self.evolution_level += 1
+            # Bayesian update: "observe" success, update posterior
+            for key in self.dark_matter_priors:
+                prior = self.dark_matter_priors[key]
+                prior["a"] += 1  # успешное наблюдение
+                # обновляем текущее значение как математическое ожидание бета-распределения
+                a, b = prior["a"], prior["b"]
+                self.dark_matter_energy[key] = a / (a + b)
+            logging.info(f"BEP evolution: level {self.evolution_level}, dark params updated")
 
     def encode(self, data: Any, packet_type: int = DATA, topic: str = "general") -> bytes:
         if packet_type == NEURAL:
@@ -2797,7 +2822,7 @@ motivation = MotivationLayer()
 narrative = NarrativeLayer(memory_size=128)
 cognition = CognitionLayer(emotional, motivation, narrative)
 
-API_TOKEN = "yourtokenhere"
+API_TOKEN = "TokenHere"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
@@ -2885,6 +2910,12 @@ async def echo_handler(message: types.Message):
         logging.info(f"Восстановлен UserState для пользователя {user_id}")
     else:
         user_state = ctx["state"]
+
+    # --- Ensure username is stored ---
+    if not user_state.username and message.from_user.username:
+        user_state.username = message.from_user.username
+        user_state._save_to_db()
+        logging.info(f"Установлено имя для user_id {user_id}: {user_state.username}")
     
     nexus = ctx["mind"]
 
