@@ -542,96 +542,35 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
   oscillator.stop(audioContext.currentTime + duration);
 }
 
-// === ADVANCED BACKGROUND MUSIC SYSTEM (AudioContext + MP3 + AnalyserNode) ===
-let audioContextBGM;
-let musicSourceNode = null;
-let musicAnalyser = null;
-let musicGainNode = null;
-let musicAudioElement = null;
-let musicOscillator = null;
-let musicAnimationFrame = null;
-let musicPlayingBGM = false;
-let musicUnlocked = false;
-
-function initAudio() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  // Also create BGM context if not present (can be shared)
-  if (!audioContextBGM) {
-    audioContextBGM = audioContext;
-  }
-}
-
-function unlockAudio() {
-  if (musicUnlocked) return;
-  musicUnlocked = true;
-  if (audioContextBGM && audioContextBGM.state === "suspended") {
-    audioContextBGM.resume();
-  }
-  // Do not stop music or restart, just resume context.
-}
-
+let backgroundMusic;
 function playBackgroundMusic() {
-    if (!soundEnabled) return;
-    initAudio();
-
-    // Получаем аудио элемент
-    if (!musicAudioElement) musicAudioElement = document.getElementById("bgm2");
-    if (!musicAudioElement) return;
-
-    // Если музыка уже играет, ничего не делаем
-    if (!musicAudioElement.paused) return;
-
-    musicAudioElement.volume = 0.4;
-
-    // Создаем AudioContext узлы один раз
-    if (!musicSourceNode) {
-        musicSourceNode = audioContextBGM.createMediaElementSource(musicAudioElement);
-        musicAnalyser = audioContextBGM.createAnalyser();
-        musicAnalyser.fftSize = 256;
-        musicGainNode = audioContextBGM.createGain();
-        musicGainNode.gain.value = 0.9;
-        musicSourceNode.connect(musicAnalyser);
-        musicAnalyser.connect(musicGainNode);
-        musicGainNode.connect(audioContextBGM.destination);
+  if (!soundEnabled) return;
+  initAudio();
+  backgroundMusic = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  backgroundMusic.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  backgroundMusic.type = 'sine';
+  gainNode.gain.value = 0.05;
+  const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
+  let currentNote = 0;
+  backgroundMusic.start();
+  const playNote = () => {
+    if (!soundEnabled) {
+      backgroundMusic.stop();
+      return;
     }
-
-    // Только запускаем музыку, если она не играет
-    musicAudioElement.play().then(() => {
-        musicPlayingBGM = true;
-        soundToggle.textContent = "🔊";
-    }).catch(e => {
-        console.log("Background music play blocked:", e);
-    });
+    backgroundMusic.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
+    currentNote = (currentNote + 1) % notes.length;
+    setTimeout(playNote, 1000);
+  };
+  playNote();
 }
 
 function stopBackgroundMusic() {
-  if (musicAudioElement) {
-    musicAudioElement.pause();
-    musicAudioElement.currentTime = 0;
+  if (backgroundMusic) {
+    backgroundMusic.stop();
   }
-  if (musicSourceNode) {
-    try { musicSourceNode.disconnect(); } catch(_) {}
-    musicSourceNode = null;
-  }
-  if (musicGainNode) {
-    try { musicGainNode.disconnect(); } catch(_) {}
-    musicGainNode = null;
-  }
-  if (musicAnalyser) {
-    try { musicAnalyser.disconnect(); } catch(_) {}
-    musicAnalyser = null;
-  }
-  if (musicOscillator) {
-    try { musicOscillator.stop(); } catch(_) {}
-    musicOscillator = null;
-  }
-  if (musicAnimationFrame) {
-    cancelAnimationFrame(musicAnimationFrame);
-    musicAnimationFrame = null;
-  }
-  musicPlayingBGM = false;
 }
 
 soundToggle.addEventListener('click', () => {
@@ -642,11 +581,6 @@ soundToggle.addEventListener('click', () => {
   } else {
     stopBackgroundMusic();
   }
-});
-
-// Ensure audio context is unlocked on user gesture
-["click", "touchstart", "keydown", "pointerdown"].forEach(ev => {
-  document.body.addEventListener(ev, unlockAudio, { once: true, passive: true });
 });
 
 // === PLAYER ===
