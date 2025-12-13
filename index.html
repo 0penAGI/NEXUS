@@ -430,7 +430,17 @@ const abilityResonance = document.getElementById('ability-resonance');
 const emotionalOverlay = document.getElementById('emotional-overlay');
 
 // === AUDIO ===
+// Глобальные переменные для улучшенного аудиосинтеза и фоновой музыки
 let audioContext;
+let backgroundSource = null;
+let analyser = null;
+let oscillator = null;
+let gainNodeOsc = null;
+let musicBuffer = null;
+let notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
+let currentNoteIndex = 0;
+let bpm = 94;
+let beatDuration = 60000 / bpm;
 let soundEnabled = true;
 
 function initAudio() {
@@ -542,36 +552,91 @@ function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
   oscillator.stop(audioContext.currentTime + duration);
 }
 
-let backgroundMusic;
+// --- Новый фоновой музыкальный движок с синхронизацией MP3 и осциллятора через AnalyserNode ---
 function playBackgroundMusic() {
   if (!soundEnabled) return;
   initAudio();
-  backgroundMusic = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  backgroundMusic.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  backgroundMusic.type = 'sine';
-  gainNode.gain.value = 0.05;
-  const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
-  let currentNote = 0;
-  backgroundMusic.start();
-  const playNote = () => {
-    if (!soundEnabled) {
-      backgroundMusic.stop();
-      return;
+  stopBackgroundMusic();
+
+  // Загрузка и проигрывание MP3 через Web Audio API
+  const audioElem = document.getElementById("bgm2");
+  if (!audioElem) return;
+  if (!analyser) analyser = audioContext.createAnalyser();
+
+  // Создаем MediaElementSource для MP3
+  backgroundSource = audioContext.createMediaElementSource(audioElem);
+  // Создаем осциллятор для синхронизации
+  oscillator = audioContext.createOscillator();
+  gainNodeOsc = audioContext.createGain();
+  oscillator.type = "triangle";
+  gainNodeOsc.gain.value = 0.07;
+  oscillator.connect(gainNodeOsc);
+  gainNodeOsc.connect(analyser);
+  analyser.connect(audioContext.destination);
+  backgroundSource.connect(analyser);
+  analyser.connect(audioContext.destination);
+
+  // Синхронизация нот осциллятора с битами MP3
+  currentNoteIndex = 0;
+  let lastBeatTime = audioContext.currentTime;
+  let oscActive = true;
+  oscillator.start();
+
+  function syncOscillator() {
+    if (!oscActive || !soundEnabled) return;
+    // Получаем текущий момент проигрывания MP3
+    let mp3Current = audioElem.currentTime;
+    let timeSinceLastBeat = (audioContext.currentTime - lastBeatTime) * 1000;
+    if (timeSinceLastBeat >= beatDuration) {
+      oscillator.frequency.setValueAtTime(notes[currentNoteIndex], audioContext.currentTime);
+      currentNoteIndex = (currentNoteIndex + 1) % notes.length;
+      lastBeatTime = audioContext.currentTime;
     }
-    backgroundMusic.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
-    currentNote = (currentNote + 1) % notes.length;
-    setTimeout(playNote, 1000);
-  };
-  playNote();
+    if (!audioElem.paused && !audioElem.ended) {
+      setTimeout(syncOscillator, 30);
+    }
+  }
+
+  // Запускаем MP3 и синхронизацию
+  audioElem.currentTime = 0;
+  audioElem.volume = 0.4;
+  audioElem.play().catch(()=>{});
+  syncOscillator();
 }
 
 function stopBackgroundMusic() {
-  if (backgroundMusic) {
-    backgroundMusic.stop();
+  // Останавливаем осциллятор и отсоединяем все
+  if (oscillator) {
+    try { oscillator.stop(); } catch(e){}
+    oscillator.disconnect();
+    oscillator = null;
   }
+  if (gainNodeOsc) {
+    gainNodeOsc.disconnect();
+    gainNodeOsc = null;
+  }
+  if (backgroundSource) {
+    try { backgroundSource.disconnect(); } catch(e){}
+    backgroundSource = null;
+  }
+  if (analyser) {
+    try { analyser.disconnect(); } catch(e){}
+    analyser = null;
+  }
+  // Ставим на паузу MP3
+  const audioElem = document.getElementById("bgm2");
+  if (audioElem) audioElem.pause();
 }
+
+// Разрешение аудиоконтекста и музыки по первому взаимодействию
+function unlockAudio() {
+  initAudio();
+  if (soundEnabled) playBackgroundMusic();
+}
+
+["click", "touchstart", "keydown", "pointerdown"].forEach(ev => {
+  document.body.addEventListener(ev, unlockAudio, { once: true, passive: true });
+});
 
 soundToggle.addEventListener('click', () => {
   soundEnabled = !soundEnabled;
@@ -798,7 +863,7 @@ function getDynamicSceneIntro(sceneIndex) {
 
 // === START GAME ===
 function startGame() {
-  initAudio();
+  unlockAudio();
   cycleCount++;
   updateStats();
   resonanceStat.style.display = 'block';
@@ -1850,51 +1915,7 @@ setInterval(moveHeart, 16);
 // === START THE GAME ===
 startGame();
 </script>
-<script>
-const bgm = document.getElementById("bgm");
-let bgmReady = false;
-let pendingPlay = false;
-
-/*************  ✨ Windsurf Command ⭐  *************/
-/**
- * Attempt to play the background music.
- * If the audio element is not ready yet, the function does nothing.
- * If the audio element is ready, but the play promise is rejected,
- * the function sets the pendingPlay flag to true and logs a message to the console.
- */
-/*******  301527cd-9ba1-408d-a273-6962fb7383de  *******/
-function tryPlayBGM() {
-    if (!bgmReady) return;
-    bgm.play().catch(() => {
-        pendingPlay = true;
-        console.log("Retry audio play soon…");
-    });
-}
-
-function enableAudio() {
-    if (bgmReady) return;
-    bgmReady = true;
-    tryPlayBGM();
-}
-
-["pointerdown", "touchstart", "click"].forEach(evt => {
-    document.addEventListener(evt, () => {
-        enableAudio();
-        if (pendingPlay) tryPlayBGM();
-    }, { once: true });
-});
-
-Telegram.WebApp.ready();
-
-document.addEventListener("pointerdown", () => {
-    Telegram.WebApp.requestFullscreen?.();
-}, { once: true });
-
-document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && bgmReady) tryPlayBGM();
-});
-// END OF AUDIO LOGIC
-</script>
+<!-- (Удален устаревший скрипт аудиологики для bgm, теперь используется Web Audio API + bgm2 + unlockAudio) -->
 <script>
 function adjustForTelegramHeader() {
     const stableHeight = Telegram.WebApp.viewportStableHeight;
