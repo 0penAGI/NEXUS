@@ -569,64 +569,41 @@ function unlockAudio() {
   if (audioContextBGM && audioContextBGM.state === "suspended") {
     audioContextBGM.resume();
   }
-  playBackgroundMusic();
+  // Do not stop music or restart, just resume context.
 }
 
 function playBackgroundMusic() {
-  if (!soundEnabled) return;
-  initAudio();
-  stopBackgroundMusic();
-  // Use <audio id="bgm2">music.mp3</audio>
-  musicAudioElement = document.getElementById("bgm2");
-  if (!musicAudioElement) return;
-  musicAudioElement.volume = 0.4;
-  // Create source node
-  musicSourceNode = audioContextBGM.createMediaElementSource(musicAudioElement);
-  // Create analyser node
-  musicAnalyser = audioContextBGM.createAnalyser();
-  musicAnalyser.fftSize = 256;
-  // Create gain node
-  musicGainNode = audioContextBGM.createGain();
-  musicGainNode.gain.value = 0.9;
-  // Connect graph: source -> analyser -> gain -> destination
-  musicSourceNode.connect(musicAnalyser);
-  musicAnalyser.connect(musicGainNode);
-  musicGainNode.connect(audioContextBGM.destination);
+    if (!soundEnabled) return;
+    initAudio();
 
-  // Optionally, create a gentle oscillator that follows the music volume
-  musicOscillator = audioContextBGM.createOscillator();
-  musicOscillator.type = "sine";
-  musicOscillator.frequency.value = 523.25; // C5
-  let oscGain = audioContextBGM.createGain();
-  oscGain.gain.value = 0.0;
-  musicOscillator.connect(oscGain).connect(audioContextBGM.destination);
-  musicOscillator.start();
+    // Получаем аудио элемент
+    if (!musicAudioElement) musicAudioElement = document.getElementById("bgm2");
+    if (!musicAudioElement) return;
 
-  // Animate oscillator gain based on music MP3 volume
-  function animateOscillator() {
-    if (!musicAnalyser || !oscGain) return;
-    let arr = new Uint8Array(musicAnalyser.frequencyBinCount);
-    musicAnalyser.getByteFrequencyData(arr);
-    // Calculate average volume
-    let avg = arr.reduce((a, b) => a + b, 0) / arr.length;
-    // Map avg (0..255) to gain (0.01..0.07)
-    let gain = Math.min(0.07, Math.max(0.01, avg / 1024));
-    oscGain.gain.setTargetAtTime(gain, audioContextBGM.currentTime, 0.1);
-    // Optionally modulate frequency for effect
-    musicOscillator.frequency.setTargetAtTime(440 + avg, audioContextBGM.currentTime, 0.2);
-    musicAnimationFrame = requestAnimationFrame(animateOscillator);
-  }
-  animateOscillator();
+    // Если музыка уже играет, ничего не делаем
+    if (!musicAudioElement.paused) return;
 
-  // Play the audio
-  musicAudioElement.currentTime = 0;
-  musicAudioElement.play().then(() => {
-    musicPlayingBGM = true;
-    soundToggle.textContent = "🔊";
-  }).catch(e => {
-    // User interaction required
-    console.log("Background music play blocked:", e);
-  });
+    musicAudioElement.volume = 0.4;
+
+    // Создаем AudioContext узлы один раз
+    if (!musicSourceNode) {
+        musicSourceNode = audioContextBGM.createMediaElementSource(musicAudioElement);
+        musicAnalyser = audioContextBGM.createAnalyser();
+        musicAnalyser.fftSize = 256;
+        musicGainNode = audioContextBGM.createGain();
+        musicGainNode.gain.value = 0.9;
+        musicSourceNode.connect(musicAnalyser);
+        musicAnalyser.connect(musicGainNode);
+        musicGainNode.connect(audioContextBGM.destination);
+    }
+
+    // Только запускаем музыку, если она не играет
+    musicAudioElement.play().then(() => {
+        musicPlayingBGM = true;
+        soundToggle.textContent = "🔊";
+    }).catch(e => {
+        console.log("Background music play blocked:", e);
+    });
 }
 
 function stopBackgroundMusic() {
