@@ -432,10 +432,27 @@ const emotionalOverlay = document.getElementById('emotional-overlay');
 // === AUDIO ===
 let audioContext;
 let soundEnabled = true;
+let musicBuffer;
+let backgroundSource;
+let analyser;
+let oscillator;
+let gainNodeOsc;
+let currentNoteIndex = 0;
+let notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
+let bpm = 120;
+let beatDuration = 60 / bpm;
 
-function initAudio() {
+async function initAudio() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Load music.mp3
+    const response = await fetch('music.mp3');
+    const arrayBuffer = await response.arrayBuffer();
+    musicBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
   }
 }
 
@@ -446,131 +463,94 @@ document.addEventListener('touchstart', initAudio, { once: true });
 function createSound(type, duration = 0.5, frequency = 440, volume = 0.3) {
   if (!soundEnabled) return;
   initAudio();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+
   switch(type) {
-    case 'dialogue':
-      oscillator.type = 'sine';
-      frequency = 220 + Math.random() * 110;
-      break;
-    case 'bullet':
-      oscillator.type = 'square';
-      frequency = 100 + Math.random() * 300;
-      volume = 0.1;
-      break;
-    case 'hit':
-      oscillator.type = 'sawtooth';
-      frequency = 150;
-      volume = 0.4;
-      break;
-    case 'void':
-      oscillator.type = 'sine';
-      frequency = 80;
-      volume = 0.2;
-      break;
-    case 'explosion':
-      oscillator.type = 'sawtooth';
-      frequency = 60;
-      volume = 0.5;
-      break;
-    case 'choice':
-      oscillator.type = 'sine';
-      frequency = 523.25;
-      volume = 0.2;
-      duration = 0.1;
-      break;
-    case 'transition':
-      oscillator.type = 'sine';
-      frequency = 329.63;
-      volume = 0.3;
-      break;
-    case 'glitch':
-      oscillator.type = 'square';
-      frequency = 100 + Math.random() * 200;
-      volume = 0.2;
-      duration = 0.05;
-      break;
-    case 'determination':
-      oscillator.type = 'sine';
-      frequency = 392;
-      volume = 0.4;
-      break;
-    case 'resonance':
-      oscillator.type = 'sine';
-      frequency = 261.63;
-      volume = 0.3;
-      break;
-    case 'victory':
-      oscillator.type = 'sine';
-      frequency = 523.25;
-      volume = 0.5;
-      break;
-    case 'gameover':
-      oscillator.type = 'sine';
-      frequency = 130.81;
-      volume = 0.5;
-      break;
-    case 'ability':
-      oscillator.type = 'sine';
-      frequency = 659.25;
-      volume = 0.4;
-      duration = 0.2;
-      break;
-    case 'phase':
-      oscillator.type = 'sine';
-      frequency = 783.99;
-      volume = 0.5;
-      break;
-    case 'chaos':
-      oscillator.type = 'sawtooth';
-      frequency = 110 + Math.random() * 100;
-      volume = 0.3;
-      break;
-    case 'emotional':
-      oscillator.type = 'sawtooth';
-      frequency = 220 + Math.random() * 200;
-      volume = 0.4;
-      duration = 0.3;
-      break;
+    case 'dialogue': osc.type = 'sine'; frequency = 220 + Math.random() * 110; break;
+    case 'bullet': osc.type = 'square'; frequency = 100 + Math.random() * 300; volume = 0.1; break;
+    case 'hit': osc.type = 'sawtooth'; frequency = 150; volume = 0.4; break;
+    case 'void': osc.type = 'sine'; frequency = 80; volume = 0.2; break;
+    case 'explosion': osc.type = 'sawtooth'; frequency = 60; volume = 0.5; break;
+    case 'choice': osc.type = 'sine'; frequency = 523.25; volume = 0.2; duration = 0.1; break;
+    case 'transition': osc.type = 'sine'; frequency = 329.63; volume = 0.3; break;
+    case 'glitch': osc.type = 'square'; frequency = 100 + Math.random() * 200; volume = 0.2; duration = 0.05; break;
+    case 'determination': osc.type = 'sine'; frequency = 392; volume = 0.4; break;
+    case 'resonance': osc.type = 'sine'; frequency = 261.63; volume = 0.3; break;
+    case 'victory': osc.type = 'sine'; frequency = 523.25; volume = 0.5; break;
+    case 'gameover': osc.type = 'sine'; frequency = 130.81; volume = 0.5; break;
+    case 'ability': osc.type = 'sine'; frequency = 659.25; volume = 0.4; duration = 0.2; break;
+    case 'phase': osc.type = 'sine'; frequency = 783.99; volume = 0.5; break;
+    case 'chaos': osc.type = 'sawtooth'; frequency = 110 + Math.random() * 100; volume = 0.3; break;
+    case 'emotional': osc.type = 'sawtooth'; frequency = 220 + Math.random() * 200; volume = 0.4; duration = 0.3; break;
   }
-  gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + duration);
+
+  gain.gain.setValueAtTime(volume, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+  osc.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  osc.start(audioContext.currentTime);
+  osc.stop(audioContext.currentTime + duration);
 }
 
-let backgroundMusic;
-function playBackgroundMusic() {
+async function playBackgroundMusic() {
   if (!soundEnabled) return;
-  initAudio();
-  backgroundMusic = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  backgroundMusic.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  backgroundMusic.type = 'sine';
-  gainNode.gain.value = 0.05;
-  const notes = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
-  let currentNote = 0;
-  backgroundMusic.start();
-  const playNote = () => {
+  await initAudio();
+  if (backgroundSource) return; // Already playing
+
+  // Background MP3
+  backgroundSource = audioContext.createBufferSource();
+  backgroundSource.buffer = musicBuffer;
+  backgroundSource.loop = true;
+
+  const gainNodeBG = audioContext.createGain();
+  gainNodeBG.gain.value = 0.4;
+
+  backgroundSource.connect(gainNodeBG);
+  gainNodeBG.connect(analyser);
+  analyser.connect(audioContext.destination);
+
+  backgroundSource.start();
+
+  // Oscillator for dynamic accompaniment
+  oscillator = audioContext.createOscillator();
+  oscillator.type = 'sine';
+  gainNodeOsc = audioContext.createGain();
+  gainNodeOsc.gain.value = 0.3;
+  oscillator.connect(gainNodeOsc);
+  gainNodeOsc.connect(audioContext.destination);
+
+  function playNextNote() {
     if (!soundEnabled) {
-      backgroundMusic.stop();
+      oscillator.stop();
       return;
     }
-    backgroundMusic.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
-    currentNote = (currentNote + 1) % notes.length;
-    setTimeout(playNote, 1000);
-  };
-  playNote();
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(dataArray);
+    const avgVolume = dataArray.reduce((a,b) => a+b, 0)/dataArray.length;
+    const freq = notes[currentNoteIndex] * (1 + avgVolume / 255 * 0.2);
+
+    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+    gainNodeOsc.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNodeOsc.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + beatDuration*0.8);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + beatDuration);
+
+    currentNoteIndex = (currentNoteIndex + 1) % notes.length;
+    setTimeout(playNextNote, beatDuration*1000);
+  }
+
+  playNextNote();
 }
 
 function stopBackgroundMusic() {
-  if (backgroundMusic) {
-    backgroundMusic.stop();
-  }
+  if (backgroundSource) backgroundSource.stop();
+  if (oscillator) oscillator.stop();
+  backgroundSource = null;
+  oscillator = null;
 }
 
 soundToggle.addEventListener('click', () => {
