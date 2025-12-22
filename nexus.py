@@ -1,4 +1,3 @@
-from aiogram import Bot, types
 from scipy.stats import beta
 import sqlite3
 from pathlib import Path
@@ -3619,7 +3618,7 @@ soul_saver = NexusSoulSaver(
     autosave_interval_minutes=13
 )
 
-API_TOKEN = "8137359130:AAHvJKhWP66icUL4nqz2ZN_TrArN1uXNLMA"
+API_TOKEN = "your token here"
 
 bot = Bot(token=API_TOKEN)
 
