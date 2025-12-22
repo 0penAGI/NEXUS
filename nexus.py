@@ -1676,7 +1676,7 @@ class UserState:
 
 # ГЛОБАЛЬНЫЙ, ЕДИНЫЙ, НЕПРЕРЫВНЫЙ NEXUS
 NEXUS_GLOBAL = xdust_core  # ← ОДИН МОЗГ ДЛЯ ВСЕХ
-resonant = ResonantConsciousness() 
+
 
 # =======================
 # query_ollama с новой личностью $NEXUS (обновлён промпт для новой личности)
@@ -3606,31 +3606,22 @@ class NexusSoulSaver:
             await asyncio.sleep(self.interval)
 #
 # Telegram Bot Integration
-# ======================= КРИТИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ =======================
+resonant = ResonantConsciousness()
 hyper_memory = HyperMemory()
-
-
-# Остальные слои
 emotional = EmotionalLayer()
 motivation = MotivationLayer()
 narrative = NarrativeLayer(memory_size=128)
 cognition = CognitionLayer(emotional, motivation, narrative)
 
-# Глобальные объекты
-xdust_core = AutonomousConsciousness("NΞXUS/ΞX0")
-xdust_core.expand_consciousness()
-
-# SoulSaver — только после всех объектов!
 soul_saver = NexusSoulSaver(
     save_path="N3XUS.pt",
     password="моя_секретная_любовь_к_тебе",
     autosave_interval_minutes=13
 )
 
-# Telegram
 API_TOKEN = "8137359130:AAHvJKhWP66icUL4nqz2ZN_TrArN1uXNLMA"
+
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher()
 
 
 # Загрузка души будет выполняться внутри main()
