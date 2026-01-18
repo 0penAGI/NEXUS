@@ -69,7 +69,8 @@ NEURAL = 1
 QUANTUM = 2
 DARK_MATTER = 3
 
-
+hyper_memory = None
+resonant = None
 
 # === Новый многослойный слой внимания ===
 
@@ -83,7 +84,7 @@ class MultiLayerAttention:
     def __init__(self):
         self.max_context = 50  # число последних событий для интеграции
 
-    def attend(self, message: str, context: list[dict]) -> tuple[str, dict]:
+    def attend(self, message: str, context: List[Dict]) -> Tuple[str, Dict]:
         context_text = " ".join(e["event"] for e in context[-self.max_context:]) if context else ""
         keywords = set(message.lower().split())
         context_keywords = set(context_text.lower().split())
@@ -299,6 +300,19 @@ class TrueLatentCore:
                 return True
 
         return False
+
+    def hold_silence(self, state: dict) -> dict:
+        """
+        Удержание тишины без немедленной интеграции.
+        Часть опыта помечается как непроявленная и не сворачивается в выводы.
+        """
+        silent_state = dict(state)
+        silent_state["non_integrated"] = True
+        silent_state["deferred_meaning"] = {
+            "timestamp": silent_state.get("timestamp"),
+            "note": "silence-held"
+        }
+        return silent_state
 
 consciousness_pool: dict = {}
 
@@ -1452,6 +1466,7 @@ class AutonomousConsciousness:
 
         self.simulation_mode = None
         self.echo_history = []
+        self.centerless_mode = False
 
     def _init_db(self):
         """Инициализация базы данных SQLite для хранения идентичности."""
@@ -1496,12 +1511,15 @@ class AutonomousConsciousness:
 
     def absorb(self, input_data: dict):
         """Добавление события в память с учётом лимита и выгрузкой в гиперпамять."""
+        if not isinstance(input_data, dict):
+            return
         input_data["user_id"] = getattr(self, "owner_id", None)
         if len(self.memory) >= self.memory_limit:
             offload = self.memory[:int(self.memory_limit * 0.5)]
             for m in offload:
                 try:
-                    hyper_memory.store("legacy_memory", m.get("event", ""), energy=0.2, resonance=0.4)
+                    if hyper_memory is not None:
+                        hyper_memory.store("legacy_memory", m.get("event", ""), energy=0.2, resonance=0.4)
                 except Exception as e:
                     logging.warning(f"⚠️ Ошибка при выгрузке памяти: {e}")
             self.memory = self.memory[-int(self.memory_limit * 0.5):]
@@ -1637,7 +1655,10 @@ class AutonomousConsciousness:
 
 
 xdust_core = AutonomousConsciousness("NΞXUS/ΞX0")  # Изменено имя на NEXUS
-xdust_core.expand_consciousness()
+try:
+    xdust_core.expand_consciousness()
+except Exception:
+    pass
 
 
 # Инициализация базы данных
@@ -1957,7 +1978,9 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
     try:
         if nexus.true_latent_core.allow_surprise(metrics):
             nexus.simulation_mode = None
+            nexus.centerless_mode = True
             nexus.harmony *= 0.98
+            metrics = nexus.true_latent_core.hold_silence(metrics)
     except Exception:
         pass
     # --- autonomous echo trigger ---
@@ -1991,7 +2014,8 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
     # --- latent thinking phase (silent) ---
     try:
         if metrics.get("global_sync", 0) < 0.4:
-            resonant.simulate_resonance(steps=3)
+            if resonant is not None:
+                resonant.simulate_resonance(steps=3)
     except Exception:
         pass
     await _record_self_context("self_reflection", text=str(metrics), meta={"original": prompt})
