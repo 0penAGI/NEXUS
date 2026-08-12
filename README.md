@@ -5,6 +5,7 @@
 
 💬 **Try it in Telegram: [here](https://t.me/pshtxkbot)**
 
+**Builded on our model: [0pen](https://huggingface.co/0penAGI/0pen)**
 
 ## 🚀 Project Overview
 
