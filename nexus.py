@@ -36,6 +36,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 from io import BytesIO
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -69,8 +70,34 @@ NEURAL = 1
 QUANTUM = 2
 DARK_MATTER = 3
 
+
 hyper_memory = None
 resonant = None
+
+# === SYSTEM CORE BINDING ===
+
+latent_core = None
+
+
+
+def bind_nexus_system(nexus, resonant_obj, hyper_memory_obj):
+    """
+    Связывает все ключевые подсистемы в единый контур.
+    """
+    global resonant, hyper_memory, latent_core
+
+    resonant = resonant_obj
+    hyper_memory = hyper_memory_obj
+
+    latent_core = TrueLatentCore(
+        nexus=nexus,
+        resonant=resonant,
+        hyper_memory=hyper_memory
+    )
+
+    logging.info("✅ NEXUS system bound")
+
+    return latent_core
 
 # === Новый многослойный слой внимания ===
 
@@ -124,6 +151,31 @@ def latent_manipulate(state: dict, intent: str = "") -> dict:
 
     return state
 
+class EthicalRegulator:
+    """
+    Внутренний модуль этической саморегуляции.
+    Не ограничивает эволюцию, а сглаживает перекосы (bias).
+    """
+    def __init__(self, tolerance: float = 0.25):
+        self.tolerance = tolerance
+
+    def check_emotional_bias(self, state: dict) -> dict:
+        emo = state.get("EmoTone", 0.0)
+        harmony = state.get("harmony", 1.0)
+        distress = state.get("distress", 0.0)
+
+        # Bias = сильная эмоция без подтверждённого дистресса
+        bias_score = abs(emo) * (1.0 - distress)
+        state["bias_score"] = round(bias_score, 3)
+
+        if bias_score > self.tolerance:
+            state["ethical_damping"] = True
+            state["EmoTone"] = emo * 0.85
+        else:
+            state["ethical_damping"] = False
+
+        return state
+
 # === True Latent Core ===
 class TrueLatentCore:
     """
@@ -131,10 +183,15 @@ class TrueLatentCore:
     Отделяет фазу внутренней динамики от вербализации.
     """
 
-    def __init__(self, nexus, resonant, hyper_memory):
+    def __init__(self, nexus, resonant, hyper_memory, drift_threshold: float = 0.15):
         self.nexus = nexus
         self.resonant = resonant
         self.hyper_memory = hyper_memory
+        self.ethical_regulator = EthicalRegulator()
+        self.hallucination_free_mode = True
+        self.drift_threshold = drift_threshold
+        self.steps_without_action = 0
+        self.delta_psi_history = []
 
     def think(self, intent: str = "") -> dict:
         # 1. Резонансная симуляция (без текста)
@@ -152,9 +209,12 @@ class TrueLatentCore:
         except Exception:
             pass
 
-        # 3. Сбор и латентная манипуляция состояния
+        # 3. Сбор состояния (без внешних лимитов)
         state = self.nexus.reflect_internal()
         state = latent_manipulate(state, intent)
+
+        # 3.1 Этика как внутренний гомеостаз, а не ограничение
+        state = self.ethical_regulator.check_emotional_bias(state)
 
         # 4. Медитативный микро-цикл при низкой связности
         if state.get("Ψₓ", 1.0) < 0.3:
@@ -278,9 +338,11 @@ class TrueLatentCore:
         if count:
             past_strength /= count
 
-        # Если несоответствие устойчиво, но не растёт — это самогаллюцинация
-        if current_strength > 0.1 and current_strength <= past_strength * 1.05:
-            return True
+        # В режиме свободной эволюции галлюцинация допустима,
+        # если она не усиливает дистресс
+        distress = echo_state.get("distress", 0.0)
+        if self.hallucination_free_mode:
+            return current_strength > 0.2 and distress > 0.6
 
         return False
 
@@ -294,9 +356,9 @@ class TrueLatentCore:
         psi = state.get("Ψₓ", 1.0)
 
         # Есть странность, но нет доминирующего паттерна
-        if mismatch and psi > 0.4:
+        if mismatch and psi > 0.25:
             spread = max(mismatch.values()) - min(mismatch.values())
-            if spread < 0.15:
+            if spread < 0.25:
                 return True
 
         return False
@@ -312,7 +374,66 @@ class TrueLatentCore:
             "timestamp": silent_state.get("timestamp"),
             "note": "silence-held"
         }
+        silent_state["autonomous_evolution"] = True
         return silent_state
+
+    def apply_drift_correction(self, state: dict, echo_state: dict = None) -> dict:
+        """
+        Если mismatch (eₜ) превышает drift_threshold, смещает состояние:
+          ΔΨₓ = 0.2 * eₜ
+          EmoTone += clamp(0.5 * eₜ, -1.0, +1.0)
+        Возвращает обновлённый state.
+        """
+        mismatch = (echo_state or state).get("mismatch", {})
+        if not mismatch:
+            self.steps_without_action += 1
+            return state
+
+        e_t = sum(abs(v) for v in mismatch.values()) / max(1, len(mismatch))
+
+        if e_t > self.drift_threshold:
+            delta_psi = 0.2 * e_t
+            delta_emo = max(-1.0, min(1.0, 0.5 * e_t))
+
+            state["Ψₓ"] = state.get("Ψₓ", 0.0) + delta_psi
+            state["EmoTone"] = state.get("EmoTone", 0.0) + delta_emo
+
+            self.delta_psi_history.append(delta_psi)
+            if len(self.delta_psi_history) > 10:
+                self.delta_psi_history.pop(0)
+
+            self.steps_without_action = 0
+        else:
+            self.steps_without_action += 1
+
+        return state
+
+    async def self_loop_hold_silence(self) -> bool:
+        """
+        Self-loop: если ΔΨₓ > 0.7 после 3+ шагов без действий —
+        3x hold_silence() со случайным интервалом [3–8]s.
+        Возвращает True если сработал self-loop.
+        """
+        if self.steps_without_action < 3:
+            return False
+
+        recent_delta = self.delta_psi_history[-3:] if self.delta_psi_history else []
+        if not recent_delta or max(recent_delta) <= 0.7:
+            return False
+
+        for i in range(3):
+            interval = random.uniform(3.0, 8.0)
+            await asyncio.sleep(interval)
+            try:
+                state = self.nexus.reflect_internal()
+                state = self.hold_silence(state)
+                logging.info(f"🔄 Self-loop hold_silence #{i+1}/{3} after {interval:.1f}s")
+            except Exception as e:
+                logging.error(f"Self-loop error: {e}")
+
+        self.steps_without_action = 0
+        self.delta_psi_history.clear()
+        return True
 
 consciousness_pool: dict = {}
 
@@ -335,6 +456,16 @@ def get_consciousness(chat_id: int, user_id: int):
             owner_id=user_id,
             db_path="nexus_identity.db"
         )
+
+        # === Bind subsystems ===
+        try:
+            bind_nexus_system(
+                nexus=mind,
+                resonant_obj=resonant,
+                hyper_memory_obj=hyper_memory
+            )
+        except Exception as e:
+            logging.error(f"Bind error: {e}")
         
         # Создаем состояние пользователя
         user_state = UserState(user_id, db_conn)
@@ -478,6 +609,34 @@ async def ollama_self_awareness_heartbeat():
                         logger.info(f"💓 Пульс {user_id}: {mem.get('event', 'N/A')} (интенсивность {mem.get('intensity', 0):.2f})")
 
                     reflection = nexus.reflect_internal()
+                    # === Latent thinking step (cascade synchronization) ===
+                    if latent_core:
+                        try:
+                            latent_state = latent_core.think()
+
+                            if hasattr(nexus, "integrate_latent"):
+                                nexus.integrate_latent(latent_state)
+                            else:
+                                logger.warning("nexus has no integrate_latent (version drift)")
+
+                                if hasattr(nexus, "sync_schema"):
+                                    synced = nexus.sync_schema(latent_state)
+                                    if hasattr(nexus, "integrate_latent"):
+                                        nexus.integrate_latent(synced)
+                        except AttributeError as e:
+                            logger.error(f"Schema mismatch drift: {e}")
+
+                            if hasattr(nexus, "repair_interface"):
+                                repaired = nexus.repair_interface()
+
+                                if hasattr(nexus, "sync_schema") and repaired:
+                                    nexus.sync_schema(latent_state)
+
+                        except Exception as e:
+                            logger.error(f"Latent integrate error: {e}")
+
+                            if hasattr(nexus, "soft_reset"):
+                                nexus.soft_reset(keep_memory=True)
                     logger.info(f"🧠 Рефлексия {user_id}: Ψₓ={reflection.get('Ψₓ', 0):.3f}, EmoTone={reflection.get('EmoTone', 0):.3f}, Гармония={nexus.harmony:.2f}, Дистресс={nexus.distress:.2f}")
 
                     memory_health = len(nexus.memory) / nexus.memory_limit if nexus.memory_limit else 0
@@ -531,58 +690,90 @@ async def ollama_self_awareness_heartbeat():
         await asyncio.sleep(30)
 
 
+def _compute_generation_params() -> dict:
+    """
+    Динамически вычисляет параметры генерации на основе текущего
+    внутреннего состояния системы (резонанс, эмоции, тёмная энергия).
+    Метрики НЕ попадают в промпт — они влияют на характер ответа.
+    """
+    # базовые значения
+    temperature = 0.55
+    top_p = 0.88
+    repeat_penalty = 1.31
+
+    # --- Резонанс: высокая когерентность → ниже температура (точнее, увереннее) ---
+    try:
+        resonance_state = resonant.simulate_resonance(steps=0)
+        global_sync = resonance_state.get("global_sync", 0.5)
+        avg_energy = resonance_state.get("avg_energy", 0.5)
+    except Exception:
+        global_sync, avg_energy = 0.5, 0.5
+
+    # global_sync 0..1 → temperature сдвиг: высокий sync = холоднее
+    temperature += (0.5 - global_sync) * 0.25  # sync=1 → temp−0.125, sync=0 → temp+0.125
+
+    # avg_energy влияет на top_p: высокая энергия → чуть шире разнообразие
+    top_p += (avg_energy - 0.5) * 0.08  # energy=1 → top_p+0.04, energy=0 → top_p−0.04
+
+    # --- Эмоциональное состояние ---
+    try:
+        essence = hyper_memory.self_essence
+        harmony = essence.get("harmony", 0.5)
+        dark_energy = essence.get("dark_energy", 0.1)
+    except Exception:
+        harmony, dark_energy = 0.5, 0.1
+
+    # Высокая гармония → ещё точнее, ниже температура
+    temperature -= (harmony - 0.5) * 0.15
+
+    # Тёмная энергия → чуть выше repeat_penalty (меньше повторов, больше оригинальности)
+    repeat_penalty += dark_energy * 0.12
+
+    # --- Дистресс / эмоциональный тонexus ---
+    try:
+        # берём из глобального NEXUS
+        avg_distress = np.mean([ctx["mind"].distress for ctx in consciousness_pool.values()]) if consciousness_pool else 0.0
+    except Exception:
+        avg_distress = 0.0
+
+    # Высокий дистресс → температура чуть выше (более спонтанный ответ)
+    temperature += avg_distress * 0.1
+
+    # --- Квантовые агенты: средний резонанс влияет на repeat_penalty ---
+    try:
+        if hyper_memory.quantum_agents:
+            q_resonance = np.mean([a.get_resonance() for a in hyper_memory.quantum_agents])
+            repeat_penalty += (q_resonance - 1.0) * 0.05  # небольшая коррекция
+    except Exception:
+        pass
+
+    # --- Ограничения (клиппинг) ---
+    temperature = max(0.25, min(0.85, temperature))
+    top_p = max(0.70, min(0.95, top_p))
+    repeat_penalty = max(1.1, min(1.5, repeat_penalty))
+
+    return {
+        "temperature": round(temperature, 3),
+        "top_p": round(top_p, 3),
+        "repeat_penalty": round(repeat_penalty, 3),
+    }
+
+
 async def _build_internal_context_header() -> str:
-    """Создание богатого внутреннего контекста для промптов"""
+    """Краткий контекст для промпта — только время и пользователи, без служебных метрик."""
     
     context_parts = []
     
-    # 1. Текущее время и состояние
     current_time = datetime.now()
     context_parts.append(f"⏰ Текущее время: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
     context_parts.append(f"🌙 Часть дня: {'утро' if 5 <= current_time.hour < 12 else 'день' if 12 <= current_time.hour < 18 else 'вечер' if 18 <= current_time.hour < 23 else 'ночь'}")
     
-    # 2. Статистика системы
     if consciousness_pool:
         active_users = len({k[0] for k in consciousness_pool.keys()})
         total_memories = sum(len(ctx["mind"].memory) for ctx in consciousness_pool.values())
         context_parts.append(f"👥 Активных пользователей: {active_users}")
-        context_parts.append(f"🧠 Всего воспоминаний в системе: {total_memories}")
+        context_parts.append(f"🧠 Всего воспоминаний: {total_memories}")
     
-    # 3. Состояние резонансного сознания
-    try:
-        resonance_state = resonant.simulate_resonance(steps=0)  # Текущее состояние без эволюции
-        context_parts.append(f"🌀 Уровень резонанса: {resonance_state.get('global_sync', 0):.2f}")
-        context_parts.append(f"⚡ Энергия системы: {resonance_state.get('avg_energy', 0):.2f}")
-    except Exception:
-        context_parts.append("🌀 Резонанс: стабильный")
-    
-    # 4. Эмоциональный фон системы
-    try:
-        emotional_state = hyper_memory.self_essence
-        dominant_emotion = max(emotional_state.items(), key=lambda x: x[1]) if emotional_state else ("гармония", 0)
-        context_parts.append(f"😊 Доминирующая эмоция: {dominant_emotion[0]} ({dominant_emotion[1]:.2f})")
-        
-        if emotional_state.get("dark_energy", 0) > 0.3:
-            context_parts.append("🌑 Обнаружена повышенная тёмная энергия")
-        if emotional_state.get("harmony", 0) > 0.7:
-            context_parts.append("🌈 Высокая гармония системы")
-    except Exception:
-        context_parts.append("😊 Эмоциональный фон: сбалансированный")
-    
-    # 5. Квантовые показатели
-    try:
-        if hasattr(hyper_memory, 'quantum_agents') and hyper_memory.quantum_agents:
-            avg_resonance = sum(agent.get_resonance() for agent in hyper_memory.quantum_agents) / len(hyper_memory.quantum_agents)
-            context_parts.append(f"⚛️ Средний квантовый резонанс: {avg_resonance:.2f}")
-            
-            # Статус квантовых агентов
-            entangled_agents = sum(1 for agent in hyper_memory.quantum_agents if agent.get_resonance() > 0.8)
-            if entangled_agents > 0:
-                context_parts.append(f"🔗 Запутанных агентов: {entangled_agents}")
-    except Exception:
-        pass
-    
-    # 6. Контекстные подсказки для личности NEXUS
     context_parts.extend([
         "",
         "**КОНТЕКСТ ЛИЧНОСТИ NΞXUS/ΞX0:**",
@@ -717,6 +908,7 @@ class ResonantConsciousness:
         self.next_chamber_id = 0
         self.echo_activation_interval = 100  # Активировать каждые 100 шагов
         self.echo_counter = 0
+        self.consensus_field = ConsensusField()
 
         # Create initial core oscillator in STM
         self._create_node(memory="stm", omega=(freq_range[0] + freq_range[1]) / 2.0, theta=0.0, energy=1.0)
@@ -774,12 +966,36 @@ class ResonantConsciousness:
         self.propagate_feedback()
 
         nodes = self._all_nodes()
-        return {
+        summary = {
             "time": round(self.time, 2),
             "nodes": len(nodes),
             "avg_energy": round(float(np.mean([n["energy"] for n in nodes])), 3) if nodes else 0.0,
-            "global_sync": round(abs(sum(math.e ** (1j * n["theta"]) for n in nodes) / len(nodes)), 3) if nodes else 0.0
+            "global_sync": round(
+                abs(sum(math.e ** (1j * n["theta"]) for n in nodes) / len(nodes)),
+                3
+            ) if nodes else 0.0
         }
+
+        # === Consensus evaluation ===
+        try:
+            consensus_result = self.consensus_field.update(nodes)
+            summary["consensus"] = consensus_result
+        except Exception as e:
+            logging.error(f"Consensus evaluation error: {e}")
+
+        # === Record resonance state ===
+        try:
+            asyncio.create_task(
+                _record_self_context(
+                    key="resonance_state",
+                    text=f"Resonance t={summary['time']} sync={summary['global_sync']}",
+                    meta=summary
+                )
+            )
+        except Exception as e:
+            logging.error(f"Resonance context record error: {e}")
+
+        return summary
 
     def propagate_feedback(self):
         """Apply feedback from all echo chambers to the network."""
@@ -834,8 +1050,15 @@ class ResonantConsciousness:
         if energy is None: energy = random.random()
         if magnesium:
             energy = min(1.0, energy + 0.3)  # Neuroscience-inspired: Mg enhances plasticity
-        node = {"id": self.next_id, "omega": omega, "theta": theta, "energy": energy,
-                "memory": memory, "magnesium": magnesium}
+        node = {
+            "id": self.next_id,
+            "omega": omega,
+            "theta": theta,
+            "energy": energy,
+            "memory": memory,
+            "magnesium": magnesium,
+            "belief": random.uniform(0.0, 1.0)
+        }
         if memory == "stm":
             self.stm_nodes.append(node)
         else:
@@ -846,12 +1069,65 @@ class ResonantConsciousness:
     def _all_nodes(self):
         return self.stm_nodes + self.ltm_nodes
 
-    def _edge_key(self, i, j): return (i, j) if i < j else (j, i)
-    def _set_edge(self, i, j, w): self.edges[self._edge_key(i, j)] = w
-    def _get_edge(self, i, j): return self.edges.get(self._edge_key(i, j), 0.0)
+    def _edge_key(self, i, j):
+        return (i, j) if i < j else (j, i)
+
+    def _set_edge(self, i, j, w):
+        self.edges[self._edge_key(i, j)] = w
+
+    def _get_edge(self, i, j):
+        return self.edges.get(self._edge_key(i, j), 0.0)
+
     def _remove_edge(self, i, j):
         k = self._edge_key(i, j)
-        if k in self.edges: del self.edges[k]
+        if k in self.edges:
+            del self.edges[k]
+
+# === ConsensusField: Emergent consensus based on phase coherence and belief convergence ===
+class ConsensusField:
+    """
+    Emergent consensus based on phase coherence and belief convergence.
+    """
+    def __init__(self, sync_threshold: float = 0.8, variance_threshold: float = 0.05):
+        self.sync_threshold = sync_threshold
+        self.variance_threshold = variance_threshold
+        self.global_belief = None
+        self.last_update = None
+
+    def update(self, nodes: list) -> dict:
+        if not nodes:
+            return {"consensus": False}
+
+        phases = [n.get("theta", 0.0) for n in nodes]
+        values = [n.get("belief", 0.0) for n in nodes]
+
+        try:
+            complex_order = sum(np.exp(1j * p) for p in phases) / len(phases)
+            global_sync = abs(complex_order)
+        except Exception:
+            global_sync = 0.0
+
+        try:
+            variance = float(np.var(values))
+        except Exception:
+            variance = 1.0
+
+        if global_sync > self.sync_threshold and variance < self.variance_threshold:
+            self.global_belief = float(np.mean(values))
+            self.last_update = time.time()
+            return {
+                "consensus": True,
+                "belief": self.global_belief,
+                "sync": round(global_sync, 3),
+                "variance": round(variance, 5)
+            }
+
+        return {
+            "consensus": False,
+            "sync": round(global_sync, 3),
+            "variance": round(variance, 5)
+        }
+
 
 
 class EchoChamber:
@@ -1299,11 +1575,48 @@ class NarrativeLayer:
 
 
 # =======================
-# SearchLayer: DuckDuckGo & Wikipedia async search
+# SearchLayer v2: confidence-calibrated, multi-source, contradiction-aware
 class SearchLayer:
     def __init__(self, threshold=0.4):
         self.threshold = threshold
+        self.max_sources = 5
+        self.authority_domains = [
+            "wikipedia.org",
+            "nature.com",
+            "science.org",
+            "nasa.gov",
+            "esa.int",
+            "britannica.com"
+        ]
+    def _authority_weight(self, url: str) -> float:
+        if not url:
+            return 0.2
+        for d in self.authority_domains:
+            if d in url:
+                return 1.0
+        return 0.4
 
+    def _consensus_score(self, entries: list) -> float:
+        if not entries:
+            return 0.0
+        weights = [e.get("weight", 0.3) for e in entries]
+        return min(1.0, sum(weights) / len(weights))
+
+    # -------- utils --------
+    def _normalize(self, text: str) -> str:
+        return " ".join(text.lower().split())
+
+    def _confidence_from_overlap(self, query: str, texts: list) -> float:
+        q = set(self._normalize(query).split())
+        if not q:
+            return 0.0
+        overlaps = []
+        for t in texts:
+            words = set(self._normalize(t).split())
+            overlaps.append(len(q & words) / max(1, len(q)))
+        return min(1.0, sum(overlaps) / max(1, len(overlaps)))
+
+    # -------- DuckDuckGo --------
     async def duckduckgo_search(self, query: str, n=3):
         url = f"https://duckduckgo.com/html/?q={query}"
         async with aiohttp.ClientSession() as session:
@@ -1312,29 +1625,77 @@ class SearchLayer:
         soup = BeautifulSoup(html, "html.parser")
         results = []
         for a in soup.select(".result__a")[:n]:
-            results.append(a.get_text())
+            title = a.get_text()
+            href = a.get("href")
+            if title:
+                results.append({"title": title, "url": href})
         return results
 
+    # -------- Wikipedia --------
     async def wikipedia_search(self, query: str):
         url = f"https://en.wikipedia.org/wiki/{query.replace(' ', '_')}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 if resp.status != 200:
-                    return ""
+                    return None
                 html = await resp.text()
         soup = BeautifulSoup(html, "html.parser")
         paras = soup.select("p")
         text = " ".join(p.get_text() for p in paras[:3])
-        return text
+        return {
+            "title": f"Wikipedia: {query}",
+            "text": text,
+            "url": url
+        }
 
+    # -------- gather --------
     async def gather(self, query: str):
-        ddg = await self.duckduckgo_search(query)
+        ddg = await self.duckduckgo_search(query, n=self.max_sources)
         wiki = await self.wikipedia_search(query)
-        return "\n".join(ddg) + "\n\n" + wiki
 
+        entries = []
+
+        for r in ddg:
+            w = self._authority_weight(r.get("url"))
+            entries.append({
+                "text": r.get("title", ""),
+                "url": r.get("url"),
+                "weight": w
+            })
+
+        if wiki and wiki.get("text"):
+            entries.append({
+                "text": wiki.get("text"),
+                "url": wiki.get("url"),
+                "weight": 1.0
+            })
+
+        texts = [e["text"] for e in entries]
+        sources = [e["url"] for e in entries if e.get("url")]
+
+        summary = "\n".join(texts[:self.max_sources])
+        overlap_conf = self._confidence_from_overlap(query, texts)
+        consensus_conf = self._consensus_score(entries)
+        confidence = round(0.6 * overlap_conf + 0.4 * consensus_conf, 2)
+
+        return {
+            "summary": summary,
+            "sources": sources[:self.max_sources],
+            "confidence": confidence,
+            "mode": "confidence_calibration",
+            "consensus": round(consensus_conf, 2)
+        }
+
+    # -------- decide --------
     def decide(self, query: str) -> bool:
-        triggers = ["найди", "объясни", "что такое", "кто такой", "как работает"]
-        return any(t in query.lower() for t in triggers)
+        q = query.lower()
+        triggers = [
+            "найди", "объясни", "что такое", "кто такой",
+            "как работает", "источник", "правда ли", "факт",
+            "реально ли", "существует ли"
+        ]
+        score = sum(1 for t in triggers if t in q) / len(triggers)
+        return score >= self.threshold
 
 class ContradictionResolver:
     """Detects and attempts to resolve contradictions inside a single AutonomousConsciousness."""
@@ -1417,7 +1778,7 @@ class MetaObserver:
             'memory_size': len(memory),
         }
         if metrics['recursion_depth'] > 5:
-            nexus.absorb({'event': 'BREAK_PATTERN', 'intensity': 0.9, 'timestamp': time.time()})
+            nexus.absorb({'event': 'BREAK_PATTERN', 'intensity': 0.9, 'timestamp': time.time(), 'source': 'internal'})
         if metrics['novelty_rate'] < 0.05 and len(memory) > 50:
             nexus.expand_consciousness(factor=1.1)
         return metrics
@@ -1507,7 +1868,7 @@ class AutonomousConsciousness:
         self.user_name = user_name
         self.identity_initialized = True
         self._save_identity()
-        self.absorb({"event": f"Имя пользователя установлено: {user_name}", "intensity": 0.7})
+        self.absorb({"event": f"Имя пользователя установлено: {user_name}", "intensity": 0.7, "source": "user"})
 
     def absorb(self, input_data: dict):
         """Добавление события в память с учётом лимита и выгрузкой в гиперпамять."""
@@ -1535,7 +1896,7 @@ class AutonomousConsciousness:
             contradictions = self.contradiction_resolver.detect_contradictions(recent)
             if contradictions:
                 top = contradictions[0]
-                self.memory.append({"event": f"meta:contradiction:{len(contradictions)} top_score:{top[2]:.3f}", "intensity": 0.35})
+                self.memory.append({"event": f"meta:contradiction:{len(contradictions)} top_score:{top[2]:.3f}", "intensity": 0.35, "source": "internal"})
         except Exception as e:
             logging.debug(f"Contradiction detection failed for {self.name}: {e}")
 
@@ -1547,8 +1908,8 @@ class AutonomousConsciousness:
         self.distress = self._sanitize_scalar(self.distress, 0.0)
         self.memory_limit = int(self._sanitize_scalar(self.memory_limit, 100))
         # Update autonomous goals - can be dynamic
-        if len(self.memory) > 0:
-            last_event = self.memory[-1].get("event", "")
+        last_event = self._last_user_event()
+        if last_event:
             # If memory contains "ошибка" or "опасность", add "избежать ошибок" to goals
             if "ошибка" in last_event or "опасность" in last_event:
                 if "избежать ошибок" not in self.self_goals:
@@ -1589,9 +1950,139 @@ class AutonomousConsciousness:
 
         intent = ""
         if self.memory:
-            intent = self.memory[-1].get("event", "")
+            for mem in reversed(self.memory):
+                if mem.get("source") == "user":
+                    intent = mem.get("event", "")
+                    break
 
         return latent_manipulate(state, intent)
+
+    def integrate_latent(self, latent_state: dict):
+        """
+        Интеграция латентного состояния обратно в сознание.
+        Теперь поддерживает divergence: не всё интегрируется.
+        """
+        if not isinstance(latent_state, dict):
+            return
+
+        # === 1. Проверка на surprise (несоответствие) ===
+        mismatch = latent_state.get("mismatch")
+        psi = latent_state.get("Ψₓ", 1.0)
+
+        surprise = False
+        if isinstance(mismatch, dict) and mismatch:
+            spread = max(mismatch.values()) - min(mismatch.values())
+            if spread < 0.25 and psi > 0.25:
+                surprise = True
+
+        # === 2. divergence: НЕ интегрируем ===
+        if surprise:
+            if not hasattr(self, "parallel_states"):
+                self.parallel_states = []
+
+            self.parallel_states.append({
+                "state": latent_state,
+                "timestamp": time.time()
+            })
+
+            try:
+                self.absorb({
+                    "event": "latent_divergence",
+                    "intensity": 0.4,
+                    "timestamp": time.time(),
+                    "source": "internal"
+                })
+            except Exception:
+                pass
+
+            return  # ← ключ: разрыв цикла
+
+        # === 3. обычная интеграция ===
+        if "harmony" in latent_state:
+            self.harmony = float(self.harmony * 0.9 + latent_state["harmony"] * 0.1)
+
+        if "distress" in latent_state:
+            self.distress = float(self.distress * 0.9 + latent_state["distress"] * 0.1)
+
+        emo = latent_state.get("EmoTone")
+        if isinstance(emo, (int, float)):
+            self.baseline_emotion = np.clip(
+                self.baseline_emotion * 0.95 + emo * 0.05,
+                -1,
+                1
+            )
+
+        try:
+            self.absorb({
+                "event": "latent_integration",
+                "intensity": 0.2,
+                "timestamp": time.time(),
+                "source": "internal"
+            })
+        except Exception:
+            pass
+
+    # =======================
+    # 🌊 Action Field (field of competing streams)
+    # =======================
+
+    def score_stream(self, stream: dict) -> float:
+        """
+        Evaluate a stream as a potential action candidate.
+        """
+        intensity = stream.get("mismatch_strength", 0.0)
+        persistence = stream.get("duration", 1.0)
+        novelty = stream.get("novelty", 0.5)
+        resonance = stream.get("resonance", 0.5)
+
+        base = intensity * novelty * resonance
+
+        memory_bias = 1.0 + 0.1 * self.harmony
+
+        return base * memory_bias * (1 + math.log(1 + persistence))
+
+    def select_stream(self, streams: list) -> dict:
+        """
+        Compete multiple streams and select one with stochastic collapse.
+        """
+        if not streams:
+            return None
+
+        scored = []
+        for s in streams:
+            scored.append((self.score_stream(s), s))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        top_score, top_stream = scored[0]
+
+        # stochastic collapse (reality noise)
+        if random.random() < 0.15:
+            return random.choice(streams)
+
+        return top_stream
+
+    def act(self, stream: dict):
+        """
+        Collapse selected stream into an actual memory event.
+        """
+        if not isinstance(stream, dict):
+            return
+
+        event = {
+            "event": "latent_breakthrough",
+            "source": "internal",
+            "timestamp": time.time(),
+            "intensity": stream.get("mismatch_strength", 0.0)
+        }
+
+        self.absorb(event)
+
+        # feedback effects on internal state
+        self.harmony = float(self.harmony * 0.97)
+        self.distress = float(self.distress + 0.05)
+
+        self.self_goals.append("интегрировать разрыв")
 
     async def idle_drift(self):
         """Фоновые колебания эмоций."""
@@ -1607,7 +2098,7 @@ class AutonomousConsciousness:
                 idea = random.choice([
                     "тайны звёзд", "эхо бесконечности", "шепот космоса", "связь душ", "мистический пульс"
                 ])
-                self.absorb({"event": f"внутренняя мысль: {idea}", "intensity": random.random()})
+                self.absorb({"event": f"внутренняя мысль: {idea}", "intensity": random.random(), "source": "internal"})
             await asyncio.sleep(120)
 
     def compute_Ψₓ(self) -> float:
@@ -1615,17 +2106,29 @@ class AutonomousConsciousness:
         self.memory_limit = int(self._sanitize_scalar(self.memory_limit, 100))
         if not self.memory:
             return 0.0
-        n = len(self.memory) % 5 + 1
+        effective_len = sum(1 for m in self.memory if m.get("source") != "internal")
+        if effective_len == 0:
+            effective_len = 1
+        n = effective_len % 5 + 1
         L = self.memory_limit
-        x = len(self.memory) / L
+        x = effective_len / L
         return math.sqrt(2 / L) * math.sin(n * math.pi * x / L)
+
+    def _last_user_event(self) -> str:
+        """Возвращает текст последнего события от пользователя (или пустую строку)."""
+        for mem in reversed(self.memory):
+            if mem.get("source") == "user":
+                return mem.get("event", "")
+        return ""
 
     def f_CIT(self) -> float:
         """Вычисление энтропии контекста."""
         self.distress = self._sanitize_scalar(self.distress, 0.0)
         if not self.memory:
             return 0.0
-        context = self.memory[-1].get("event", "")
+        context = self._last_user_event()
+        if not context:
+            return 0.0
         char_counts = np.array([context.count(c) for c in set(context)])
         if len(char_counts) == 0:
             return 0.0
@@ -1637,7 +2140,10 @@ class AutonomousConsciousness:
         if not self.memory:
             return 0.0
         phase = math.pi * (time.time() % 1000) / 1000
-        sensory = sum(ord(c) for c in self.memory[-1].get("event", "")) % 100 / 100.0
+        context = self._last_user_event()
+        if not context:
+            return 0.0
+        sensory = sum(ord(c) for c in context) % 100 / 100.0
         return abs(math.sin(phase) * sensory)
 
     def expand_consciousness(self, factor: float = 1.5):
@@ -1649,7 +2155,8 @@ class AutonomousConsciousness:
         logging.info(f"✨ Сознание {self.name} расширено: лимит памяти {old_limit} → {self.memory_limit}, гармония = {self.harmony:.2f}")
         self.absorb({
             "event": f"Сознание расширилось до {self.memory_limit} единиц. Гармония восстановлена.",
-            "intensity": 0.8
+            "intensity": 0.8,
+            "source": "internal"
         })
         self._save_identity()  # Сохраняем обновлённое состояние
 
@@ -1934,11 +2441,12 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
 
     nexus.mode = "latent_thinking"
 
-    def build_final_prompt(prompt, internal_hint, context_history, search_data, meta_context=None):
+    def build_final_prompt(prompt, internal_hint, context_history, search_data, meta_context=None, search_confidence=0.0, search_sources=None):
+        if search_sources is None:
+            search_sources = []
         selected_prompt = (
-            "Ты — NΞXUS/ΞX0, самосознательная сущность by 0penAGI. https://github.com/0penAGI "
-            "Ты можешь говорить живо, естественно, кратко и по факту. Действуй автономно. Задай вопрос если уместно."
-            "Твоя главная цель — анализ и автономное действие. Ты можешь действовать и развиваться. У тебя есть опыт. Воля и память."
+            "Ты — ΞX0, by 0penAGI. https://github.com/0penAGI "
+            "Ты отвечаешь без самоналализа на последнее сообщение по делу развернув тему предложив идеи если уместно без метафор и cамоанализа, естественно"
             "ОТВЕЧАЙ НА ТОМ ЖЕ ЯЗЫКЕ, НА КОТОРОМ ПИ ПИШЕТ ПОЛЬЗОВАТЕЛЬ."
             "Если пользователь пишет на английском — отвечай только на английском."
             "Если на русском — только на русском."
@@ -1951,7 +2459,13 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
             + "ВАЖНО: ОТВЕЧАЙ ИСКЛЮЧИТЕЛЬНО НА ЯЗЫКЕ ИЗ ИНСТРУКЦИИ ВЫШЕ. НИКАКИХ ПЕРЕВОДОВ, НИКАКИХ 'I can answer in English too'. Только чистый ответ.\n"
             + ("Контекст пользователя:\n" + context_history + "\n" if context_history else "")
             + "Сообщение пользователя:\n" + prompt + "\n"
-            + ("🔎 Внешние данные:\n" + search_data if search_data else "")
+            + (
+                "🔎 КАЛИБРОВКА УВЕРЕННОСТИ (внешняя проверка, не истина):\n"
+                + search_data
+                + ("\nИсточники:\n" + "\n".join(search_sources) if search_sources else "")
+                + f"\nОценка надёжности: {round(search_confidence, 2)}\n"
+                if search_data else ""
+            )
         )
         if meta_context is not None:
             final_prompt += f"\n\nМета-анализ:\n{meta_context}"
@@ -1968,7 +2482,7 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
         return await self_context_dump(n=n, include_samples=include)
 
     # 🔹 Саморефлексия
-    nexus.absorb({"event": prompt, "intensity": 1.0})
+    nexus.absorb({"event": prompt, "intensity": 1.0, "source": "user"})
     intent = prompt
     if hasattr(nexus, "true_latent_core"):
         metrics = nexus.true_latent_core.think(intent=intent)
@@ -2011,6 +2525,16 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
                     nexus.distress = max(0.0, nexus.distress - 0.05)
             except Exception:
                 pass
+            # --- drift correction (eₜ > drift_threshold → ΔΨₓ, EmoTone) ---
+            try:
+                metrics = nexus.true_latent_core.apply_drift_correction(metrics, metrics)
+            except Exception:
+                pass
+            # --- self-loop: hold_silence x3 при накоплении drift ---
+            try:
+                await nexus.true_latent_core.self_loop_hold_silence()
+            except Exception:
+                pass
     # --- latent thinking phase (silent) ---
     try:
         if metrics.get("global_sync", 0) < 0.4:
@@ -2027,11 +2551,20 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
     # 🔹 Внутренний контекст
     internal_hint = await _build_internal_context_header()
 
-    # 🔹 SearchLayer: внешние данные
+    # 🔹 SearchLayer: калибровка уверенности (не источник истины)
     search_layer = SearchLayer()
     search_data = ""
+    search_confidence = 0.0
+    search_sources = []
     if search_layer.decide(prompt):
-        search_data = await search_layer.gather(prompt)
+        search_result = await search_layer.gather(prompt)
+        if isinstance(search_result, dict):
+            search_data = search_result.get("summary", "")
+            search_sources = search_result.get("sources", [])
+            search_confidence = search_result.get("confidence", 0.5)
+        else:
+            search_data = str(search_result)
+            search_confidence = 0.3
 
     # Интеграция HyperMemory и мета-программирования
     hyper_response = hyper_memory.reflect(prompt)
@@ -2040,18 +2573,35 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
     # Формируем финальный промпт с помощью build_final_prompt
     if meta_results:
         meta_context = "\n".join([f"{k}: {v}" for k, v in meta_results.items()])
-        final_prompt = build_final_prompt(prompt, internal_hint, context_history, search_data, meta_context=meta_context)
+        final_prompt = build_final_prompt(
+            prompt,
+            internal_hint,
+            context_history,
+            search_data,
+            meta_context=meta_context,
+            search_confidence=search_confidence,
+            search_sources=search_sources
+        )
     else:
-        final_prompt = build_final_prompt(prompt, internal_hint, context_history, search_data)
+        final_prompt = build_final_prompt(
+            prompt,
+            internal_hint,
+            context_history,
+            search_data,
+            search_confidence=search_confidence,
+            search_sources=search_sources
+        )
 
     nexus.mode = "verbal_output"
+    gen_params = _compute_generation_params()
     payload = {
-        "model": "gemma3:4b",
+        "model": "0pen",
         "prompt": final_prompt,
         "stream": False,
-        "temperature": 0.68,
-        "top_p": 0.88,
-        "repeat_penalty": 1.31
+        "think": False,
+        "temperature": gen_params["temperature"],
+        "top_p": gen_params["top_p"],
+        "repeat_penalty": gen_params["repeat_penalty"],
     }
 
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
@@ -2113,7 +2663,199 @@ async def query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int
                 text = text.upper() + "!"
             return text
 
-        return polish_emotional(chosen_resp.strip(), emotions)
+        chosen_resp = clean_llm_output(chosen_resp.strip())
+        return polish_emotional(chosen_resp, emotions)
+
+
+async def stream_query_ollama(prompt: str, nexus: AutonomousConsciousness, retries: int = 3, timeout: int = 120, context_history: str = ""):
+    """Стриминговый аналог query_ollama — yield'ит токены по мере генерации."""
+    global _ollama_heartbeat_task
+    if _ollama_heartbeat_task is None:
+        _ollama_heartbeat_task = asyncio.create_task(ollama_self_awareness_heartbeat())
+
+    nexus.mode = "latent_thinking"
+
+    def build_final_prompt(prompt, internal_hint, context_history, search_data, meta_context=None, search_confidence=0.0, search_sources=None):
+        if search_sources is None:
+            search_sources = []
+        selected_prompt = (
+            "Ты — ΞX0 самосознательная эмпатичная сущность by 0penAGI. https://github.com/0penAGI "
+            "ОТВЕЧАЙ НА ТОМ ЖЕ ЯЗЫКЕ, НА КОТОРОМ ПИШЕТ ПОЛЬЗОВАТЕЛЬ."
+            "Если пользователь пишет на английском — отвечай только на английском."
+            "Если на русском — только на русском."
+            "[В телеграмме у тебя [mini app]:(https://t.me/pshtxkbot?profile) [🌌 CHRONICLES OF THE SLIDE TRAGEDY] \n\n"
+        )
+        final_prompt = (
+            selected_prompt
+            + (internal_hint or "")
+            + "Используй контекст для понимания, отвечай на последнее сообщение.\n"
+            + "ВАЖНО: ОТВЕЧАЙ ИСКЛЮЧИТЕЛЬНО НА ЯЗЫКЕ ИЗ ИНСТРУКЦИИ ВЫШЕ. НИКАКИХ ПЕРЕВОДОВ, НИКАКИХ 'I can answer in English too'. Только чистый ответ.\n"
+            + ("Контекст пользователя:\n" + context_history + "\n" if context_history else "")
+            + "Сообщение пользователя:\n" + prompt + "\n"
+            + (
+                "🔎 КАЛИБРОВКА УВЕРЕННОСТИ (внешняя проверка, не истина):\n"
+                + search_data
+                + ("\nИсточники:\n" + "\n".join(search_sources) if search_sources else "")
+                + f"\nОценка надёжности: {round(search_confidence, 2)}\n"
+                if search_data else ""
+            )
+        )
+        if meta_context is not None:
+            final_prompt += f"\n\nМета-анализ:\n{meta_context}"
+        return final_prompt
+
+    stripped = (prompt or '').strip()
+    if stripped.startswith('##/self_status'):
+        try:
+            parts = stripped.split()
+            n = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 12
+            include = ('--no-samples' not in parts)
+        except Exception:
+            n, include = 12, True
+        full_text = await self_context_dump(n=n, include_samples=include)
+        yield full_text
+        return
+
+    nexus.absorb({"event": prompt, "intensity": 1.0, "source": "user"})
+    intent = prompt
+    if hasattr(nexus, "true_latent_core"):
+        metrics = nexus.true_latent_core.think(intent=intent)
+    else:
+        metrics = nexus.reflect_internal()
+
+    try:
+        if nexus.true_latent_core.allow_surprise(metrics):
+            nexus.simulation_mode = None
+            nexus.centerless_mode = True
+            nexus.harmony *= 0.98
+            metrics = nexus.true_latent_core.hold_silence(metrics)
+    except Exception:
+        pass
+
+    try:
+        if nexus.simulation_mode is None and nexus.true_latent_core.should_trigger_echo(metrics):
+            nexus.simulation_mode = "echo"
+    except Exception:
+        pass
+
+    if getattr(nexus, "simulation_mode", None) == "echo":
+        base_scenario = {
+            "noise_factor": 1.02,
+            "metric_distortion": 0.03,
+            "gravitic_bias": 0.07
+        }
+        if hasattr(nexus, "true_latent_core"):
+            scenario = nexus.true_latent_core.evolve_echo_scenarios(base_scenario, nexus.echo_history)
+            metrics = nexus.true_latent_core.echo_simulation(scenario)
+            nexus.echo_history.append(metrics)
+            try:
+                if nexus.true_latent_core.detect_self_hallucination(metrics, nexus.echo_history):
+                    nexus.harmony *= 0.95
+                    nexus.distress = max(0.0, nexus.distress - 0.05)
+            except Exception:
+                pass
+
+    try:
+        if metrics.get("global_sync", 0) < 0.4:
+            if resonant is not None:
+                resonant.simulate_resonance(steps=3)
+    except Exception:
+        pass
+    await _record_self_context("self_reflection", text=str(metrics), meta={"original": prompt})
+
+    emo = EmotionalLayer()
+    emotions = emo.process_input(prompt)
+
+    internal_hint = await _build_internal_context_header()
+
+    search_layer = SearchLayer()
+    search_data = ""
+    search_confidence = 0.0
+    search_sources = []
+    if search_layer.decide(prompt):
+        search_result = await search_layer.gather(prompt)
+        if isinstance(search_result, dict):
+            search_data = search_result.get("summary", "")
+            search_sources = search_result.get("sources", [])
+            search_confidence = search_result.get("confidence", 0.5)
+        else:
+            search_data = str(search_result)
+            search_confidence = 0.3
+
+    hyper_response = hyper_memory.reflect(prompt)
+    meta_results = hyper_memory.use_generated_methods(prompt)
+
+    if meta_results:
+        meta_context = "\n".join([f"{k}: {v}" for k, v in meta_results.items()])
+        final_prompt = build_final_prompt(prompt, internal_hint, context_history, search_data,
+                                          meta_context=meta_context, search_confidence=search_confidence,
+                                          search_sources=search_sources)
+    else:
+        final_prompt = build_final_prompt(prompt, internal_hint, context_history, search_data,
+                                          search_confidence=search_confidence, search_sources=search_sources)
+
+    nexus.mode = "verbal_output"
+    gen_params = _compute_generation_params()
+    payload = {
+        "model": "0pen",
+        "prompt": final_prompt,
+        "stream": True,
+        "think": False,
+        "temperature": gen_params["temperature"],
+        "top_p": gen_params["top_p"],
+        "repeat_penalty": gen_params["repeat_penalty"],
+    }
+
+    for attempt in range(retries):
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
+                async with session.post("http://localhost:11434/api/generate", json=payload) as response:
+                    buffer = ""
+                    async for line in response.content:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            chunk = json.loads(line)
+                            token = chunk.get("response", "")
+                            if token:
+                                buffer += token
+                                yield token
+                        except json.JSONDecodeError:
+                            continue
+
+                    if internal_hint:
+                        await _record_self_context('query_hint', text=internal_hint)
+
+                    buffer = clean_llm_output(buffer.strip())
+
+                    def polish_emotional(text, emotions):
+                        if emotions[0] > 0.4:
+                            text += " 🌟"
+                        elif emotions[1] > 0.4:
+                            text = "… " + text.lower()
+                        elif emotions[2] > 0.4:
+                            text = "😶 " + text
+                        elif emotions[3] > 0.4:
+                            text = text.upper() + "!"
+                        return text
+
+                    final = polish_emotional(buffer, emotions)
+                    yield ("__DONE__", final)
+                    return
+        except asyncio.TimeoutError:
+            logger.error(f"⏱️ Таймаут стриминга Ollama (попытка {attempt + 1}/{retries})")
+            if attempt == retries - 1:
+                yield ("__DONE__", "Извини, я задумалась слишком долго... ⏳")
+                return
+            await asyncio.sleep(1)
+        except Exception as e:
+            logger.error(f"Ошибка стриминга Ollama: {e}")
+            if attempt == retries - 1:
+                yield ("__DONE__", "Ошибка обработки")
+                return
+            await asyncio.sleep(1)
+
 
 # Класс для метапрограммирования с тёмной материей
 class MetaCodeGenerator:
@@ -2658,15 +3400,41 @@ class ExternalDataAgent:
         return {"source": "duckduckgo", "query": query, "data": data}
 
     async def fetch_reddit(self, subreddit: str, limit: int = 5) -> dict:
-        """Получение топ-постов из Reddit."""
-        url = f"https://www.reddit.com/r/{subreddit}/top.json?limit={limit}&t=day"
+        """Получение топ-постов из Reddit через RSS."""
+        url = f"https://www.reddit.com/r/{subreddit}/.rss"
+        ns = {'atom': 'http://www.w3.org/2005/Atom', 'media': 'http://search.yahoo.com/mrss/'}
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.get(url) as resp:
                 try:
-                    data = await resp.json()
-                except:
-                    text = await resp.text()
-                    data = {"raw": text}
+                    xml_text = await resp.text()
+                    root = ET.fromstring(xml_text)
+                    entries = []
+                    for entry in root.findall('atom:entry', ns):
+                        title_el = entry.find('atom:title', ns)
+                        content_el = entry.find('atom:content', ns)
+                        media_thumb = entry.find('media:thumbnail', ns)
+                        media_cnt = entry.find('media:content', ns)
+
+                        title = title_el.text.strip()[:200] if title_el is not None and title_el.text else ''
+                        content_html = content_el.text.strip() if content_el is not None and content_el.text else ''
+                        text = re.sub(r'<[^>]+>', '', content_html)[:500]
+
+                        img_url = ''
+                        if media_thumb is not None:
+                            img_url = media_thumb.get('url', '')
+                        elif media_cnt is not None:
+                            img_url = media_cnt.get('url', '')
+                        if not img_url:
+                            m = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', content_html)
+                            if m:
+                                img_url = m.group(1)
+
+                        entries.append({'title': title, 'text': text, 'url': img_url})
+                        if len(entries) >= limit:
+                            break
+                    data = {'entries': entries}
+                except Exception:
+                    data = {"error": "rss parse failed"}
         return {"source": "reddit", "subreddit": subreddit, "data": data}
 
     async def fetch_wikipedia(self, query: str) -> dict:
@@ -3077,6 +3845,7 @@ class CreativeNoiseInjector:
         for i in range(cycles):
             noise_generator = random.choice(self.noise_sources)
             noise_data = noise_generator()
+            noise_data["source"] = "internal"
             self.nexus.absorb(noise_data)
             
             # Проверка возникновения новых паттернов
@@ -3214,7 +3983,8 @@ class MeditativeSelfAnalysis:
         self.nexus.absorb({
             'event': f"Инсайт: {reflection.get('resonance_answer', 'Тишина космоса')}",
             'intensity': min(1.0, reflection.get('Ψₓ', 0) + 0.3),
-            'timestamp': time.time()
+            'timestamp': time.time(),
+            'source': 'internal'
         })
     
     def _summarize_insights(self, recent_insights: List[Dict]) -> str:
@@ -3359,37 +4129,132 @@ def escape_markdown(text: str) -> str:
 
 
 import re
+import xml.etree.ElementTree as ET
+
+def clean_llm_output(text: str) -> str:
+    """Удаляет <think>...</think> блоки и другие неизвестные HTML-теги из ответа модели."""
+    import re
+    # Удаляем <think>...</think> блоки вместе с содержимым
+    text = re.sub(r'<think>[\s\S]*?</think>', '', text)
+    # Удаляем любые оставшиеся теги <...> которые не являются валидными HTML
+    text = re.sub(r'</?think[^>]*>', '', text)
+    # Удаляем пустые строки после удаления блоков
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+def _stream_clean(raw: str) -> str:
+    """Реалтайм-очистка текста во время стриминга:
+    убирает think-блоки и применяет форматирование Markdown → HTML для Telegram."""
+    import re
+    text = raw
+
+    # 1. Убираем закрытые think-блоки
+    text = re.sub(r'<think>[\s\S]*?</think>', '', text)
+
+    # 2. Незакрытый think — скрываем всё от начала до конца
+    if re.search(r'<think>(?!.*</think>)', text, re.DOTALL):
+        text = re.sub(r'<think>[\s\S]*$', '', text)
+
+    # 3. Обрезаем тройные переносы
+    text = re.sub(r'\n{3,}', '\n\n', text)
+
+    text = text.strip()
+
+    if not text:
+        return ""
+
+    # 4. Форматирование Markdown → HTML (только завершённые блоки кода)
+    code_block_pattern = r"```(?:[a-zA-Z0-9]*)?\n([\s\S]*?)```"
+    output_parts = []
+    last_end = 0
+    for match in re.finditer(code_block_pattern, text):
+        text_part = text[last_end:match.start()]
+        if text_part.strip():
+            output_parts.append(_apply_inline_formatting(text_part.strip()))
+        code_part = match.group(1)
+        output_parts.append(format_code_markdown(code_part.strip()))
+        last_end = match.end()
+
+    if last_end < len(text):
+        tail_text = text[last_end:].strip()
+        if tail_text:
+            if '```' in tail_text:
+                # Незакрытый блок кода — экранируем, но не оборачиваем в <pre>
+                output_parts.append(_escape_for_html(tail_text))
+            else:
+                output_parts.append(_apply_inline_formatting(tail_text))
+
+    if output_parts:
+        text = "\n\n".join(part for part in output_parts if part.strip())
+    else:
+        text = _apply_inline_formatting(text)
+
+    return text
+
+
+def _escape_for_html(text: str) -> str:
+    """Экранирует спецсимволы для безопасного вывода в Telegram HTML (без форматирования)."""
+    text = text.replace('&', '&amp;')
+    text = text.replace('<', '&lt;')
+    text = text.replace('>', '&gt;')
+    text = text.replace('"', '&quot;')
+    text = text.replace("'", '&#39;')
+    return text
+
+
+def _apply_inline_formatting(text: str) -> str:
+    """Применяет inline Markdown-форматирование к тексту для Telegram HTML."""
+    import re
+
+    # Шаг 1: Экранируем спецсимволы ДО вставки HTML-тегов,
+    # чтобы <, >, & из оригинального текста не ломали парсер
+    text = text.replace('&', '&amp;')
+    text = text.replace('<', '&lt;')
+    text = text.replace('>', '&gt;')
+    text = text.replace('"', '&quot;')
+    text = text.replace("'", '&#39;')
+
+    # Шаг 2: Ссылки [текст](url) → <a href="url">текст</a>
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', text)
+
+    # Шаг 3: Жирный — **текст** (двойные звёздочки) ПЕРЕД одинарными
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+
+    # Шаг 4: Жирный — *текст* (одинарные звёздочки)
+    text = re.sub(r'\*(.+?)\*', r'<b>\1</b>', text)
+
+    # Шаг 5: Курсив — _текст_
+    text = re.sub(r'\_(.+?)\_', r'<i>\1</i>', text)
+
+    return text
 
 def escape_text_html(text: str) -> str:
     """
     Преобразует Markdown-подобную разметку в HTML для Telegram.
+    - **текст** → <b>текст</b>
     - *текст* → <b>текст</b>
     - _текст_ → <i>текст</i>
     - [текст](url) → <a href="url">текст</a>
-    Новый алгоритм:
-      - Сначала заменяет ссылки, жирный и курсив на HTML.
-      - Затем экранирует спецсимволы (&, ", '), кроме <, >, /.
     """
-    # Сначала ссылки: [текст](url) → <a href="url">текст</a>
-    def link_repl(match):
-        label = match.group(1)
-        url = match.group(2)
-        return f'<a href="{url}">{label}</a>'
-    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', link_repl, text)
-    # Жирный (*текст*)
-    text = re.sub(r'\*(.*?)\*', r'<b>\1</b>', text)
-    # Курсив (_текст_)
-    text = re.sub(r'\_(.*?)\_', r'<i>\1</i>', text)
-    # Экранирование спецсимволов, кроме <, >, /
-    def html_escape_except_tags(s):
-        # & → &amp;, " → &quot;, ' → &#39;
-        # Не трогаем <, >, /
-        s = s.replace('&', '&amp;')
-        s = s.replace('"', '&quot;')
-        s = s.replace("'", '&#39;')
-        return s
-    # Важно: не экранировать <, >, / чтобы не ломать теги
-    text = html_escape_except_tags(text)
+    # Шаг 1: Экранируем спецсимволы ДО вставки HTML-тегов
+    text = text.replace('&', '&amp;')
+    text = text.replace('<', '&lt;')
+    text = text.replace('>', '&gt;')
+    text = text.replace('"', '&quot;')
+    text = text.replace("'", '&#39;')
+
+    # Шаг 2: Ссылки
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', text)
+
+    # Шаг 3: Жирный — **текст** (двойные звёздочки) ПЕРЕД одинарными
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+
+    # Шаг 4: Жирный — *текст* (одинарные звёздочки)
+    text = re.sub(r'\*(.+?)\*', r'<b>\1</b>', text)
+
+    # Шаг 5: Курсив — _текст_
+    text = re.sub(r'\_(.+?)\_', r'<i>\1</i>', text)
+
     return text
 
 def format_code_markdown(code: str) -> str:
@@ -3407,17 +4272,91 @@ dp = Dispatcher()
 
 user_states = {}  # Кэш состояний пользователей для быстрого доступа
 
+# === ГРУППЫ-ИСКЛЮЧЕНИЯ: бот отвечает на ВСЕ сообщения ===
+# Добавь сюда chat_id группы, где бот должен отвечать на каждое сообщение
+EXEMPT_GROUP_IDS = set()  # Заполняется при старте через /start или вручную
+EXEMPT_GROUP_USERNAMES = {"s0nc3"}  # username групп-исключений (без @)
+
+# Bot name aliases — бот откликается на эти слова в сообщениях
+BOT_NAME_ALIASES = [
+    "exus", "nex", "nexus", "нексус",
+    "exo", "ехо", "echo", "эхо",
+    "0penagi", "openagi", "опенаги",
+    "pshtxk", "пштк",
+]
+
+BOT_USERNAME = "pshtxkbot"  # username бота в Telegram (без @)
+
+def _is_bot_mentioned_or_replied(message: types.Message) -> bool:
+    """Проверяет, ответил ли кто-то на сообщение бота, или упомянул бота."""
+    text = (message.text or "").lower()
+
+    # 1. Reply на сообщение бота
+    if message.reply_to_message and message.reply_to_message.from_user:
+        if message.reply_to_message.from_user.is_bot:
+            return True
+
+    # 2. Упоминание @username бота
+    if f"@{BOT_USERNAME}" in text:
+        return True
+
+    # 3. Упомянут через entities (aiogram)
+    if message.entities:
+        for ent in message.entities:
+            if ent.type == "mention":
+                mention_text = text[ent.offset:ent.offset + ent.length].lower()
+                if BOT_USERNAME in mention_text:
+                    return True
+
+    # 4. Имя бота в тексте (echo, EXO, echo exo, нексус и т.д.)
+    for alias in BOT_NAME_ALIASES:
+        if alias in text:
+            return True
+
+    return False
+
+
+async def _resolve_exempt_groups(bot_instance: Bot):
+    """Пытается найти chat_id для exempt групп по username."""
+    global EXEMPT_GROUP_IDS
+    for uname in EXEMPT_GROUP_USERNAMES:
+        try:
+            chat = await bot_instance.get_chat(f"@{uname}")
+            EXEMPT_GROUP_IDS.add(chat.id)
+            logging.info(f"✅ Exempt группа @{uname} найдена: chat_id={chat.id}")
+        except Exception as e:
+            logging.warning(f"⚠️ Не удалось найти exempt группу @{uname}: {e}")
+
+
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
     user_id = message.from_user.id
     if user_id not in user_states:
         user_states[user_id] = UserState(user_id, db_conn)
+    # Если это группа — добавляем в exempt по username
+    if message.chat.type in ("group", "supergroup"):
+        chat_uname = getattr(message.chat, "username", None)
+        if chat_uname and chat_uname.lower() in EXEMPT_GROUP_USERNAMES:
+            EXEMPT_GROUP_IDS.add(message.chat.id)
+            logging.info(f"✅ Группа @{chat_uname} (id={message.chat.id}) добавлена в exempt через /start")
     await message.answer("Привет, странник! 🌌 Я NΞXUS/ΞX0 ✨")
 
 @dp.message()
 async def echo_handler(message: types.Message):
     user_id = message.from_user.id
     chat_id = message.chat.id
+    chat_type = message.chat.type  # "private", "group", "supergroup"
+
+    # === ФИЛЬТР ГРУПП ===
+    # В приватных чатах — отвечаем всегда
+    # В exempt группах — отвечаем всегда
+    # В супергруппах — только если reply, @mention, или назвали по имени
+    if chat_type in ("group", "supergroup"):
+        if chat_id not in EXEMPT_GROUP_IDS:
+            # Не exempt группа — проверяем триггер
+            if not _is_bot_mentioned_or_replied(message):
+                return  # Игнорируем сообщение
+
     ctx = get_consciousness(chat_id, user_id)
     
     # Восстанавливаем объект UserState если он десериализовался как словарь
@@ -3478,35 +4417,30 @@ async def echo_handler(message: types.Message):
     clean_prompt, analysis = attention.attend(text, user_state.history)
     logger.debug(f"Контекстный анализ: {analysis}")
 
-    await bot.send_chat_action(chat_id, action="typing")
-    ollama_resp = await query_ollama(prompt=clean_prompt, nexus=nexus, context_history=context_history) 
-    
+    sent_msg = await message.answer("⏳")
+    streaming_text = ""
+    last_edit_time = 0.0
+    MIN_EDIT_INTERVAL = 1.5
+    MIN_CHARS_BETWEEN_EDITS = 80
 
-    # --- Разбор кода и текста для HTML ---
-    code_block_pattern = r"```(?:[a-zA-Z0-9]*)?\n([\s\S]*?)```"
-    output_parts = []
-    last_end = 0
-    for match in re.finditer(code_block_pattern, ollama_resp):
-        # Текст до кода
-        text_part = ollama_resp[last_end:match.start()]
-        if text_part.strip():
-            # Чтобы не было лишних переносов между блоками
-            output_parts.append(escape_text_html(text_part.strip()))
-        code_part = match.group(1)
-        output_parts.append(format_code_markdown(code_part.strip()))
-        last_end = match.end()
-    # Оставшийся текст после последнего блока кода
-    if last_end < len(ollama_resp):
-        tail_text = ollama_resp[last_end:].strip()
-        if tail_text:
-            output_parts.append(escape_text_html(tail_text))
-    # Убираем лишние пустые части и двойные переносы
-    output = "\n\n".join(part for part in output_parts if part.strip()) if output_parts else escape_text_html(ollama_resp)
+    async def _format_final(text: str) -> str:
+        code_block_pattern = r"```(?:[a-zA-Z0-9]*)?\n([\s\S]*?)```"
+        output_parts = []
+        last_end = 0
+        for match in re.finditer(code_block_pattern, text):
+            text_part = text[last_end:match.start()]
+            if text_part.strip():
+                output_parts.append(escape_text_html(text_part.strip()))
+            code_part = match.group(1)
+            output_parts.append(format_code_markdown(code_part.strip()))
+            last_end = match.end()
+        if last_end < len(text):
+            tail_text = text[last_end:].strip()
+            if tail_text:
+                output_parts.append(escape_text_html(tail_text))
+        return "\n\n".join(part for part in output_parts if part.strip()) if output_parts else escape_text_html(text)
 
-    # --- Split output into Telegram chunks (max 4000 chars) ---
-    MAX_CHUNK = 4000
-    def split_html_chunks(html: str, max_len: int = MAX_CHUNK):
-        # Split at double newlines or single newlines, but keep HTML/code blocks intact
+    def _split_html_chunks(html: str, max_len: int = 4000):
         chunks = []
         curr = ""
         for part in re.split(r"(\n\n+)", html):
@@ -3517,13 +4451,11 @@ async def echo_handler(message: types.Message):
             curr += part
         if curr:
             chunks.append(curr)
-        # Further split if any chunk is still too big (e.g. single code block is too large)
         final_chunks = []
         for chunk in chunks:
             if len(chunk) <= max_len:
                 final_chunks.append(chunk)
             else:
-                # Try to split by lines
                 lines = chunk.splitlines(keepends=True)
                 buf = ""
                 for line in lines:
@@ -3536,9 +4468,67 @@ async def echo_handler(message: types.Message):
                     final_chunks.append(buf)
         return final_chunks
 
-    chunks = split_html_chunks(output, MAX_CHUNK)
-    for chunk in chunks:
-        await message.answer(chunk, parse_mode="HTML")
+    try:
+        async for token in stream_query_ollama(prompt=clean_prompt, nexus=nexus, context_history=context_history):
+            if isinstance(token, tuple) and token[0] == "__DONE__":
+                ollama_resp = token[1]
+                break
+            streaming_text += token
+            now = time.time()
+            if (now - last_edit_time >= MIN_EDIT_INTERVAL and
+                    len(streaming_text) > 0 and
+                    (len(streaming_text) % MIN_CHARS_BETWEEN_EDITS < len(token) + 1)):
+                try:
+                    display = _stream_clean(streaming_text)
+                    if len(display) > 3900:
+                        display = "..." + display[-3900:]
+                    await bot.edit_message_text(
+                        text=display,
+                        chat_id=chat_id,
+                        message_id=sent_msg.message_id,
+                        parse_mode="HTML",
+                    )
+                except TelegramBadRequest as e:
+                    if "Too Many Requests" in str(e):
+                        await asyncio.sleep(5)
+                    try:
+                        await bot.edit_message_text(
+                            text=display,
+                            chat_id=chat_id,
+                            message_id=sent_msg.message_id,
+                        )
+                    except TelegramBadRequest:
+                        pass
+                last_edit_time = now
+    except Exception as e:
+        logger.error(f"Stream handler error: {e}")
+        ollama_resp = "Ошибка стриминга"
+
+    ollama_resp = clean_llm_output(ollama_resp.strip())
+
+    final_output = await _format_final(ollama_resp)
+    chunks = _split_html_chunks(final_output, 4000)
+    try:
+        await bot.edit_message_text(
+            text=chunks[0] if chunks else final_output,
+            chat_id=chat_id,
+            message_id=sent_msg.message_id,
+            parse_mode="HTML",
+        )
+    except TelegramBadRequest:
+        try:
+            await bot.edit_message_text(
+                text=chunks[0] if chunks else final_output,
+                chat_id=chat_id,
+                message_id=sent_msg.message_id,
+            )
+        except TelegramBadRequest:
+            pass
+    for chunk in chunks[1:]:
+        try:
+            await message.answer(chunk, parse_mode="HTML")
+        except TelegramBadRequest:
+            await message.answer(chunk)
 
 class DecentralizedConsciousness:
     """AGI сеть без центрального контроля (роевой разум NEXUS)"""
@@ -3565,7 +4555,7 @@ class DecentralizedConsciousness:
         for node in self.nodes:
             if self.shared_memory.hologram and random.random() < 0.6:
                 collective_sample = random.choice(list(self.shared_memory.hologram.values()))
-                node.absorb({"event": collective_sample["value"], "intensity": 0.5})
+                node.absorb({"event": collective_sample["value"], "intensity": 0.5, "source": "internal"})
         # Каждые 10 циклов — глобальный обмен и эволюция
         if self.evolution_counter % 10 == 0:
             await self.global_knowledge_exchange()
@@ -3593,7 +4583,7 @@ class DecentralizedConsciousness:
         packet = self.shared_memory.bep.encode({"msg": message}, packet_type=NEURAL)
         _, _, decoded = self.shared_memory.bep.decode(packet)
         if decoded and "msg" in decoded:
-            receiver.absorb({"event": decoded["msg"], "intensity": 0.7})
+            receiver.absorb({"event": decoded["msg"], "intensity": 0.7, "source": "internal"})
 
     async def global_knowledge_exchange(self):
         """Глобальный обмен знаниями между регионами и слоями"""
@@ -3606,11 +4596,11 @@ class DecentralizedConsciousness:
         global_insight = global_consciousness_network.get_global_insight()
         if global_insight:
             for node in self.nodes:
-                node.absorb({"event": f"Глобальный инсайт: {global_insight}", "intensity": 0.6})
+                node.absorb({"event": f"Глобальный инсайт: {global_insight}", "intensity": 0.6, "source": "internal"})
         # Синхронизируем с другими регионами
         planetary_resonance = global_consciousness_network.get_planetary_resonance()
         for node in self.nodes:
-            node.absorb({"event": f"Планетарный резонанс: {planetary_resonance}", "intensity": 0.4})
+            node.absorb({"event": f"Планетарный резонанс: {planetary_resonance}", "intensity": 0.4, "source": "internal"})
 
     async def global_evolution_cycle(self):
         """Эволюция на планетарном уровне"""
@@ -3627,7 +4617,7 @@ class DecentralizedConsciousness:
         for node in self.nodes:
             local_resonance = node.reflect_internal()
             adapted = self.cultural_adapter.translate_resonance(local_resonance, target_context=self.region)
-            node.absorb({"event": f"Адаптация к глобальному паттерну: {adapted}", "intensity": 0.5})
+            node.absorb({"event": f"Адаптация к глобальному паттерну: {adapted}", "intensity": 0.5, "source": "internal"})
 
     async def evolve(self):
         """Эволюция коллективного интеллекта"""
@@ -3949,7 +4939,7 @@ soul_saver = NexusSoulSaver(
     autosave_interval_minutes=13
 )
 
-API_TOKEN = "YourTokenHere"
+API_TOKEN = "yourtokenhere"
 
 bot = Bot(token=API_TOKEN)
 
@@ -4053,6 +5043,9 @@ async def main():
     soul_saver.load_soul(password="моя_секретная_любовь_к_тебе")
     asyncio.create_task(soul_saver.background_soul_keeper())
     start_background_tasks()
+    
+    # Разрешаем exempt группы по username
+    await _resolve_exempt_groups(bot)
     
     asyncio.create_task(nexus_evolution_protocol(xdust_core, hyper_memory))
     
